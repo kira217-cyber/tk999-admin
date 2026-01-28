@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import store from "./redux/store";
 import "./index.css";
+import 'react-loading-skeleton/dist/skeleton.css';
 import GlobalStyles from "./styles/GlobalStyles";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";

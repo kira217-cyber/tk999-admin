@@ -1,170 +1,25 @@
-// admin/FavIconAndTitleSettings.jsx
+// src/pages/FavIconAndTitleSettings.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import styled from "styled-components";
+import { motion } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { API_URL } from "../utils/baseURL";
+import { FaSpinner } from "react-icons/fa";
 
-// 🌤️ Light Theme Styling
-const Page = styled.div`
-  min-height: 100vh;
-  background: #f9fafb;
-  padding: 40px 20px;
-  font-family: "Inter", sans-serif;
-  color: #111827;
-`;
-
-const Container = styled.div`
-  max-width: 900px;
-  margin: 0 auto;
-  background: #ffffff;
-  border-radius: 24px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-`;
-
-const Header = styled.div`
-  background: white;
-  padding: 40px 20px;
-  text-align: center;
-  color: white;
-`;
-
-const Title = styled.h1`
-   color: #111827;
-  font-size: 42px;
-  font-weight: 900;
-  margin: 0;
-`;
-
-const Content = styled.div`
-  padding: 60px;
-`;
-
-const Section = styled.div`
-  margin-bottom: 50px;
-`;
-
-const Label = styled.label`
-  display: block;
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 12px;
-  color: #1e3a8a;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 16px 20px;
-  background: #f1f5f9;
-  border: 2px solid #cbd5e1;
-  border-radius: 14px;
-  color: #111827;
-  font-size: 16px;
-  transition: 0.3s ease;
-  &:focus {
-    outline: none;
-    border-color: #3b82f6;
-    background: #fff;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
-  }
-`;
-
-const UploadBox = styled.label`
-  display: block;
-  padding: 60px;
-  border: 3px dashed #94a3b8;
-  border-radius: 20px;
-  text-align: center;
-  cursor: pointer;
-  background: #f8fafc;
-  font-weight: 700;
-  font-size: 18px;
-  transition: 0.3s;
-  &:hover {
-    border-color: #3b82f6;
-    background: #eff6ff;
-    color: #1e40af;
-  }
-`;
-
-const PreviewBox = styled.div`
-  margin-top: 25px;
-  text-align: center;
-`;
-
-const FaviconPreview = styled.img`
-  width: 90px;
-  height: 90px;
-  border-radius: 18px;
-  border: 4px solid #3b82f6;
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.25);
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  margin-top: 40px;
-`;
-
-const SaveBtn = styled.button`
-  background: linear-gradient(135deg, #10b981, #059669);
-  padding: 16px 45px;
-  border: none;
-  border-radius: 50px;
-  color: white;
-  font-size: 18px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: 0.3s ease;
-  &:hover {
-    transform: translateY(-3px);
-  }
-  &:disabled {
-    background: #94a3b8;
-    cursor: not-allowed;
-  }
-`;
-
-const ResetBtn = styled.button`
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  padding: 16px 40px;
-  border: none;
-  border-radius: 50px;
-  color: white;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.3s ease;
-  &:hover {
-    transform: translateY(-3px);
-  }
-`;
-
-const InfoBox = styled.div`
-  margin-top: 40px;
-  padding: 25px;
-  background: #f1f5f9;
-  border-radius: 16px;
-  text-align: center;
-  font-size: 15px;
-  color: #475569;
-  border: 1px solid #cbd5e1;
-`;
-
-const FavIconAndTitleSettings = () => {
+export default function FavIconAndTitleSettings() {
   const [title, setTitle] = useState("");
   const [favicon, setFavicon] = useState(null);
   const [previewFavicon, setPreviewFavicon] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // 🔹 Load Settings from API
   useEffect(() => {
     loadSettings();
   }, []);
 
   const loadSettings = async () => {
+    setLoading(true);
     try {
       const res = await axios.get(`${API_URL}/api/site-settings`);
       setTitle(res.data.title || "Rajabaji - Best Online Casino");
@@ -172,7 +27,7 @@ const FavIconAndTitleSettings = () => {
         setPreviewFavicon(`${API_URL}${res.data.favicon}?t=${Date.now()}`);
       }
     } catch (err) {
-      console.log("Using default");
+      console.log("Using default title");
       setTitle("Rajabaji - Best Online Casino");
     } finally {
       setLoading(false);
@@ -187,10 +42,9 @@ const FavIconAndTitleSettings = () => {
     }
   };
 
-  // 🔹 Save settings
   const handleSave = async () => {
     if (!title.trim()) {
-      alert("Title cannot be empty!");
+      toast.error("Title cannot be empty!");
       return;
     }
 
@@ -201,94 +55,141 @@ const FavIconAndTitleSettings = () => {
 
     try {
       await axios.put(`${API_URL}/api/site-settings`, formData);
-      alert("✅ Saved to Database! Refresh main site to see changes.");
+      toast.success(
+        "Settings saved successfully! Refresh main site to see changes.",
+      );
       loadSettings();
     } catch (err) {
-      alert("❌ Save Failed!");
+      toast.error("Save failed!");
       console.error(err);
     } finally {
       setSaving(false);
     }
   };
 
-  // 🔹 Reset to Default
   const handleReset = async () => {
-    if (!window.confirm("Reset to default?")) return;
+    if (!window.confirm("Reset to default settings?")) return;
+
     try {
       await axios.delete(`${API_URL}/api/site-settings`);
-      alert("✅ Reset Done!");
+      toast.success("Settings reset successfully!");
       loadSettings();
       window.location.reload();
     } catch (err) {
-      alert("❌ Reset Failed!");
+      toast.error("Reset failed!");
     }
   };
 
   if (loading) {
     return (
-      <Page className="flex items-center justify-center">
-        <div className="text-3xl text-gray-600 font-semibold">Loading...</div>
-      </Page>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/30 to-black flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+          className="text-emerald-400 text-6xl"
+        >
+          <FaSpinner />
+        </motion.div>
+      </div>
     );
   }
 
   return (
-    <Page>
-      <Container>
-        <Header>
-          <Title>Favicon & Title Settings</Title>
-        </Header>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 sm:p-6 md:p-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-8 text-center">
+          Favicon & Title Settings
+        </h1>
 
-        <Content>
-          <Section>
-            <Label>Website Title</Label>
-            <Input
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 sm:p-8 shadow-2xl"
+        >
+          {/* Website Title */}
+          <div className="mb-10">
+            <label className="block text-emerald-300 font-medium mb-3 text-lg">
+              Website Title
+            </label>
+            <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Rajabaji - Best Online Casino"
+              className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
             />
-          </Section>
+          </div>
 
-          <Section>
-            <Label>Favicon (32x32 or 64x64 recommended)</Label>
-            <UploadBox>
-              {previewFavicon ? "Change Favicon" : "Upload Favicon"}
-              <input
-                type="file"
-                accept=".png,.ico,.jpg,.jpeg,.svg,.webp"
-                onChange={handleFaviconChange}
-                hidden
-              />
-            </UploadBox>
+          {/* Favicon Upload */}
+          <div className="mb-10">
+            <label className="block text-emerald-300 font-medium mb-3 text-lg">
+              Favicon (32×32 or 64×64 recommended)
+            </label>
 
             {previewFavicon && (
-              <PreviewBox>
-                <p style={{ margin: "15px 0", color: "#475569" }}>
-                  Current Favicon:
+              <div className="mb-6 text-center">
+                <p className="text-gray-400 mb-3">
+                  Current / Selected Favicon:
                 </p>
-                <FaviconPreview src={previewFavicon} alt="Favicon" />
-              </PreviewBox>
+                <img
+                  src={previewFavicon}
+                  alt="Favicon Preview"
+                  className="w-24 h-24 object-contain mx-auto rounded-xl border-4 border-emerald-700/50 shadow-xl"
+                />
+              </div>
             )}
-          </Section>
 
-          <ButtonGroup>
-            <SaveBtn onClick={handleSave} disabled={saving}>
+            <input
+              type="file"
+              accept=".png,.ico,.jpg,.jpeg,.svg,.webp"
+              onChange={handleFaviconChange}
+              className="hidden"
+              id="favicon-input"
+            />
+
+            <label
+              htmlFor="favicon-input"
+              className="block w-full bg-gray-900/60 border-2 border-dashed border-emerald-700/50 rounded-xl px-6 py-16 text-center cursor-pointer hover:border-emerald-500/70 hover:bg-gray-900/70 transition-all text-gray-300 font-medium"
+            >
+              {previewFavicon ? "Change Favicon" : "Upload Favicon"}
+            </label>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 mt-12">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-4 rounded-xl font-bold cursor-pointer transition-all shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+            >
               {saving ? "Saving..." : "Save to Database"}
-            </SaveBtn>
-            <ResetBtn onClick={handleReset}>Reset</ResetBtn>
-          </ButtonGroup>
+            </motion.button>
 
-          <InfoBox>
-            Favicon saved in: <code>uploads/method-icons/favicon.png</code>
-            <br />
-            Access: <code>{API_URL}/uploads/method-icons/favicon.png</code>
-            <br />
-            Refresh main site to see changes.
-          </InfoBox>
-        </Content>
-      </Container>
-    </Page>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleReset}
+              className="flex-1 bg-gradient-to-r from-rose-700 to-red-700 hover:from-rose-600 hover:to-red-600 text-white py-4 rounded-xl font-bold cursor-pointer transition-all shadow-lg"
+            >
+              Reset
+            </motion.button>
+          </div>
+
+          {/* Info Box */}
+          <div className="mt-12 p-6 bg-gray-900/50 border border-emerald-800/50 rounded-xl text-center text-gray-300 text-sm">
+            <p className="mb-2">
+              Favicon saved in: <code>uploads/method-icons/favicon.png</code>
+            </p>
+            <p className="mb-2">
+              Access: <code>{API_URL}/uploads/method-icons/favicon.png</code>
+            </p>
+            <p>Refresh main site / clear cache to see changes.</p>
+          </div>
+        </motion.div>
+      </div>
+
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+    </div>
   );
-};
-
-export default FavIconAndTitleSettings;
+}

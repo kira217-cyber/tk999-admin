@@ -1,245 +1,14 @@
+// src/pages/AddWithdrawMethods.jsx
 import React, { useState, useEffect } from "react";
-import styled from "styled-components";
-import { toast } from "react-toastify";
-import JoditEditor from "jodit-react";
 import axios from "axios";
+import { motion } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import JoditEditor from "jodit-react";
 import { API_URL } from "../utils/baseURL";
+import { Loader2 } from "lucide-react";
 
-// === Styled Components (অপরিবর্তিত) ===
-const Container = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-  background: #f4f7fa;
-  min-height: 100vh;
-  @media (max-width: 640px) {
-    padding: 1rem;
-  }
-`;
-const Title = styled.h1`
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #1e3a8a;
-  margin-bottom: 2rem;
-`;
-const FormCard = styled.form`
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
-`;
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-`;
-const InputGroup = styled.div`
-  margin-bottom: 1.5rem;
-`;
-const Label = styled.label`
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 0.5rem;
-`;
-const Input = styled.input`
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 1rem;
-  &:focus {
-    outline: none;
-    border-color: #4c51bf;
-    box-shadow: 0 0 0 3px rgba(76, 81, 191, 0.1);
-  }
-  ${({ error }) => error && `border-color:#e53e3e;`}${({ type }) =>
-    type === "color" && `height:50px;`}
-`;
-const FileInput = styled.input`
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: white;
-  cursor: pointer;
-`;
-const ImagePreview = styled.img`
-  width: 100%;
-  max-height: 120px;
-  object-fit: cover;
-  border-radius: 8px;
-  margin-top: 0.5rem;
-`;
-const Select = styled.select`
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: white;
-`;
-const Button = styled.button`
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  ${({ primary }) =>
-    primary &&
-    `background:linear-gradient(45deg,#4c51bf,#7f9cf5);color:white;`}${({
-    danger,
-  }) =>
-    danger &&
-    `background:linear-gradient(45deg,#e53e3e,#f56565);color:white;`}${({
-    small,
-  }) => small && `padding:0.5rem 1rem;font-size:0.875rem;`}&:disabled {
-    background: #e2e8f0;
-    cursor: not-allowed;
-    opacity: 0.7;
-  }
-`;
-const ErrorText = styled.p`
-  color: #e53e3e;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-`;
-const GatewayContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-`;
-const GatewayTag = styled.div`
-  display: flex;
-  align-items: center;
-  background: #e6fffa;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.875rem;
-`;
-const RemoveGatewayButton = styled.button`
-  margin-left: 0.5rem;
-  background: none;
-  border: none;
-  color: #e53e3e;
-  cursor: pointer;
-`;
-const GatewayInputWrapper = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-`;
-const ButtonWrapper = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 1rem;
-`;
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-`;
-const ModalContent = styled.div`
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  max-width: 600px;
-  width: 100%;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-`;
-const ModalHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-`;
-const ModalTitle = styled.h2`
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1e3a8a;
-`;
-const CloseButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: #2d3748;
-  cursor: pointer;
-`;
-const UserInputCard = styled.div`
-  background: #f7fafc;
-  padding: 1.5rem;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-`;
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-`;
-const TableHead = styled.thead`
-  background: linear-gradient(45deg, #4c51bf, #7f9cf5);
-  color: white;
-`;
-const TableRow = styled.tr`
-  border-bottom: 1px solid #e2e8f0;
-  &:hover {
-    background: rgba(167, 169, 202, 0.26);
-  }
-`;
-const TableHeader = styled.th`
-  padding: 1rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  text-align: left;
-`;
-const TableCell = styled.td`
-  padding: 1rem;
-  font-size: 0.875rem;
-  color: #2d3748;
-`;
-const ActionButtons = styled.div`
-  display: flex;
-  gap: 0.5rem;
-`;
-const MethodsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-`;
-const MethodCard = styled.div`
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s;
-  &:hover {
-    transform: translateY(-5px);
-  }
-`;
-const MethodImage = styled.img`
-  width: 100%;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-`;
-
-const AddWithdrawMethods = () => {
+export default function AddWithdrawMethods() {
   const [methods, setMethods] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -257,6 +26,7 @@ const AddWithdrawMethods = () => {
     fieldInstructionBD: "",
     name: "",
   });
+
   const [editingUserInput, setEditingUserInput] = useState(null);
   const [editingIndex, setEditingIndex] = useState(null);
 
@@ -274,7 +44,6 @@ const AddWithdrawMethods = () => {
     userInputs: [],
   });
 
-
   useEffect(() => {
     fetchMethods();
   }, []);
@@ -283,13 +52,14 @@ const AddWithdrawMethods = () => {
     setLoading(true);
     try {
       const res = await axios.get(
-        `${API_URL}/api/withdraw-payment-methods/methods`
+        `${API_URL}/api/withdraw-payment-methods/methods`,
       );
-      setMethods(res.data.data);
-    } catch {
-      toast.error("Failed to load methods");
+      setMethods(res.data.data || []);
+    } catch (err) {
+      toast.error("Failed to load withdraw methods");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const validate = () => {
@@ -306,7 +76,9 @@ const AddWithdrawMethods = () => {
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) setFormData((prev) => ({ ...prev, methodImage: file }));
+    if (file) {
+      setFormData((prev) => ({ ...prev, methodImage: file }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -325,22 +97,24 @@ const AddWithdrawMethods = () => {
     payload.append("status", formData.status);
     payload.append("userInputs", JSON.stringify(formData.userInputs));
 
-    // ইমেজ (create এ বাধ্যতামূলক, update এ অপশনাল)
     if (formData.methodImage) {
       payload.append("methodImage", formData.methodImage);
     }
 
+    setLoading(true);
     try {
-      setLoading(true);
       if (editingId) {
         await axios.put(
           `${API_URL}/api/withdraw-payment-methods/method/${editingId}`,
-          payload
+          payload,
         );
-        toast.success("Updated successfully!");
+        toast.success("Method updated successfully!");
       } else {
-        await axios.post(`${API_URL}/api/withdraw-payment-methods/method`, payload);
-        toast.success("Created successfully!");
+        await axios.post(
+          `${API_URL}/api/withdraw-payment-methods/method`,
+          payload,
+        );
+        toast.success("Method created successfully!");
       }
       resetForm();
       fetchMethods();
@@ -354,19 +128,23 @@ const AddWithdrawMethods = () => {
   const handleEdit = (method) => {
     setFormData({
       ...method,
-      methodImage: null, // নতুন ইমেজ চাইলে আবার আপলোড করবে
+      methodImage: null, // new image optional on update
     });
     setEditingId(method._id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this method?")) return;
+    if (!window.confirm("Delete this withdraw method?")) return;
+
     try {
-      await axios.delete(`${API_URL}/api/withdraw-payment-methods/method/${id}`);
-      toast.success("Deleted");
+      await axios.delete(
+        `${API_URL}/api/withdraw-payment-methods/method/${id}`,
+      );
+      toast.success("Method deleted!");
       fetchMethods();
-    } catch {
-      toast.error("Delete failed");
+    } catch (err) {
+      toast.error("Delete failed!");
     }
   };
 
@@ -388,21 +166,27 @@ const AddWithdrawMethods = () => {
     setErrors({});
   };
 
-  // Gateway & User Input functions
+  // Gateway helpers
   const addGateway = () => {
-    const t = gatewayInput.trim();
-    if (!t || formData.gateway.includes(t)) return;
-    setFormData((p) => ({ ...p, gateway: [...p.gateway, t] }));
+    const trimmed = gatewayInput.trim();
+    if (!trimmed || formData.gateway.includes(trimmed)) return;
+    setFormData((prev) => ({ ...prev, gateway: [...prev.gateway, trimmed] }));
     setGatewayInput("");
   };
-  const removeGateway = (g) =>
-    setFormData((p) => ({ ...p, gateway: p.gateway.filter((x) => x !== g) }));
 
+  const removeGateway = (gateway) => {
+    setFormData((prev) => ({
+      ...prev,
+      gateway: prev.gateway.filter((g) => g !== gateway),
+    }));
+  };
+
+  // User Input helpers
   const addUserInput = () => {
-    if (!newUserInput.name.trim()) return toast.error("Name required");
-    setFormData((p) => ({
-      ...p,
-      userInputs: [...p.userInputs, { ...newUserInput }],
+    if (!newUserInput.name.trim()) return toast.error("Name is required");
+    setFormData((prev) => ({
+      ...prev,
+      userInputs: [...prev.userInputs, { ...newUserInput }],
     }));
     setNewUserInput({
       type: "text",
@@ -417,510 +201,742 @@ const AddWithdrawMethods = () => {
   };
 
   const updateUserInput = () => {
-    if (!editingUserInput.name.trim()) return toast.error("Name required");
+    if (!editingUserInput.name.trim()) return toast.error("Name is required");
     const updated = [...formData.userInputs];
     updated[editingIndex] = editingUserInput;
-    setFormData((p) => ({ ...p, userInputs: updated }));
+    setFormData((prev) => ({ ...prev, userInputs: updated }));
     setIsUpdateModalOpen(false);
   };
 
-  const deleteUserInput = (i) =>
-    setFormData((p) => ({
-      ...p,
-      userInputs: p.userInputs.filter((_, idx) => idx !== i),
+  const deleteUserInput = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      userInputs: prev.userInputs.filter((_, i) => i !== index),
     }));
+  };
 
   return (
-    <Container>
-      <Title>Manage Withdraw Payment Methods</Title>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 sm:p-6 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-8 text-center">
+          Manage Withdraw Payment Methods
+        </h1>
 
-      <FormCard onSubmit={handleSubmit}>
-        <Grid>
-          <InputGroup>
-            <Label>Method Name (EN)</Label>
-            <Input
-              type="text"
-              value={formData.methodName}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, methodName: e.target.value }))
-              }
-              error={errors.methodName}
-            />
-            {errors.methodName && <ErrorText>{errors.methodName}</ErrorText>}
-          </InputGroup>
-          <InputGroup>
-            <Label>Method Name (BD)</Label>
-            <Input
-              type="text"
-              value={formData.methodNameBD}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, methodNameBD: e.target.value }))
-              }
-              error={errors.methodNameBD}
-            />
-            {errors.methodNameBD && (
-              <ErrorText>{errors.methodNameBD}</ErrorText>
-            )}
-          </InputGroup>
-
-          <InputGroup>
-            <Label>Method Image {editingId && "(Optional on update)"}</Label>
-            <FileInput
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-            />
-            {formData.methodImage &&
-              typeof formData.methodImage === "string" && (
-                <ImagePreview
-                  src={`${API_URL}${formData.methodImage}`}
-                  alt="preview"
-                />
-              )}
-            {errors.methodImage && <ErrorText>{errors.methodImage}</ErrorText>}
-          </InputGroup>
-
-          <InputGroup>
-            <Label>Gateways</Label>
-            <GatewayInputWrapper>
-              <Input
+        <motion.form
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          onSubmit={handleSubmit}
+          className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 sm:p-8 shadow-2xl mb-12"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Method Name EN */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Method Name (EN)
+              </label>
+              <input
                 type="text"
-                value={gatewayInput}
-                onChange={(e) => setGatewayInput(e.target.value)}
-                placeholder="Obay"
+                value={formData.methodName}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, methodName: e.target.value }))
+                }
+                className={`w-full bg-gray-900/60 border ${
+                  errors.methodName
+                    ? "border-rose-500"
+                    : "border-emerald-800/50"
+                } rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all`}
               />
-              <Button type="button" onClick={addGateway} small primary>
-                Add
-              </Button>
-            </GatewayInputWrapper>
-            {errors.gateway && <ErrorText>{errors.gateway}</ErrorText>}
-            <GatewayContainer>
-              {formData.gateway.map((g, i) => (
-                <GatewayTag key={i}>
-                  {g}
-                  <RemoveGatewayButton onClick={() => removeGateway(g)}>
-                    ×
-                  </RemoveGatewayButton>
-                </GatewayTag>
-              ))}
-            </GatewayContainer>
-          </InputGroup>
+              {errors.methodName && (
+                <p className="text-rose-400 text-sm mt-1">
+                  {errors.methodName}
+                </p>
+              )}
+            </div>
 
-          <InputGroup>
-            <Label>Text Color</Label>
-            <Input
-              type="color"
-              value={formData.color}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, color: e.target.value }))
-              }
-            />
-          </InputGroup>
-          <InputGroup>
-            <Label>Background Color</Label>
-            <Input
-              type="color"
-              value={formData.backgroundColor}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, backgroundColor: e.target.value }))
-              }
-            />
-          </InputGroup>
-          <InputGroup>
-            <Label>Button Color</Label>
-            <Input
-              type="color"
-              value={formData.buttonColor}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, buttonColor: e.target.value }))
-              }
-            />
-          </InputGroup>
-          <InputGroup>
-            <Label>Status</Label>
-            <Select
-              value={formData.status}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, status: e.target.value }))
-              }
+            {/* Method Name BD */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Method Name (BD)
+              </label>
+              <input
+                type="text"
+                value={formData.methodNameBD}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, methodNameBD: e.target.value }))
+                }
+                className={`w-full bg-gray-900/60 border ${
+                  errors.methodNameBD
+                    ? "border-rose-500"
+                    : "border-emerald-800/50"
+                } rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all`}
+              />
+              {errors.methodNameBD && (
+                <p className="text-rose-400 text-sm mt-1">
+                  {errors.methodNameBD}
+                </p>
+              )}
+            </div>
+
+            {/* Method Image */}
+            <div className="md:col-span-3 lg:col-span-1">
+              <label className="block text-emerald-300 font-medium mb-2">
+                Method Image {editingId && "(Optional on update)"}
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-700/50 file:text-emerald-100 hover:file:bg-emerald-600/70 cursor-pointer"
+              />
+              {formData.methodImage &&
+                typeof formData.methodImage === "string" && (
+                  <div className="mt-4">
+                    <img
+                      src={`${API_URL}${formData.methodImage}`}
+                      alt="Method Preview"
+                      className="w-full max-h-32 object-contain rounded-xl border border-emerald-700/50 shadow-lg"
+                    />
+                  </div>
+                )}
+              {errors.methodImage && (
+                <p className="text-rose-400 text-sm mt-1">
+                  {errors.methodImage}
+                </p>
+              )}
+            </div>
+
+            {/* Gateways */}
+            <div className="md:col-span-2 lg:col-span-1">
+              <label className="block text-emerald-300 font-medium mb-2">
+                Gateways
+              </label>
+              <div className="flex gap-3 mb-3">
+                <input
+                  type="text"
+                  value={gatewayInput}
+                  onChange={(e) => setGatewayInput(e.target.value)}
+                  placeholder="e.g. bKash"
+                  className="flex-1 bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={addGateway}
+                  className="bg-emerald-700/60 hover:bg-emerald-600/70 text-white px-6 py-3 rounded-xl font-medium cursor-pointer transition-all"
+                >
+                  Add
+                </button>
+              </div>
+              {errors.gateway && (
+                <p className="text-rose-400 text-sm mb-2">{errors.gateway}</p>
+              )}
+              <div className="flex flex-wrap gap-2">
+                {formData.gateway.map((g, i) => (
+                  <div
+                    key={i}
+                    className="bg-emerald-900/50 text-emerald-200 px-4 py-2 rounded-full text-sm flex items-center gap-2"
+                  >
+                    {g}
+                    <button
+                      type="button"
+                      onClick={() => removeGateway(g)}
+                      className="text-rose-400 hover:text-rose-300"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Colors */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Text Color
+              </label>
+              <input
+                type="color"
+                value={formData.color}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, color: e.target.value }))
+                }
+                className="w-full h-12 bg-gray-900/60 border border-emerald-800/50 rounded-xl cursor-pointer"
+              />
+            </div>
+
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Background Color
+              </label>
+              <input
+                type="color"
+                value={formData.backgroundColor}
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    backgroundColor: e.target.value,
+                  }))
+                }
+                className="w-full h-12 bg-gray-900/60 border border-emerald-800/50 rounded-xl cursor-pointer"
+              />
+            </div>
+
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Button Color
+              </label>
+              <input
+                type="color"
+                value={formData.buttonColor}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, buttonColor: e.target.value }))
+                }
+                className="w-full h-12 bg-gray-900/60 border border-emerald-800/50 rounded-xl cursor-pointer"
+              />
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Status
+              </label>
+              <select
+                value={formData.status}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, status: e.target.value }))
+                }
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Instructions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Instruction (EN)
+              </label>
+              <JoditEditor
+                value={formData.instruction}
+                onChange={(newContent) =>
+                  setFormData((p) => ({ ...p, instruction: newContent }))
+                }
+                className="bg-gray-900/60 border border-emerald-800/50 rounded-xl text-black"
+              />
+            </div>
+
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Instruction (BD)
+              </label>
+              <JoditEditor
+                value={formData.instructionBD}
+                onChange={(newContent) =>
+                  setFormData((p) => ({ ...p, instructionBD: newContent }))
+                }
+                className="bg-gray-900/60 border border-emerald-800/50 rounded-xl text-black"
+              />
+            </div>
+          </div>
+
+          {/* User Input Fields */}
+          <div className="mt-10">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-white">
+                User Input Fields
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(true)}
+                className="bg-emerald-700/60 hover:bg-emerald-600/70 text-white px-6 py-2 rounded-xl font-medium cursor-pointer transition-all"
+              >
+                Add New Field
+              </button>
+            </div>
+
+            {errors.userInputs && (
+              <p className="text-rose-400 text-sm mb-4">{errors.userInputs}</p>
+            )}
+
+            {formData.userInputs.length > 0 && (
+              <div className="overflow-x-auto rounded-xl border border-emerald-800/50 bg-gray-900/40 backdrop-blur-md shadow-lg">
+                <table className="w-full min-w-[800px]">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-emerald-950/80 to-gray-900/80 border-b border-emerald-800/50">
+                      <th className="px-6 py-4 text-left text-emerald-300 font-semibold">
+                        Name
+                      </th>
+                      <th className="px-6 py-4 text-left text-emerald-300 font-semibold">
+                        Type
+                      </th>
+                      <th className="px-6 py-4 text-left text-emerald-300 font-semibold">
+                        Required
+                      </th>
+                      <th className="px-6 py-4 text-left text-emerald-300 font-semibold">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {formData.userInputs.map((input, idx) => (
+                      <tr
+                        key={idx}
+                        className="border-b border-emerald-900/40 hover:bg-emerald-950/40 transition-colors"
+                      >
+                        <td className="px-6 py-4 text-gray-200">
+                          {input.name}
+                        </td>
+                        <td className="px-6 py-4 text-gray-300 capitalize">
+                          {input.type}
+                        </td>
+                        <td className="px-6 py-4 text-gray-300">
+                          {input.isRequired === "true" ? "Yes" : "No"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-3">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingUserInput({ ...input });
+                                setEditingIndex(idx);
+                                setIsUpdateModalOpen(true);
+                              }}
+                              className="bg-emerald-700/60 hover:bg-emerald-600/70 text-white px-4 py-2 rounded-xl text-sm cursor-pointer transition-all"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => deleteUserInput(idx)}
+                              className="bg-rose-700/60 hover:bg-rose-600/70 text-white px-4 py-2 rounded-xl text-sm cursor-pointer transition-all"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 mt-12">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-4 rounded-xl font-bold cursor-pointer transition-all shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
             >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </Select>
-          </InputGroup>
-        </Grid>
+              {loading && <Loader2 size={20} className="animate-spin" />}
+              {loading
+                ? "Saving..."
+                : editingId
+                  ? "Update Method"
+                  : "Create Method"}
+            </motion.button>
 
-        <InputGroup>
-          <Label>Instruction (EN)</Label>
-          <JoditEditor
-            value={formData.instruction}
-            onChange={(c) => setFormData((p) => ({ ...p, instruction: c }))}
-          />
-        </InputGroup>
-        <InputGroup>
-          <Label>Instruction (BD)</Label>
-          <JoditEditor
-            value={formData.instructionBD}
-            onChange={(c) => setFormData((p) => ({ ...p, instructionBD: c }))}
-          />
-        </InputGroup>
+            {editingId && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.97 }}
+                type="button"
+                onClick={resetForm}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-4 rounded-xl font-bold cursor-pointer transition-all border border-gray-600"
+              >
+                Cancel
+              </motion.button>
+            )}
+          </div>
+        </motion.form>
 
-        <InputGroup>
-          <Label>User Input Fields</Label>
-          <ButtonWrapper>
-            <Button
-              type="button"
-              onClick={() => setIsAddModalOpen(true)}
-              primary
-            >
-              Add New Field
-            </Button>
-          </ButtonWrapper>
-          {errors.userInputs && <ErrorText>{errors.userInputs}</ErrorText>}
-        </InputGroup>
+        {/* Existing Methods */}
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold text-white mb-6">
+            Existing Withdraw Methods
+          </h2>
 
-        {formData.userInputs.length > 0 && (
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableHeader>Name</TableHeader>
-                <TableHeader>Type</TableHeader>
-                <TableHeader>Required</TableHeader>
-                <TableHeader>Actions</TableHeader>
-              </TableRow>
-            </TableHead>
-            <tbody>
-              {formData.userInputs.map((input, idx) => (
-                <TableRow key={idx}>
-                  <TableCell>{input.name}</TableCell>
-                  <TableCell>{input.type}</TableCell>
-                  <TableCell>
-                    {input.isRequired === "true" ? "Yes" : "No"}
-                  </TableCell>
-                  <TableCell>
-                    <ActionButtons>
-                      <Button
-                        small
-                        primary
-                        onClick={() => {
-                          setEditingUserInput({ ...input });
-                          setEditingIndex(idx);
-                          setIsUpdateModalOpen(true);
-                        }}
+          {loading ? (
+            <div className="text-center py-20">
+              <Loader2
+                size={48}
+                className="animate-spin mx-auto text-emerald-400"
+              />
+            </div>
+          ) : methods.length === 0 ? (
+            <div className="text-center py-20 text-gray-400 text-xl">
+              No withdraw methods added yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {methods.map((m) => (
+                <motion.div
+                  key={m._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all group"
+                >
+                  <img
+                    src={`${API_URL}${m.methodImage}`}
+                    alt={m.methodName}
+                    className="w-full h-40 object-cover"
+                  />
+
+                  <div className="p-5">
+                    <h3 className="text-lg font-bold text-emerald-300 mb-2">
+                      {m.methodName} ({m.methodNameBD})
+                    </h3>
+                    <p className="text-sm text-gray-300 mb-3">
+                      Status:{" "}
+                      <span
+                        className={
+                          m.status === "active"
+                            ? "text-emerald-400"
+                            : "text-rose-400"
+                        }
+                      >
+                        {m.status}
+                      </span>
+                    </p>
+                    <p className="text-sm text-gray-300 mb-4">
+                      Gateways: {m.gateway.join(", ")}
+                    </p>
+
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => handleEdit(m)}
+                        className="flex-1 bg-emerald-700/60 hover:bg-emerald-600/70 text-white py-2 rounded-xl font-medium cursor-pointer transition-all"
                       >
                         Edit
-                      </Button>
-                      <Button small danger onClick={() => deleteUserInput(idx)}>
+                      </button>
+
+                      <button
+                        onClick={() => handleDelete(m._id)}
+                        className="flex-1 bg-rose-700/60 hover:bg-rose-600/70 text-white py-2 rounded-xl font-medium cursor-pointer transition-all"
+                      >
                         Delete
-                      </Button>
-                    </ActionButtons>
-                  </TableCell>
-                </TableRow>
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
               ))}
-            </tbody>
-          </Table>
-        )}
-
-        <ButtonWrapper>
-          <Button type="submit" primary disabled={loading}>
-            {loading
-              ? "Saving..."
-              : editingId
-              ? "Update Method"
-              : "Create Method"}
-          </Button>
-          {editingId && (
-            <Button type="button" onClick={resetForm}>
-              Cancel
-            </Button>
+            </div>
           )}
-        </ButtonWrapper>
-      </FormCard>
-
-      {/* Add / Edit User Input Modals (আগের মতোই) */}
-      {isAddModalOpen && (
-        <ModalOverlay onClick={() => setIsAddModalOpen(false)}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            <ModalHeader>
-              <ModalTitle>Add Field</ModalTitle>
-              <CloseButton onClick={() => setIsAddModalOpen(false)}>
-                ×
-              </CloseButton>
-            </ModalHeader>
-            <UserInputCard>
-              <Grid>
-                <InputGroup>
-                  <Label>Type</Label>
-                  <Select
-                    value={newUserInput.type}
-                    onChange={(e) =>
-                      setNewUserInput((p) => ({ ...p, type: e.target.value }))
-                    }
-                  >
-                    <option value="text">Text</option>
-                    <option value="number">Number</option>
-                    <option value="file">File</option>
-                  </Select>
-                </InputGroup>
-                <InputGroup>
-                  <Label>Name (key)</Label>
-                  <Input
-                    type="text"
-                    value={newUserInput.name}
-                    onChange={(e) =>
-                      setNewUserInput((p) => ({ ...p, name: e.target.value }))
-                    }
-                  />
-                </InputGroup>
-                <InputGroup>
-                  <Label>Label (EN)</Label>
-                  <Input
-                    type="text"
-                    value={newUserInput.label}
-                    onChange={(e) =>
-                      setNewUserInput((p) => ({ ...p, label: e.target.value }))
-                    }
-                  />
-                </InputGroup>
-                <InputGroup>
-                  <Label>Label (BD)</Label>
-                  <Input
-                    type="text"
-                    value={newUserInput.labelBD}
-                    onChange={(e) =>
-                      setNewUserInput((p) => ({
-                        ...p,
-                        labelBD: e.target.value,
-                      }))
-                    }
-                  />
-                </InputGroup>
-                <InputGroup>
-                  <Label>Required?</Label>
-                  <Select
-                    value={newUserInput.isRequired}
-                    onChange={(e) =>
-                      setNewUserInput((p) => ({
-                        ...p,
-                        isRequired: e.target.value,
-                      }))
-                    }
-                  >
-                    <option value="true">Yes</option>
-                    <option value="false">No</option>
-                  </Select>
-                </InputGroup>
-                <InputGroup>
-                  <Label>Instruction (EN)</Label>
-                  <Input
-                    type="text"
-                    value={newUserInput.fieldInstruction}
-                    onChange={(e) =>
-                      setNewUserInput((p) => ({
-                        ...p,
-                        fieldInstruction: e.target.value,
-                      }))
-                    }
-                  />
-                </InputGroup>
-                <InputGroup>
-                  <Label>Instruction (BD)</Label>
-                  <Input
-                    type="text"
-                    value={newUserInput.fieldInstructionBD}
-                    onChange={(e) =>
-                      setNewUserInput((p) => ({
-                        ...p,
-                        fieldInstructionBD: e.target.value,
-                      }))
-                    }
-                  />
-                </InputGroup>
-              </Grid>
-            </UserInputCard>
-            <ButtonWrapper>
-              <Button primary onClick={addUserInput}>
-                Add
-              </Button>
-              <Button onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
-            </ButtonWrapper>
-          </ModalContent>
-        </ModalOverlay>
-      )}
-
-      {isUpdateModalOpen && editingUserInput && (
-        <ModalOverlay onClick={() => setIsUpdateModalOpen(false)}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            <ModalHeader>
-              <ModalTitle>Edit Field</ModalTitle>
-              <CloseButton onClick={() => setIsUpdateModalOpen(false)}>
-                ×
-              </CloseButton>
-            </ModalHeader>
-            <UserInputCard>
-              <Grid>
-                <InputGroup>
-                  <Label>Type</Label>
-                  <Select
-                    value={editingUserInput.type}
-                    onChange={(e) =>
-                      setEditingUserInput((p) => ({
-                        ...p,
-                        type: e.target.value,
-                      }))
-                    }
-                  >
-                    <option value="text">Text</option>
-                    <option value="number">Number</option>
-                    <option value="file">File</option>
-                  </Select>
-                </InputGroup>
-                <InputGroup>
-                  <Label>Name</Label>
-                  <Input
-                    type="text"
-                    value={editingUserInput.name}
-                    onChange={(e) =>
-                      setEditingUserInput((p) => ({
-                        ...p,
-                        name: e.target.value,
-                      }))
-                    }
-                  />
-                </InputGroup>
-                <InputGroup>
-                  <Label>Label (EN)</Label>
-                  <Input
-                    type="text"
-                    value={editingUserInput.label}
-                    onChange={(e) =>
-                      setEditingUserInput((p) => ({
-                        ...p,
-                        label: e.target.value,
-                      }))
-                    }
-                  />
-                </InputGroup>
-                <InputGroup>
-                  <Label>Label (BD)</Label>
-                  <Input
-                    type="text"
-                    value={editingUserInput.labelBD}
-                    onChange={(e) =>
-                      setEditingUserInput((p) => ({
-                        ...p,
-                        labelBD: e.target.value,
-                      }))
-                    }
-                  />
-                </InputGroup>
-                <InputGroup>
-                  <Label>Required?</Label>
-                  <Select
-                    value={editingUserInput.isRequired}
-                    onChange={(e) =>
-                      setEditingUserInput((p) => ({
-                        ...p,
-                        isRequired: e.target.value,
-                      }))
-                    }
-                  >
-                    <option value="true">Yes</option>
-                    <option value="false">No</option>
-                  </Select>
-                </InputGroup>
-                <InputGroup>
-                  <Label>Instruction (EN)</Label>
-                  <Input
-                    type="text"
-                    value={editingUserInput.fieldInstruction}
-                    onChange={(e) =>
-                      setEditingUserInput((p) => ({
-                        ...p,
-                        fieldInstruction: e.target.value,
-                      }))
-                    }
-                  />
-                </InputGroup>
-                <InputGroup>
-                  <Label>Instruction (BD)</Label>
-                  <Input
-                    type="text"
-                    value={editingUserInput.fieldInstructionBD}
-                    onChange={(e) =>
-                      setEditingUserInput((p) => ({
-                        ...p,
-                        fieldInstructionBD: e.target.value,
-                      }))
-                    }
-                  />
-                </InputGroup>
-              </Grid>
-            </UserInputCard>
-            <ButtonWrapper>
-              <Button primary onClick={updateUserInput}>
-                Save
-              </Button>
-              <Button onClick={() => setIsUpdateModalOpen(false)}>
-                Cancel
-              </Button>
-            </ButtonWrapper>
-          </ModalContent>
-        </ModalOverlay>
-      )}
-
-      {/* Existing Methods */}
-      <div>
-        <h2
-          style={{
-            fontSize: "1.5rem",
-            margin: "2rem 0 1rem",
-            color: "#1e3a8a",
-          }}
-        >
-          Existing Methods
-        </h2>
-        {loading ? (
-          <p>Loading...</p>
-        ) : (
-          <MethodsGrid>
-            {methods.map((m) => (
-              <MethodCard key={m._id}>
-                <MethodImage
-                  src={`${API_URL}${m.methodImage}`}
-                  alt={m.methodName}
-                />
-                <h3 style={{ fontSize: "1.25rem", margin: "0.5rem 0" }}>
-                  {m.methodName} ({m.methodNameBD})
-                </h3>
-                <p>
-                  <strong>Status:</strong> {m.status}
-                </p>
-                <p>
-                  <strong>Gateways:</strong> {m.gateway.join(", ")}
-                </p>
-                <div
-                  style={{
-                    marginTop: "1rem",
-                    display: "flex",
-                    gap: "0.5rem",
-                    justifyContent: "flex-end",
-                  }}
-                >
-                  <Button small primary onClick={() => handleEdit(m)}>
-                    Edit
-                  </Button>
-                  <Button small danger onClick={() => handleDelete(m._id)}>
-                    Delete
-                  </Button>
-                </div>
-              </MethodCard>
-            ))}
-          </MethodsGrid>
-        )}
+        </div>
       </div>
-    </Container>
-  );
-};
 
-export default AddWithdrawMethods;
+      {/* Add User Input Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-lg border border-emerald-800/50 rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-2xl"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-white">Add New Field</h3>
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="text-gray-400 hover:text-white text-3xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Type
+                </label>
+                <select
+                  value={newUserInput.type}
+                  onChange={(e) =>
+                    setNewUserInput((p) => ({ ...p, type: e.target.value }))
+                  }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
+                >
+                  <option value="text">Text</option>
+                  <option value="number">Number</option>
+                  <option value="file">File</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Name (key)
+                </label>
+                <input
+                  type="text"
+                  value={newUserInput.name}
+                  onChange={(e) =>
+                    setNewUserInput((p) => ({ ...p, name: e.target.value }))
+                  }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Label (EN)
+                </label>
+                <input
+                  type="text"
+                  value={newUserInput.label}
+                  onChange={(e) =>
+                    setNewUserInput((p) => ({ ...p, label: e.target.value }))
+                  }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Label (BD)
+                </label>
+                <input
+                  type="text"
+                  value={newUserInput.labelBD}
+                  onChange={(e) =>
+                    setNewUserInput((p) => ({ ...p, labelBD: e.target.value }))
+                  }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Required?
+                </label>
+                <select
+                  value={newUserInput.isRequired}
+                  onChange={(e) =>
+                    setNewUserInput((p) => ({
+                      ...p,
+                      isRequired: e.target.value,
+                    }))
+                  }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
+                >
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Instruction (EN)
+                </label>
+                <input
+                  type="text"
+                  value={newUserInput.fieldInstruction}
+                  onChange={(e) =>
+                    setNewUserInput((p) => ({
+                      ...p,
+                      fieldInstruction: e.target.value,
+                    }))
+                  }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Instruction (BD)
+                </label>
+                <input
+                  type="text"
+                  value={newUserInput.fieldInstructionBD}
+                  onChange={(e) =>
+                    setNewUserInput((p) => ({
+                      ...p,
+                      fieldInstructionBD: e.target.value,
+                    }))
+                  }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 mt-8">
+              <button
+                onClick={addUserInput}
+                className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-3 rounded-xl font-bold cursor-pointer transition-all shadow-lg"
+              >
+                Add Field
+              </button>
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-xl font-bold cursor-pointer transition-all border border-gray-600"
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Edit User Input Modal */}
+      {isUpdateModalOpen && editingUserInput && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-lg border border-emerald-800/50 rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-2xl"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-white">Edit Field</h3>
+              <button
+                onClick={() => setIsUpdateModalOpen(false)}
+                className="text-gray-400 hover:text-white text-3xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Type
+                </label>
+                <select
+                  value={editingUserInput.type}
+                  onChange={(e) =>
+                    setEditingUserInput((p) => ({ ...p, type: e.target.value }))
+                  }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
+                >
+                  <option value="text">Text</option>
+                  <option value="number">Number</option>
+                  <option value="file">File</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  value={editingUserInput.name}
+                  onChange={(e) =>
+                    setEditingUserInput((p) => ({ ...p, name: e.target.value }))
+                  }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Label (EN)
+                </label>
+                <input
+                  type="text"
+                  value={editingUserInput.label}
+                  onChange={(e) =>
+                    setEditingUserInput((p) => ({
+                      ...p,
+                      label: e.target.value,
+                    }))
+                  }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Label (BD)
+                </label>
+                <input
+                  type="text"
+                  value={editingUserInput.labelBD}
+                  onChange={(e) =>
+                    setEditingUserInput((p) => ({
+                      ...p,
+                      labelBD: e.target.value,
+                    }))
+                  }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Required?
+                </label>
+                <select
+                  value={editingUserInput.isRequired}
+                  onChange={(e) =>
+                    setEditingUserInput((p) => ({
+                      ...p,
+                      isRequired: e.target.value,
+                    }))
+                  }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
+                >
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Instruction (EN)
+                </label>
+                <input
+                  type="text"
+                  value={editingUserInput.fieldInstruction}
+                  onChange={(e) =>
+                    setEditingUserInput((p) => ({
+                      ...p,
+                      fieldInstruction: e.target.value,
+                    }))
+                  }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Instruction (BD)
+                </label>
+                <input
+                  type="text"
+                  value={editingUserInput.fieldInstructionBD}
+                  onChange={(e) =>
+                    setEditingUserInput((p) => ({
+                      ...p,
+                      fieldInstructionBD: e.target.value,
+                    }))
+                  }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 mt-8">
+              <button
+                onClick={updateUserInput}
+                className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-3 rounded-xl font-bold cursor-pointer transition-all shadow-lg"
+              >
+                Save Changes
+              </button>
+              <button
+                onClick={() => setIsUpdateModalOpen(false)}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-xl font-bold cursor-pointer transition-all border border-gray-600"
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+    </div>
+  );
+}

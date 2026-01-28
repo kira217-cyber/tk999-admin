@@ -1,112 +1,13 @@
-// admin/SuperAffiliateVideoSettings.jsx
+// src/pages/SuperAffiliateVideoSettings.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import styled from "styled-components";
+import { motion } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { API_URL } from "../utils/baseURL";
+import { FaSpinner } from "react-icons/fa";
 
-const Page = styled.div`
-  min-height: 100vh;
-  background: #f9fafb; /* light white/gray background */
-  padding: 40px 20px;
-  color: #111827; /* dark text for white background */
-  font-family: "Inter", sans-serif;
-`;
-
-const Container = styled.div`
-  max-width: 1100px;
-  margin: 0 auto;
-  background: #ffffff; /* white card background */
-  border-radius: 24px;
-  padding: 50px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1); /* lighter shadow */
-`;
-
-const Title = styled.h1`
-  font-size: 42px;
-  font-weight: 900;
-  text-align: center;
-  color: #111827;
-  margin-bottom: 40px;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 18px 24px;
-  background: #f3f4f6; /* light gray input */
-  border: 2px solid #d1d5db; /* light border */
-  border-radius: 16px;
-  color: #111827;
-  font-size: 18px;
-  margin-bottom: 20px;
-  &:focus {
-    outline: none;
-    border-color: #3b82f6; /* blue focus border */
-  }
-`;
-
-const AddBtn = styled.button`
-  background: #3b82f6;
-  padding: 16px 40px;
-  border: none;
-  border-radius: 50px;
-  color: white;
-  font-size: 18px;
-  font-weight: 700;
-  cursor: pointer;
-  &:hover {
-    background: #2563eb;
-  }
-`;
-
-const VideoGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 30px;
-  margin-top: 50px;
-`;
-
-const VideoCard = styled.div`
-  background: #f3f4f6; /* light gray card */
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); /* lighter shadow */
-  position: relative;
-`;
-
-const Video = styled.video`
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-  background: #000;
-`;
-
-const Actions = styled.div`
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  display: flex;
-  gap: 10px;
-`;
-
-const EditBtn = styled.button`
-  background: #3b82f6;
-  color: white;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  font-size: 18px;
-`;
-
-const DeleteBtn = styled.button`
-  background: #ef4444;
-  color: white;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  font-size: 18px;
-`;
-
-const SuperAffiliateVideoSettings = () => {
+export default function SuperAffiliateVideoSettings() {
   const [videos, setVideos] = useState([]);
   const [url, setUrl] = useState("");
   const [editIndex, setEditIndex] = useState(null);
@@ -117,6 +18,7 @@ const SuperAffiliateVideoSettings = () => {
   }, []);
 
   const loadVideos = async () => {
+    setLoading(true);
     try {
       const res = await axios.get(`${API_URL}/api/super-affiliate-video`);
       setVideos(res.data || []);
@@ -129,7 +31,7 @@ const SuperAffiliateVideoSettings = () => {
 
   const handleAddOrUpdate = async () => {
     if (!url.trim() || !url.includes("http")) {
-      alert("Please enter a valid video URL!");
+      toast.error("Please enter a valid video URL!");
       return;
     }
 
@@ -138,22 +40,29 @@ const SuperAffiliateVideoSettings = () => {
         await axios.put(`${API_URL}/api/super-affiliate-video/${editIndex}`, {
           url,
         });
+        toast.success("Video URL updated!");
         setEditIndex(null);
       } else {
         await axios.post(`${API_URL}/api/super-affiliate-video`, { url });
+        toast.success("Video URL added!");
       }
       setUrl("");
       loadVideos();
-      alert("Video URL saved!");
     } catch (err) {
-      alert("Failed to save!");
+      toast.error("Failed to save video URL!");
     }
   };
 
   const handleDelete = async (index) => {
     if (!window.confirm("Delete this video URL?")) return;
-    await axios.delete(`${API_URL}/api/super-affiliate-video/${index}`);
-    loadVideos();
+
+    try {
+      await axios.delete(`${API_URL}/api/super-affiliate-video/${index}`);
+      toast.success("Video URL deleted!");
+      loadVideos();
+    } catch (err) {
+      toast.error("Failed to delete video URL!");
+    }
   };
 
   const handleEdit = (index) => {
@@ -161,50 +70,107 @@ const SuperAffiliateVideoSettings = () => {
     setEditIndex(index);
   };
 
-  if (loading)
-    return <div className="text-center py-20 text-3xl">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/30 to-black flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+          className="text-emerald-400 text-6xl"
+        >
+          <FaSpinner />
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
-    <Page>
-      <Container>
-        <Title>Super Affiliate Video URLs</Title>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 sm:p-6 md:p-8">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 text-center">
+          Super Affiliate Video Settings
+        </h1>
+        <p className="text-emerald-300/80 text-lg sm:text-xl text-center mb-10">
+          Add video URLs for Super Affiliate section (MP4 recommended)
+        </p>
 
-        <div>
-          <Input
-            type="text"
-            placeholder="Paste Video URL here (e.g. https://api.dstgamevideo.live/....mp4)"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-          />
-          <div className="text-center">
-            <AddBtn onClick={handleAddOrUpdate}>
-              {editIndex !== null ? "Update URL" : "Add Video URL"}
-            </AddBtn>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 sm:p-8 shadow-2xl"
+        >
+          {/* URL Input & Add/Update Button */}
+          <div className="mb-12">
+            <input
+              type="text"
+              placeholder="Paste Video URL here (e.g. https://api.dstgamevideo.live/....mp4)"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-4 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all mb-4"
+            />
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleAddOrUpdate}
+              className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-4 rounded-xl font-bold cursor-pointer transition-all shadow-lg"
+            >
+              {editIndex !== null ? "Update Video URL" : "Add Video URL"}
+            </motion.button>
           </div>
-        </div>
 
-        <VideoGrid>
-          {videos.map((video, i) => (
-            <VideoCard key={i}>
-              <Video controls>
-                <source src={video.url} type="video/mp4" />
-              </Video>
-              <Actions>
-                <EditBtn onClick={() => handleEdit(i)}>Edit</EditBtn>
-                <DeleteBtn onClick={() => handleDelete(i)}>X</DeleteBtn>
-              </Actions>
-            </VideoCard>
-          ))}
-        </VideoGrid>
+          {/* Video List */}
+          {videos.length > 0 ? (
+            <>
+              <h3 className="text-xl font-bold text-white mb-6">
+                Current Video URLs
+              </h3>
 
-        {videos.length === 0 && (
-          <div className="text-center py-20 text-2xl text-gray-500">
-            No video URLs added yet. Paste a URL and click "Add Video URL".
-          </div>
-        )}
-      </Container>
-    </Page>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {videos.map((video, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    className="relative bg-gray-900/50 border border-emerald-800/50 rounded-xl overflow-hidden shadow-xl group hover:shadow-2xl transition-all"
+                  >
+                    <video
+                      controls
+                      className="w-full h-48 object-cover bg-black"
+                    >
+                      <source src={video.url} type="video/mp4" />
+                      Your browser does not support the video tag.
+                    </video>
+
+                    <div className="absolute top-3 right-3 flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => handleEdit(i)}
+                        className="bg-emerald-700/90 hover:bg-emerald-600/90 text-white w-10 h-10 rounded-full flex items-center justify-center cursor-pointer shadow-lg"
+                      >
+                        ✎
+                      </button>
+
+                      <button
+                        onClick={() => handleDelete(i)}
+                        className="bg-rose-700/90 hover:bg-rose-600/90 text-white w-10 h-10 rounded-full flex items-center justify-center cursor-pointer shadow-lg"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-20 text-gray-400 text-xl">
+              No video URLs added yet. Paste a URL and click "Add Video URL".
+            </div>
+          )}
+        </motion.div>
+      </div>
+
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+    </div>
   );
-};
-
-export default SuperAffiliateVideoSettings;
+}

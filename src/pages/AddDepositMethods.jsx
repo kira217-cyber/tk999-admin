@@ -1,244 +1,14 @@
-// src/AdminComponents/DepositPaymentMethods/AddDepositMethods.jsx
+// src/pages/AddDepositMethods.jsx
 import React, { useState, useEffect } from "react";
-import styled from "styled-components";
-import { toast } from "react-toastify";
-import JoditEditor from "jodit-react";
 import axios from "axios";
+import { motion } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import JoditEditor from "jodit-react";
 import { API_URL } from "../utils/baseURL";
+import { Loader2 } from "lucide-react";
 
-
-const Container = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-  background: #f4f7fa;
-  min-height: 100vh;
-`;
-
-const Title = styled.h1`
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #1e3a8a;
-  margin-bottom: 2rem;
-`;
-
-const FormCard = styled.form`
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  margin-bottom: 3rem;
-`;
-
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-`;
-
-const InputGroup = styled.div`
-  margin-bottom: 1.5rem;
-`;
-
-const Label = styled.label`
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 0.5rem;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 1rem;
-  &:focus {
-    outline: none;
-    border-color: #4c51bf;
-    box-shadow: 0 0 0 3px rgba(76, 81, 191, 0.1);
-  }
-  ${({ error }) => error && `border-color: #e53e3e;`}
-  ${({ type }) => type === "color" && `height: 50px; padding: 4px;`}
-`;
-
-const FileInput = styled.input`
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: white;
-  cursor: pointer;
-`;
-
-const ImagePreview = styled.img`
-  width: 100%;
-  max-height: 140px;
-  object-fit: cover;
-  border-radius: 8px;
-  margin-top: 0.5rem;
-  border: 2px solid #e2e8f0;
-`;
-
-const Select = styled.select`
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: white;
-`;
-
-const Button = styled.button`
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-  ${({ primary }) =>
-    primary &&
-    `background: linear-gradient(45deg,#4c51bf,#7f9cf5); color: white;`}
-  ${({ danger }) =>
-    danger &&
-    `background: linear-gradient(45deg,#e53e3e,#f56565); color: white;`}
-  ${({ small }) => small && `padding: 6px 12px; font-size: 0.875rem;`}
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
-
-const ErrorText = styled.p`
-  color: #e53e3e;
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-`;
-
-const GatewayContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-`;
-
-const GatewayTag = styled.div`
-  display: flex;
-  align-items: center;
-  background: #e6fffa;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.875rem;
-`;
-
-const RemoveBtn = styled.button`
-  margin-left: 0.5rem;
-  background: none;
-  border: none;
-  color: #e53e3e;
-  cursor: pointer;
-`;
-
-const ButtonWrapper = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 2rem 0;
-`;
-
-const ModalOverlay = styled.div`
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-`;
-
-const ModalContent = styled.div`
-  background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  width: 100%;
-  max-width: 700px;
-  max-height: 90vh;
-  overflow-y: auto;
-`;
-
-const ModalHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-`;
-
-const ModalTitle = styled.h2`
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1e3a8a;
-`;
-
-const CloseButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 1.8rem;
-  cursor: pointer;
-`;
-
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  margin-top: 1rem;
-`;
-
-const TableHead = styled.thead`
-  background: linear-gradient(45deg, #4c51bf, #7f9cf5);
-  color: white;
-`;
-
-const TableRow = styled.tr`
-  border-bottom: 1px solid #e2e8f0;
-`;
-
-const TableHeader = styled.th`
-  padding: 1rem;
-  text-align: left;
-  font-size: 0.875rem;
-  font-weight: 600;
-`;
-
-const TableCell = styled.td`
-  padding: 1rem;
-  font-size: 0.875rem;
-`;
-
-const MethodsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
-`;
-
-const MethodCard = styled.div`
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-`;
-
-const MethodImage = styled.img`
-  width: 100%;
-  height: 140px;
-  object-fit: cover;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-`;
-
-const AddDepositMethods = () => {
+export default function AddDepositMethods() {
   const [methods, setMethods] = useState([]);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -277,24 +47,23 @@ const AddDepositMethods = () => {
   const [editingUserInput, setEditingUserInput] = useState(null);
   const [editingUserIndex, setEditingUserIndex] = useState(null);
 
-  // Fetch all methods
+  useEffect(() => {
+    fetchMethods();
+  }, []);
+
   const fetchMethods = async () => {
     setLoading(true);
     try {
       const res = await axios.get(
-        `${API_URL}/api/deposit-payment-method/methods`
+        `${API_URL}/api/deposit-payment-method/methods`,
       );
       setMethods(res.data.data || []);
     } catch (err) {
-      toast.error("Failed to load methods");
+      toast.error("Failed to load deposit methods");
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchMethods();
-  }, []);
 
   const validate = () => {
     const err = {};
@@ -303,49 +72,55 @@ const AddDepositMethods = () => {
     if (!formData.agentWalletNumber.trim()) err.agentWalletNumber = "Required";
     if (!formData.agentWalletText.trim()) err.agentWalletText = "Required";
     if (!editingId && !formData.methodImage) err.methodImage = "Image required";
+    if (formData.gateway.length === 0) err.gateway = "Add at least one gateway";
+    if (formData.userInputs.length === 0)
+      err.userInputs = "Add at least one field";
     setErrors(err);
     return Object.keys(err).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validate()) return toast.error("Please fix errors");
+    if (!validate()) return;
 
-    const data = new FormData();
-    data.append("methodName", formData.methodName);
-    data.append("methodNameBD", formData.methodNameBD);
-    data.append("agentWalletNumber", formData.agentWalletNumber);
-    data.append("agentWalletText", formData.agentWalletText);
-    data.append("gateway", JSON.stringify(formData.gateway));
-    data.append("color", formData.color);
-    data.append("backgroundColor", formData.backgroundColor);
-    data.append("buttonColor", formData.buttonColor);
-    data.append("instruction", formData.instruction);
-    data.append("instructionBD", formData.instructionBD);
-    data.append("status", formData.status);
-    data.append("userInputs", JSON.stringify(formData.userInputs));
+    const payload = new FormData();
+    payload.append("methodName", formData.methodName);
+    payload.append("methodNameBD", formData.methodNameBD);
+    payload.append("agentWalletNumber", formData.agentWalletNumber);
+    payload.append("agentWalletText", formData.agentWalletText);
+    payload.append("gateway", JSON.stringify(formData.gateway));
+    payload.append("color", formData.color);
+    payload.append("backgroundColor", formData.backgroundColor);
+    payload.append("buttonColor", formData.buttonColor);
+    payload.append("instruction", formData.instruction || "");
+    payload.append("instructionBD", formData.instructionBD || "");
+    payload.append("status", formData.status);
+    payload.append("userInputs", JSON.stringify(formData.userInputs));
 
-    if (formData.methodImage instanceof File)
-      data.append("methodImage", formData.methodImage);
-    if (formData.paymentPageImage instanceof File)
-      data.append("paymentPageImage", formData.paymentPageImage);
+    if (formData.methodImage)
+      payload.append("methodImage", formData.methodImage);
+    if (formData.paymentPageImage)
+      payload.append("paymentPageImage", formData.paymentPageImage);
 
+    setLoading(true);
     try {
-      setLoading(true);
       if (editingId) {
         await axios.put(
           `${API_URL}/api/deposit-payment-method/method/${editingId}`,
-          data
+          payload,
         );
-        toast.success("Updated successfully");
+        toast.success("Deposit method updated successfully!");
       } else {
-        await axios.post(`${API_URL}/api/deposit-payment-method/method`, data);
-        toast.success("Created successfully");
+        await axios.post(
+          `${API_URL}/api/deposit-payment-method/method`,
+          payload,
+        );
+        toast.success("Deposit method created successfully!");
       }
       resetForm();
       fetchMethods();
     } catch (err) {
-      toast.error(err.response?.data?.msg || "Server error");
+      toast.error(err.response?.data?.msg || "Operation failed");
     } finally {
       setLoading(false);
     }
@@ -355,33 +130,35 @@ const AddDepositMethods = () => {
     try {
       setLoading(true);
       const res = await axios.get(
-        `${API_URL}/api/deposit-payment-method/method/${id}`
+        `${API_URL}/api/deposit-payment-method/method/${id}`,
       );
       const m = res.data.data;
       setFormData({
         ...m,
-        methodImage: m.methodImage || null,
-        paymentPageImage: m.paymentPageImage || null,
+        methodImage: null,
+        paymentPageImage: null,
         gateway: m.gateway || [],
         userInputs: m.userInputs || [],
       });
       setEditingId(id);
       setErrors({});
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
-      toast.error("Failed to load");
+      toast.error("Failed to load method details");
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this method?")) return;
+    if (!window.confirm("Delete this deposit method?")) return;
+
     try {
       await axios.delete(`${API_URL}/api/deposit-payment-method/method/${id}`);
-      toast.success("Deleted");
+      toast.success("Method deleted!");
       fetchMethods();
     } catch (err) {
-      toast.error("Delete failed");
+      toast.error("Delete failed!");
     }
   };
 
@@ -407,16 +184,16 @@ const AddDepositMethods = () => {
     setErrors({});
   };
 
-  // Gateway
+  // Gateway helpers
   const addGateway = () => {
-    const val = gatewayInput.trim();
-    if (!val) return;
-    if (formData.gateway.includes(val)) return toast.error("Already added");
-    setFormData((p) => ({ ...p, gateway: [...p.gateway, val] }));
+    const trimmed = gatewayInput.trim();
+    if (!trimmed) return;
+    if (formData.gateway.includes(trimmed)) return toast.error("Already added");
+    setFormData((prev) => ({ ...prev, gateway: [...prev.gateway, trimmed] }));
     setGatewayInput("");
   };
 
-  // User Input Modals
+  // User Input helpers
   const openAddModal = () => {
     setNewUserInput({
       type: "text",
@@ -431,13 +208,13 @@ const AddDepositMethods = () => {
   };
 
   const addUserInput = () => {
-    if (!newUserInput.name.trim()) return toast.error("Name required");
-    setFormData((p) => ({
-      ...p,
-      userInputs: [...p.userInputs, { ...newUserInput }],
+    if (!newUserInput.name.trim()) return toast.error("Name is required");
+    setFormData((prev) => ({
+      ...prev,
+      userInputs: [...prev.userInputs, { ...newUserInput }],
     }));
     setIsAddModalOpen(false);
-    toast.success("Field added");
+    toast.success("Field added!");
   };
 
   const openEditModal = (input, idx) => {
@@ -447,346 +224,622 @@ const AddDepositMethods = () => {
   };
 
   const updateUserInput = () => {
-    if (!editingUserInput.name.trim()) return toast.error("Name required");
+    if (!editingUserInput.name.trim()) return toast.error("Name is required");
     const updated = [...formData.userInputs];
     updated[editingUserIndex] = editingUserInput;
-    setFormData((p) => ({ ...p, userInputs: updated }));
+    setFormData((prev) => ({ ...prev, userInputs: updated }));
     setIsUpdateModalOpen(false);
-    toast.success("Updated");
+    toast.success("Field updated!");
   };
 
   const deleteUserInput = (idx) => {
-    setFormData((p) => ({
-      ...p,
-      userInputs: p.userInputs.filter((_, i) => i !== idx),
+    setFormData((prev) => ({
+      ...prev,
+      userInputs: prev.userInputs.filter((_, i) => i !== idx),
     }));
-    toast.success("Deleted");
+    toast.success("Field deleted!");
   };
 
   return (
-    <Container>
-      <Title>Manage Deposit Payment Methods</Title>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 sm:p-6 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-8 text-center">
+          Manage Deposit Payment Methods
+        </h1>
 
-      <FormCard onSubmit={handleSubmit}>
-        <Grid>
-          <InputGroup>
-            <Label>Method Name (English)</Label>
-            <Input
-              value={formData.methodName}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, methodName: e.target.value }))
-              }
-              error={errors.methodName}
-            />
-            {errors.methodName && <ErrorText>{errors.methodName}</ErrorText>}
-          </InputGroup>
-
-          <InputGroup>
-            <Label>Method Name (Bangla)</Label>
-            <Input
-              value={formData.methodNameBD}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, methodNameBD: e.target.value }))
-              }
-              error={errors.methodNameBD}
-            />
-            {errors.methodNameBD && (
-              <ErrorText>{errors.methodNameBD}</ErrorText>
-            )}
-          </InputGroup>
-
-          <InputGroup>
-            <Label>Agent Wallet Number</Label>
-            <Input
-              value={formData.agentWalletNumber}
-              onChange={(e) =>
-                setFormData((p) => ({
-                  ...p,
-                  agentWalletNumber: e.target.value,
-                }))
-              }
-              error={errors.agentWalletNumber}
-            />
-            {errors.agentWalletNumber && (
-              <ErrorText>{errors.agentWalletNumber}</ErrorText>
-            )}
-          </InputGroup>
-
-          <InputGroup>
-            <Label>Agent Wallet Text</Label>
-            <Input
-              value={formData.agentWalletText}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, agentWalletText: e.target.value }))
-              }
-              error={errors.agentWalletText}
-            />
-            {errors.agentWalletText && (
-              <ErrorText>{errors.agentWalletText}</ErrorText>
-            )}
-          </InputGroup>
-
-          {/* Method Image */}
-          <InputGroup>
-            <Label>Method Image {editingId && "(leave blank to keep)"}</Label>
-            <FileInput
-              type="file"
-              accept="image/*"
-              onChange={(e) =>
-                setFormData((p) => ({
-                  ...p,
-                  methodImage: e.target.files[0] || null,
-                }))
-              }
-            />
-            {formData.methodImage &&
-              typeof formData.methodImage === "string" && (
-                <ImagePreview
-                  src={`${API_URL}${formData.methodImage}`}
-                  alt="current"
-                />
+        <motion.form
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          onSubmit={handleSubmit}
+          className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 sm:p-8 shadow-2xl mb-12"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Method Name EN */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Method Name (English)
+              </label>
+              <input
+                type="text"
+                value={formData.methodName}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, methodName: e.target.value }))
+                }
+                className={`w-full bg-gray-900/60 border ${
+                  errors.methodName
+                    ? "border-rose-500"
+                    : "border-emerald-800/50"
+                } rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all`}
+              />
+              {errors.methodName && (
+                <p className="text-rose-400 text-sm mt-1">
+                  {errors.methodName}
+                </p>
               )}
-            {formData.methodImage instanceof File && (
-              <ImagePreview
-                src={URL.createObjectURL(formData.methodImage)}
-                alt="preview"
-              />
-            )}
-            {errors.methodImage && <ErrorText>{errors.methodImage}</ErrorText>}
-          </InputGroup>
-
-          {/* Payment Page Image */}
-          <InputGroup>
-            <Label>Payment Page Image (optional)</Label>
-            <FileInput
-              type="file"
-              accept="image/*"
-              onChange={(e) =>
-                setFormData((p) => ({
-                  ...p,
-                  paymentPageImage: e.target.files[0] || null,
-                }))
-              }
-            />
-            {formData.paymentPageImage &&
-              typeof formData.paymentPageImage === "string" && (
-                <ImagePreview
-                  src={`${API_URL}${formData.paymentPageImage}`}
-                  alt="current"
-                />
-              )}
-            {formData.paymentPageImage instanceof File && (
-              <ImagePreview
-                src={URL.createObjectURL(formData.paymentPageImage)}
-                alt="preview"
-              />
-            )}
-          </InputGroup>
-
-          {/* Gateways */}
-          <InputGroup>
-            <Label>Gateways</Label>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
-              <Input
-                value={gatewayInput}
-                onChange={(e) => setGatewayInput(e.target.value)}
-                placeholder="Type gateway name"
-              />
-              <Button type="button" small primary onClick={addGateway}>
-                Add
-              </Button>
             </div>
-            <GatewayContainer>
-              {formData.gateway.map((g, i) => (
-                <GatewayTag key={i}>
-                  {g}
-                  <RemoveBtn
-                    onClick={() =>
-                      setFormData((p) => ({
-                        ...p,
-                        gateway: p.gateway.filter((_, x) => x !== i),
-                      }))
+
+            {/* Method Name BD */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Method Name (Bangla)
+              </label>
+              <input
+                type="text"
+                value={formData.methodNameBD}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, methodNameBD: e.target.value }))
+                }
+                className={`w-full bg-gray-900/60 border ${
+                  errors.methodNameBD
+                    ? "border-rose-500"
+                    : "border-emerald-800/50"
+                } rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all`}
+              />
+              {errors.methodNameBD && (
+                <p className="text-rose-400 text-sm mt-1">
+                  {errors.methodNameBD}
+                </p>
+              )}
+            </div>
+
+            {/* Agent Wallet Number */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Agent Wallet Number
+              </label>
+              <input
+                type="text"
+                value={formData.agentWalletNumber}
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    agentWalletNumber: e.target.value,
+                  }))
+                }
+                className={`w-full bg-gray-900/60 border ${
+                  errors.agentWalletNumber
+                    ? "border-rose-500"
+                    : "border-emerald-800/50"
+                } rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all`}
+              />
+              {errors.agentWalletNumber && (
+                <p className="text-rose-400 text-sm mt-1">
+                  {errors.agentWalletNumber}
+                </p>
+              )}
+            </div>
+
+            {/* Agent Wallet Text */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Agent Wallet Text
+              </label>
+              <input
+                type="text"
+                value={formData.agentWalletText}
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    agentWalletText: e.target.value,
+                  }))
+                }
+                className={`w-full bg-gray-900/60 border ${
+                  errors.agentWalletText
+                    ? "border-rose-500"
+                    : "border-emerald-800/50"
+                } rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all`}
+              />
+              {errors.agentWalletText && (
+                <p className="text-rose-400 text-sm mt-1">
+                  {errors.agentWalletText}
+                </p>
+              )}
+            </div>
+
+            {/* Method Image */}
+            <div className="md:col-span-3 lg:col-span-1">
+              <label className="block text-emerald-300 font-medium mb-2">
+                Method Image {editingId && "(leave blank to keep current)"}
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    methodImage: e.target.files[0] || null,
+                  }))
+                }
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-700/50 file:text-emerald-100 hover:file:bg-emerald-600/70 cursor-pointer"
+              />
+              {(formData.methodImage ||
+                (typeof formData.methodImage === "string" &&
+                  formData.methodImage)) && (
+                <div className="mt-4">
+                  <img
+                    src={
+                      formData.methodImage instanceof File
+                        ? URL.createObjectURL(formData.methodImage)
+                        : `${API_URL}${formData.methodImage}`
                     }
+                    alt="Method Preview"
+                    className="w-full max-h-40 object-contain rounded-xl border-2 border-emerald-700/50 shadow-lg"
+                  />
+                </div>
+              )}
+              {errors.methodImage && (
+                <p className="text-rose-400 text-sm mt-1">
+                  {errors.methodImage}
+                </p>
+              )}
+            </div>
+
+            {/* Payment Page Image */}
+            <div className="md:col-span-3 lg:col-span-1">
+              <label className="block text-emerald-300 font-medium mb-2">
+                Payment Page Image (optional)
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    paymentPageImage: e.target.files[0] || null,
+                  }))
+                }
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-700/50 file:text-emerald-100 hover:file:bg-emerald-600/70 cursor-pointer"
+              />
+              {(formData.paymentPageImage ||
+                (typeof formData.paymentPageImage === "string" &&
+                  formData.paymentPageImage)) && (
+                <div className="mt-4">
+                  <img
+                    src={
+                      formData.paymentPageImage instanceof File
+                        ? URL.createObjectURL(formData.paymentPageImage)
+                        : `${API_URL}${formData.paymentPageImage}`
+                    }
+                    alt="Payment Page Preview"
+                    className="w-full max-h-40 object-contain rounded-xl border-2 border-emerald-700/50 shadow-lg"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Gateways */}
+            <div className="md:col-span-2 lg:col-span-1">
+              <label className="block text-emerald-300 font-medium mb-2">
+                Gateways
+              </label>
+              <div className="flex gap-3 mb-3">
+                <input
+                  type="text"
+                  value={gatewayInput}
+                  onChange={(e) => setGatewayInput(e.target.value)}
+                  placeholder="e.g. bKash"
+                  className="flex-1 bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={addGateway}
+                  className="bg-emerald-700/60 hover:bg-emerald-600/70 text-white px-6 py-3 rounded-xl font-medium cursor-pointer transition-all"
+                >
+                  Add
+                </button>
+              </div>
+              {errors.gateway && (
+                <p className="text-rose-400 text-sm mb-2">{errors.gateway}</p>
+              )}
+              <div className="flex flex-wrap gap-2">
+                {formData.gateway.map((g, i) => (
+                  <div
+                    key={i}
+                    className="bg-emerald-900/50 text-emerald-200 px-4 py-2 rounded-full text-sm flex items-center gap-2"
                   >
-                    ×
-                  </RemoveBtn>
-                </GatewayTag>
-              ))}
-            </GatewayContainer>
-          </InputGroup>
+                    {g}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFormData((p) => ({
+                          ...p,
+                          gateway: p.gateway.filter((_, x) => x !== i),
+                        }))
+                      }
+                      className="text-rose-400 hover:text-rose-300"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-          <InputGroup>
-            <Label>Text Color</Label>
-            <Input
-              type="color"
-              value={formData.color}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, color: e.target.value }))
-              }
-            />
-          </InputGroup>
+            {/* Colors */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Text Color
+              </label>
+              <input
+                type="color"
+                value={formData.color}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, color: e.target.value }))
+                }
+                className="w-full h-12 bg-gray-900/60 border border-emerald-800/50 rounded-xl cursor-pointer"
+              />
+            </div>
 
-          <InputGroup>
-            <Label>Background Color</Label>
-            <Input
-              type="color"
-              value={formData.backgroundColor}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, backgroundColor: e.target.value }))
-              }
-            />
-          </InputGroup>
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Background Color
+              </label>
+              <input
+                type="color"
+                value={formData.backgroundColor}
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    backgroundColor: e.target.value,
+                  }))
+                }
+                className="w-full h-12 bg-gray-900/60 border border-emerald-800/50 rounded-xl cursor-pointer"
+              />
+            </div>
 
-          <InputGroup>
-            <Label>Button Color</Label>
-            <Input
-              type="color"
-              value={formData.buttonColor}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, buttonColor: e.target.value }))
-              }
-            />
-          </InputGroup>
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Button Color
+              </label>
+              <input
+                type="color"
+                value={formData.buttonColor}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, buttonColor: e.target.value }))
+                }
+                className="w-full h-12 bg-gray-900/60 border border-emerald-800/50 rounded-xl cursor-pointer"
+              />
+            </div>
 
-          <InputGroup>
-            <Label>Status</Label>
-            <Select
-              value={formData.status}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, status: e.target.value }))
-              }
+            {/* Status */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Status
+              </label>
+              <select
+                value={formData.status}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, status: e.target.value }))
+                }
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
+              >
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Instructions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Instruction (English)
+              </label>
+              <JoditEditor
+                value={formData.instruction}
+                onChange={(newContent) =>
+                  setFormData((p) => ({ ...p, instruction: newContent }))
+                }
+                className="bg-gray-900/60 border border-emerald-800/50 rounded-xl text-black min-h-[200px]"
+              />
+            </div>
+
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Instruction (Bangla)
+              </label>
+              <JoditEditor
+                value={formData.instructionBD}
+                onChange={(newContent) =>
+                  setFormData((p) => ({ ...p, instructionBD: newContent }))
+                }
+                className="bg-gray-900/60 border border-emerald-800/50 rounded-xl text-black min-h-[200px]"
+              />
+            </div>
+          </div>
+
+          {/* User Input Fields */}
+          <div className="mt-10">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-white">
+                User Input Fields
+              </h3>
+              <button
+                type="button"
+                onClick={openAddModal}
+                className="bg-emerald-700/60 hover:bg-emerald-600/70 text-white px-6 py-2 rounded-xl font-medium cursor-pointer transition-all"
+              >
+                Add New Field
+              </button>
+            </div>
+
+            {errors.userInputs && (
+              <p className="text-rose-400 text-sm mb-4">{errors.userInputs}</p>
+            )}
+
+            {formData.userInputs.length > 0 && (
+              <div className="overflow-x-auto rounded-xl border border-emerald-800/50 bg-gray-900/40 backdrop-blur-md shadow-lg">
+                <table className="w-full min-w-[800px]">
+                  <thead>
+                    <tr className="bg-gradient-to-r from-emerald-950/80 to-gray-900/80 border-b border-emerald-800/50">
+                      <th className="px-6 py-4 text-left text-emerald-300 font-semibold">
+                        Name
+                      </th>
+                      <th className="px-6 py-4 text-left text-emerald-300 font-semibold">
+                        Type
+                      </th>
+                      <th className="px-6 py-4 text-left text-emerald-300 font-semibold">
+                        Required
+                      </th>
+                      <th className="px-6 py-4 text-left text-emerald-300 font-semibold">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {formData.userInputs.map((inp, i) => (
+                      <tr
+                        key={i}
+                        className="border-b border-emerald-900/40 hover:bg-emerald-950/40 transition-colors"
+                      >
+                        <td className="px-6 py-4 text-gray-200">{inp.name}</td>
+                        <td className="px-6 py-4 text-gray-300 capitalize">
+                          {inp.type}
+                        </td>
+                        <td className="px-6 py-4 text-gray-300">
+                          {inp.isRequired === "true" ? "Yes" : "No"}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-3">
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(inp, i)}
+                              className="bg-emerald-700/60 hover:bg-emerald-600/70 text-white px-4 py-2 rounded-xl text-sm cursor-pointer transition-all"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => deleteUserInput(i)}
+                              className="bg-rose-700/60 hover:bg-rose-600/70 text-white px-4 py-2 rounded-xl text-sm cursor-pointer transition-all"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 mt-12">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              type="submit"
+              disabled={loading}
+              className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-4 rounded-xl font-bold cursor-pointer transition-all shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
             >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </Select>
-          </InputGroup>
-        </Grid>
+              {loading && <Loader2 className="w-5 h-5 animate-spin" />}
+              {loading
+                ? "Saving..."
+                : editingId
+                  ? "Update Method"
+                  : "Create Method"}
+            </motion.button>
 
-        <InputGroup>
-          <Label>Instruction (English)</Label>
-          <JoditEditor
-            value={formData.instruction}
-            onChange={(c) => setFormData((p) => ({ ...p, instruction: c }))}
-          />
-        </InputGroup>
+            {editingId && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.97 }}
+                type="button"
+                onClick={resetForm}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-4 rounded-xl font-bold cursor-pointer transition-all border border-gray-600"
+              >
+                Cancel
+              </motion.button>
+            )}
+          </div>
+        </motion.form>
 
-        <InputGroup>
-          <Label>Instruction (Bangla)</Label>
-          <JoditEditor
-            value={formData.instructionBD}
-            onChange={(c) => setFormData((p) => ({ ...p, instructionBD: c }))}
-          />
-        </InputGroup>
+        {/* Existing Methods */}
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold text-white mb-6">
+            All Deposit Methods
+          </h2>
 
-        {/* User Inputs Section */}
-        <InputGroup>
-          <Label>User Input Fields</Label>
-          <ButtonWrapper>
-            <Button type="button" primary onClick={openAddModal}>
-              Add New Field
-            </Button>
-          </ButtonWrapper>
-        </InputGroup>
+          {loading ? (
+            <div className="flex justify-center py-20">
+              <Loader2 className="w-12 h-12 text-emerald-400 animate-spin" />
+            </div>
+          ) : methods.length === 0 ? (
+            <div className="text-center py-20 text-gray-400 text-xl">
+              No deposit methods added yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {methods.map((m) => (
+                <motion.div
+                  key={m._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transition-all group"
+                >
+                  {m.methodImage && (
+                    <img
+                      src={`${API_URL}${m.methodImage}`}
+                      alt={m.methodName}
+                      className="w-full h-48 object-cover"
+                    />
+                  )}
 
-        {formData.userInputs.length > 0 && (
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableHeader>Name</TableHeader>
-                <TableHeader>Type</TableHeader>
-                <TableHeader>Required</TableHeader>
-                <TableHeader>Actions</TableHeader>
-              </TableRow>
-            </TableHead>
-            <tbody>
-              {formData.userInputs.map((inp, i) => (
-                <TableRow key={i}>
-                  <TableCell>{inp.name}</TableCell>
-                  <TableCell>{inp.type}</TableCell>
-                  <TableCell>
-                    {inp.isRequired === "true" ? "Yes" : "No"}
-                  </TableCell>
-                  <TableCell>
-                    <Button small primary onClick={() => openEditModal(inp, i)}>
-                      Edit
-                    </Button>{" "}
-                    <Button small danger onClick={() => deleteUserInput(i)}>
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
+                  <div className="p-5">
+                    <h3 className="text-lg font-bold text-emerald-300 mb-2">
+                      {m.methodName} ({m.methodNameBD})
+                    </h3>
+
+                    <p className="text-sm text-gray-300 mb-2">
+                      Wallet:{" "}
+                      <span className="font-medium">{m.agentWalletNumber}</span>
+                    </p>
+
+                    <p className="text-sm text-gray-300 mb-4">
+                      Status:{" "}
+                      <span
+                        className={
+                          m.status === "active"
+                            ? "text-emerald-400"
+                            : "text-rose-400"
+                        }
+                      >
+                        {m.status}
+                      </span>
+                    </p>
+
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => handleEdit(m._id)}
+                        className="flex-1 bg-emerald-700/60 hover:bg-emerald-600/70 text-white py-2 rounded-xl font-medium cursor-pointer transition-all"
+                      >
+                        Edit
+                      </button>
+
+                      <button
+                        onClick={() => handleDelete(m._id)}
+                        className="flex-1 bg-rose-700/60 hover:bg-rose-600/70 text-white py-2 rounded-xl font-medium cursor-pointer transition-all"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
               ))}
-            </tbody>
-          </Table>
-        )}
-
-        <ButtonWrapper>
-          <Button type="submit" primary disabled={loading}>
-            {loading ? "Saving..." : editingId ? "Update" : "Create"}
-          </Button>
-          {editingId && (
-            <Button type="button" onClick={resetForm}>
-              Cancel
-            </Button>
+            </div>
           )}
-        </ButtonWrapper>
-      </FormCard>
+        </div>
+      </div>
 
-      {/* ==================== ADD USER INPUT MODAL ==================== */}
+      {/* Add User Input Modal */}
       {isAddModalOpen && (
-        <ModalOverlay onClick={() => setIsAddModalOpen(false)}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            <ModalHeader>
-              <ModalTitle>Add New User Input Field</ModalTitle>
-              <CloseButton onClick={() => setIsAddModalOpen(false)}>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-lg border border-emerald-800/50 rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-2xl"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-white">
+                Add New User Input Field
+              </h3>
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="text-gray-400 hover:text-white text-3xl"
+              >
                 ×
-              </CloseButton>
-            </ModalHeader>
-            <Grid>
-              <InputGroup>
-                <Label>Field Name (code)</Label>
-                <Input
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Field Name (code)
+                </label>
+                <input
+                  type="text"
                   value={newUserInput.name}
                   onChange={(e) =>
                     setNewUserInput((p) => ({ ...p, name: e.target.value }))
                   }
                   placeholder="e.g. transaction_id"
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
                 />
-              </InputGroup>
-              <InputGroup>
-                <Label>Type</Label>
-                <Select
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Type
+                </label>
+                <select
                   value={newUserInput.type}
                   onChange={(e) =>
                     setNewUserInput((p) => ({ ...p, type: e.target.value }))
                   }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
                 >
                   <option value="text">Text</option>
                   <option value="number">Number</option>
                   <option value="file">File Upload</option>
-                </Select>
-              </InputGroup>
-              <InputGroup>
-                <Label>Label (English)</Label>
-                <Input
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Label (English)
+                </label>
+                <input
+                  type="text"
                   value={newUserInput.label}
                   onChange={(e) =>
                     setNewUserInput((p) => ({ ...p, label: e.target.value }))
                   }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
                 />
-              </InputGroup>
-              <InputGroup>
-                <Label>Label (Bangla)</Label>
-                <Input
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Label (Bangla)
+                </label>
+                <input
+                  type="text"
                   value={newUserInput.labelBD}
                   onChange={(e) =>
                     setNewUserInput((p) => ({ ...p, labelBD: e.target.value }))
                   }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
                 />
-              </InputGroup>
-              <InputGroup>
-                <Label>Field Instruction (English)</Label>
-                <Input
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Field Instruction (English)
+                </label>
+                <input
+                  type="text"
                   value={newUserInput.fieldInstruction}
                   onChange={(e) =>
                     setNewUserInput((p) => ({
@@ -795,11 +848,16 @@ const AddDepositMethods = () => {
                     }))
                   }
                   placeholder="e.g. Enter your transaction ID"
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
                 />
-              </InputGroup>
-              <InputGroup>
-                <Label>Field Instruction (Bangla)</Label>
-                <Input
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Field Instruction (Bangla)
+                </label>
+                <input
+                  type="text"
                   value={newUserInput.fieldInstructionBD}
                   onChange={(e) =>
                     setNewUserInput((p) => ({
@@ -808,11 +866,15 @@ const AddDepositMethods = () => {
                     }))
                   }
                   placeholder="আপনার ট্রানজেকশন আইডি দিন"
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
                 />
-              </InputGroup>
-              <InputGroup>
-                <Label>Required?</Label>
-                <Select
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Required?
+                </label>
+                <select
                   value={newUserInput.isRequired}
                   onChange={(e) =>
                     setNewUserInput((p) => ({
@@ -820,58 +882,91 @@ const AddDepositMethods = () => {
                       isRequired: e.target.value,
                     }))
                   }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
                 >
                   <option value="true">Yes</option>
                   <option value="false">No</option>
-                </Select>
-              </InputGroup>
-            </Grid>
-            <ButtonWrapper>
-              <Button primary onClick={addUserInput}>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 mt-8">
+              <button
+                onClick={addUserInput}
+                className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-3 rounded-xl font-bold cursor-pointer transition-all shadow-lg"
+              >
                 Add Field
-              </Button>
-              <Button onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
-            </ButtonWrapper>
-          </ModalContent>
-        </ModalOverlay>
+              </button>
+
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-xl font-bold cursor-pointer transition-all border border-gray-600"
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        </div>
       )}
 
-      {/* ==================== EDIT USER INPUT MODAL ==================== */}
+      {/* Edit User Input Modal */}
       {isUpdateModalOpen && editingUserInput && (
-        <ModalOverlay onClick={() => setIsUpdateModalOpen(false)}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            <ModalHeader>
-              <ModalTitle>Edit User Input Field</ModalTitle>
-              <CloseButton onClick={() => setIsUpdateModalOpen(false)}>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-lg border border-emerald-800/50 rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-2xl"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold text-white">
+                Edit User Input Field
+              </h3>
+              <button
+                onClick={() => setIsUpdateModalOpen(false)}
+                className="text-gray-400 hover:text-white text-3xl"
+              >
                 ×
-              </CloseButton>
-            </ModalHeader>
-            <Grid>
-              <InputGroup>
-                <Label>Field Name</Label>
-                <Input
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Field Name
+                </label>
+                <input
+                  type="text"
                   value={editingUserInput.name}
                   onChange={(e) =>
                     setEditingUserInput((p) => ({ ...p, name: e.target.value }))
                   }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
                 />
-              </InputGroup>
-              <InputGroup>
-                <Label>Type</Label>
-                <Select
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Type
+                </label>
+                <select
                   value={editingUserInput.type}
                   onChange={(e) =>
                     setEditingUserInput((p) => ({ ...p, type: e.target.value }))
                   }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
                 >
                   <option value="text">Text</option>
                   <option value="number">Number</option>
                   <option value="file">File Upload</option>
-                </Select>
-              </InputGroup>
-              <InputGroup>
-                <Label>Label (English)</Label>
-                <Input
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Label (English)
+                </label>
+                <input
+                  type="text"
                   value={editingUserInput.label}
                   onChange={(e) =>
                     setEditingUserInput((p) => ({
@@ -879,11 +974,16 @@ const AddDepositMethods = () => {
                       label: e.target.value,
                     }))
                   }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
                 />
-              </InputGroup>
-              <InputGroup>
-                <Label>Label (Bangla)</Label>
-                <Input
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Label (Bangla)
+                </label>
+                <input
+                  type="text"
                   value={editingUserInput.labelBD}
                   onChange={(e) =>
                     setEditingUserInput((p) => ({
@@ -891,11 +991,16 @@ const AddDepositMethods = () => {
                       labelBD: e.target.value,
                     }))
                   }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
                 />
-              </InputGroup>
-              <InputGroup>
-                <Label>Field Instruction (English)</Label>
-                <Input
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Field Instruction (English)
+                </label>
+                <input
+                  type="text"
                   value={editingUserInput.fieldInstruction}
                   onChange={(e) =>
                     setEditingUserInput((p) => ({
@@ -903,11 +1008,16 @@ const AddDepositMethods = () => {
                       fieldInstruction: e.target.value,
                     }))
                   }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
                 />
-              </InputGroup>
-              <InputGroup>
-                <Label>Field Instruction (Bangla)</Label>
-                <Input
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Field Instruction (Bangla)
+                </label>
+                <input
+                  type="text"
                   value={editingUserInput.fieldInstructionBD}
                   onChange={(e) =>
                     setEditingUserInput((p) => ({
@@ -915,11 +1025,15 @@ const AddDepositMethods = () => {
                       fieldInstructionBD: e.target.value,
                     }))
                   }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
                 />
-              </InputGroup>
-              <InputGroup>
-                <Label>Required?</Label>
-                <Select
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Required?
+                </label>
+                <select
                   value={editingUserInput.isRequired}
                   onChange={(e) =>
                     setEditingUserInput((p) => ({
@@ -927,68 +1041,34 @@ const AddDepositMethods = () => {
                       isRequired: e.target.value,
                     }))
                   }
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
                 >
                   <option value="true">Yes</option>
                   <option value="false">No</option>
-                </Select>
-              </InputGroup>
-            </Grid>
-            <ButtonWrapper>
-              <Button primary onClick={updateUserInput}>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 mt-8">
+              <button
+                onClick={updateUserInput}
+                className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-3 rounded-xl font-bold cursor-pointer transition-all shadow-lg"
+              >
                 Save Changes
-              </Button>
-              <Button onClick={() => setIsUpdateModalOpen(false)}>
+              </button>
+
+              <button
+                onClick={() => setIsUpdateModalOpen(false)}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-xl font-bold cursor-pointer transition-all border border-gray-600"
+              >
                 Cancel
-              </Button>
-            </ButtonWrapper>
-          </ModalContent>
-        </ModalOverlay>
+              </button>
+            </div>
+          </motion.div>
+        </div>
       )}
 
-      {/* ==================== LIST OF METHODS ==================== */}
-      <div>
-        <h2 className="text-2xl font-bold mb-6 text-gray-800">
-          All Deposit Methods
-        </h2>
-        {loading ? (
-          <p>Loading...</p>
-        ) : methods.length === 0 ? (
-          <p>No methods found</p>
-        ) : (
-          <MethodsGrid>
-            {methods.map((m) => (
-              <MethodCard key={m._id}>
-                {m.methodImage && (
-                  <MethodImage
-                    src={`${API_URL}${m.methodImage}`}
-                    alt={m.methodName}
-                  />
-                )}
-                <h3 className="text-lg font-bold mt-3">{m.methodName}</h3>
-                <p className="text-sm text-gray-600">{m.methodNameBD}</p>
-                <p className="text-sm">Wallet: {m.agentWalletNumber}</p>
-                <p className="text-sm">Status: {m.status}</p>
-                <div className="mt-4 flex justify-end gap-3">
-                  <Button
-                    onClick={() => handleEdit(m._id)}
-                    style={{ background: "#3b82f6", color: "white" }}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    onClick={() => handleDelete(m._id)}
-                    style={{ background: "#ef4444", color: "white" }}
-                  >
-                    Delete
-                  </Button>
-                </div>
-              </MethodCard>
-            ))}
-          </MethodsGrid>
-        )}
-      </div>
-    </Container>
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+    </div>
   );
-};
-
-export default AddDepositMethods;
+}

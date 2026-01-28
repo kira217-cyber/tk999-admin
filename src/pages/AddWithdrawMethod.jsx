@@ -1,4 +1,4 @@
-// src/AdminComponents/WithdrawSystem/AdminWithdrawMethods.jsx
+// src/pages/AdminWithdrawMethods.jsx
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
@@ -15,224 +15,11 @@ import {
   Trash2,
   Upload,
 } from "lucide-react";
-import { toast } from "react-toastify";
-import styled, { css } from "styled-components";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { API_URL } from "../utils/baseURL";
 
-// ==================== Styled Components ====================
-
-const Container = styled(motion.div)`
-  min-height: 100vh;
-  padding: 2rem 1.5rem;
-  background: #0f172a;
-  font-family: "Poppins", sans-serif;
-  color: white;
-`;
-
-const Header = styled(motion.div)`
-  text-align: center;
-  margin-bottom: 3rem;
-`;
-
-const Title = styled.h1`
-  font-size: 3.5rem;
-  font-weight: 800;
-  background: linear-gradient(to right, #a855f7, #ec4899);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 0.5rem;
-`;
-
-const Subtitle = styled.p`
-  font-size: 1.25rem;
-  opacity: 0.8;
-`;
-
-const AddButton = styled(motion.button)`
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: white;
-  color: #9333ea;
-  font-weight: 600;
-  padding: 1rem 2rem;
-  border-radius: 1.5rem;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  margin: 0 auto 3rem;
-`;
-
-const Grid = styled(motion.div)`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
-`;
-
-const Card = styled(motion.div)`
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 1.5rem;
-  padding: 1.5rem;
-  position: relative;
-  overflow: hidden;
-`;
-
-const CardHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1rem;
-`;
-
-const IconWrapper = styled.div`
-  background: white;
-  padding: 0.5rem;
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const ActionButtons = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  opacity: 0;
-  transition: opacity 0.3s;
-  ${Card}:hover & {
-    opacity: 1;
-  }
-`;
-
-const ActionBtn = styled.button`
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(8px);
-  padding: 0.5rem;
-  border-radius: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-  &:hover {
-    background: rgba(255, 255, 255, 0.3);
-  }
-`;
-
-const DeleteBtn = styled(ActionBtn)`
-  background: rgba(239, 68, 68, 0.3);
-  &:hover {
-    background: rgba(239, 68, 68, 0.5);
-  }
-`;
-
-const MethodName = styled.h3`
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-`;
-
-const InfoRow = styled.p`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-  opacity: 0.9;
-`;
-
-const ChipContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 1rem;
-`;
-
-const Chip = styled.span`
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  ${({ color }) => color && css`
-    background: ${color};
-    color: ${color.replace("100", "700").replace("bg-", "#")};
-  `}
-`;
-
-const ModalOverlay = styled(motion.div)`
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 50;
-  padding: 1rem;
-`;
-
-const ModalContent = styled(motion.div)`
-  background: white;
-  color: #1f2937;
-  border-radius: 1.5rem;
-  padding: 2rem;
-  width: 100%;
-  max-width: 500px;
-  max-height: 95vh;
-  overflow-y: auto;
-`;
-
-const ModalHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-`;
-
-const Input = styled(motion.input)`
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.75rem;
-  outline: none;
-  font-size: 1rem;
-  &:focus {
-    border-color: #9333ea;
-    box-shadow: 0 0 0 4px rgba(147, 51, 234, 0.1);
-  }
-`;
-
-const Label = styled.label`
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #374151;
-`;
-
-const PreviewImg = styled.img`
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-  border-radius: 0.5rem;
-  border: 2px solid #e5e7eb;
-`;
-
-const SubmitBtn = styled(motion.button)`
-  width: 100%;
-  background: linear-gradient(to right, #9333ea, #ec4899);
-  color: white;
-  font-weight: 600;
-  padding: 1rem;
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-top: 1.5rem;
-`;
-
-// ==================== Component ====================
-
-const AddWithdrawMethod = () => {
+export default function AdminWithdrawMethods() {
   const [methods, setMethods] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -252,14 +39,14 @@ const AddWithdrawMethod = () => {
     methodIcon: null,
   });
 
-  // Fetch all methods (global)
+  // Fetch all methods
   const fetchMethods = async () => {
     setLoading(true);
     try {
       const res = await axios.get(`${API_URL}/api/admin-withdraw/methods`);
-      setMethods(res.data);
+      setMethods(res.data || []);
     } catch (err) {
-      toast.error("Failed to load methods");
+      toast.error("Failed to load withdraw methods");
     } finally {
       setLoading(false);
     }
@@ -371,107 +158,135 @@ const AddWithdrawMethod = () => {
         <img
           src={`${API_URL}${method.methodIcon}`}
           alt={method.methodName}
-          className="w-16 h-16 object-contain rounded-lg"
+          className="w-16 h-16 object-contain rounded-lg border border-emerald-700/50"
         />
       );
     }
     const name = method.methodName.toLowerCase();
     if (name.includes("bkash") || name.includes("nagad") || name.includes("rocket"))
-      return <Smartphone className="w-8 h-8" />;
-    if (name.includes("bank")) return <Building2 className="w-8 h-8" />;
-    return <Smartphone className="w-8 h-8" />;
+      return <Smartphone className="w-8 h-8 text-emerald-400" />;
+    if (name.includes("bank")) return <Building2 className="w-8 h-8 text-teal-400" />;
+    return <Smartphone className="w-8 h-8 text-gray-400" />;
   };
 
   const getTypeChip = (type) => {
     const t = type.toLowerCase();
-    if (t === "personal") return { icon: <User size={14} />, color: "bg-blue-100 text-blue-700" };
-    if (t === "agent") return { icon: <Store size={14} />, color: "bg-green-100 text-green-700" };
-    if (t === "merchant") return { icon: <Building2 size={14} />, color: "bg-purple-100 text-purple-700" };
-    return { icon: <User size={14} />, color: "bg-gray-100 text-gray-700" };
+    if (t === "personal") return { icon: <User size={14} />, color: "bg-emerald-900/50 text-emerald-300" };
+    if (t === "agent") return { icon: <Store size={14} />, color: "bg-teal-900/50 text-teal-300" };
+    if (t === "merchant") return { icon: <Building2 size={14} />, color: "bg-purple-900/50 text-purple-300" };
+    return { icon: <User size={14} />, color: "bg-gray-800/50 text-gray-300" };
   };
 
   return (
-    <Container initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 sm:p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <Header initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}>
-          <Title>Admin Withdraw Methods</Title>
-          <Subtitle>Manage global payment methods</Subtitle>
-        </Header>
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-10"
+        >
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+            Admin Withdraw Methods
+          </h1>
+          <p className="text-emerald-300/80 text-lg sm:text-xl">
+            Manage global payment methods for withdrawals
+          </p>
+        </motion.div>
 
-        <AddButton
+        <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={openModal}
+          className="flex items-center justify-center gap-3 mx-auto mb-12 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-8 py-4 rounded-xl font-bold cursor-pointer transition-all shadow-2xl"
         >
           <Plus size={24} />
           Add New Method
-        </AddButton>
+        </motion.button>
 
-        {loading && (
+        {loading ? (
           <div className="flex justify-center py-20">
-            <Loader2 className="w-12 h-12 text-white animate-spin" />
+            <Loader2 className="w-12 h-12 text-emerald-400 animate-spin" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <AnimatePresence>
+              {methods.map((method, i) => (
+                <motion.div
+                  key={method._id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all group relative overflow-hidden"
+                >
+                  <div className="flex items-start justify-between mb-5">
+                    <div className="flex items-center gap-4">
+                      {getMethodIcon(method)}
+                      <h3 className="text-xl font-bold text-white group-hover:text-emerald-300 transition-colors">
+                        {method.methodName}
+                      </h3>
+                    </div>
+
+                    <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => openEdit(method)}
+                        className="bg-emerald-700/70 hover:bg-emerald-600/80 text-white w-10 h-10 rounded-full flex items-center justify-center cursor-pointer shadow-lg"
+                      >
+                        <Edit2 size={18} />
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setDeleteId(method._id);
+                          setDeleteModal(true);
+                        }}
+                        className="bg-rose-700/70 hover:bg-rose-600/80 text-white w-10 h-10 rounded-full flex items-center justify-center cursor-pointer shadow-lg"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 text-gray-300">
+                    <div className="flex justify-between">
+                      <span>Minimum:</span>
+                      <span className="font-bold text-emerald-300">৳{method.minAmount}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Maximum:</span>
+                      <span className="font-bold text-emerald-300">৳{method.maxAmount}</span>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mt-4">
+                      {method.paymentTypes.map((type) => {
+                        const chip = getTypeChip(type);
+                        return (
+                          <div
+                            key={type}
+                            className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm ${chip.color}`}
+                          >
+                            {chip.icon}
+                            {type}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         )}
-
-        <Grid layout>
-          <AnimatePresence>
-            {methods.map((method, i) => (
-              <Card
-                key={method._id}
-                layout
-                initial={{ opacity: 0, y: 50 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ delay: i * 0.1 }}
-                whileHover={{ y: -8, scale: 1.02 }}
-              >
-                <CardHeader>
-                  <IconWrapper>{getMethodIcon(method)}</IconWrapper>
-                  <ActionButtons>
-                    <ActionBtn onClick={() => openEdit(method)}>
-                      <Edit2 size={18} />
-                    </ActionBtn>
-                    <DeleteBtn onClick={() => { setDeleteId(method._id); setDeleteModal(true); }}>
-                      <Trash2 size={18} />
-                    </DeleteBtn>
-                  </ActionButtons>
-                </CardHeader>
-
-                <MethodName>{method.methodName}</MethodName>
-
-                <InfoRow>
-                  <span>Minimum:</span>
-                  <span className="font-bold">৳{method.minAmount}</span>
-                </InfoRow>
-                <InfoRow>
-                  <span>Maximum:</span>
-                  <span className="font-bold">৳{method.maxAmount}</span>
-                </InfoRow>
-
-                <ChipContainer>
-                  {method.paymentTypes.map((type) => {
-                    const chip = getTypeChip(type);
-                    return (
-                      <Chip key={type} color={chip.color}>
-                        {chip.icon} {type}
-                      </Chip>
-                    );
-                  })}
-                </ChipContainer>
-              </Card>
-            ))}
-          </AnimatePresence>
-        </Grid>
 
         {/* Empty State */}
         {!loading && methods.length === 0 && (
           <div className="text-center py-20">
-            <div className="bg-white/10 backdrop-blur rounded-3xl p-12 max-w-md mx-auto">
-              <div className="bg-white/20 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
-                <Plus size={48} className="text-white/60" />
+            <div className="bg-gray-800/50 backdrop-blur rounded-3xl p-12 max-w-md mx-auto border border-emerald-800/50">
+              <div className="bg-emerald-900/30 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                <Plus size={48} className="text-emerald-400/60" />
               </div>
-              <p className="text-white/80 text-lg">No payment methods yet</p>
-              <p className="text-white/60 text-sm mt-2">Click the button above to add</p>
+              <p className="text-white/80 text-xl mb-3">No withdraw methods yet</p>
+              <p className="text-gray-400 text-lg">Click the button above to add one</p>
             </div>
           </div>
         )}
@@ -480,56 +295,100 @@ const AddWithdrawMethod = () => {
       {/* Add/Edit Modal */}
       <AnimatePresence>
         {modalOpen && (
-          <ModalOverlay
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closeModal}
-          >
-            <ModalContent
-              initial={{ scale: 0.8, opacity: 0 }}
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-lg border border-emerald-800/50 rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-2xl"
             >
-              <ModalHeader>
-                <h2 className="text-3xl font-bold">{editId ? "Edit" : "Add New"} Method</h2>
-                <button onClick={closeModal}>
-                  <X size={28} />
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">
+                  {editId ? "Edit Withdraw Method" : "Add New Withdraw Method"}
+                </h2>
+                <button
+                  onClick={closeModal}
+                  className="text-gray-400 hover:text-white text-3xl"
+                >
+                  ×
                 </button>
-              </ModalHeader>
+              </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <Label>Method Name</Label>
-                  <Input
-                    whileFocus={{ scale: 1.02 }}
+                  <label className="block text-emerald-300 font-medium mb-2">
+                    Method Name
+                  </label>
+                  <input
                     name="methodName"
                     type="text"
                     required
                     value={form.methodName}
                     onChange={handleChange}
-                    placeholder="bKash, Nagad, Bank..."
+                    placeholder="bKash, Nagad, Bank Transfer..."
+                    className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
                   />
                 </div>
 
                 <div>
-                  <Label>Payment Types (comma separated)</Label>
-                  <Input
-                    whileFocus={{ scale: 1.02 }}
+                  <label className="block text-emerald-300 font-medium mb-2">
+                    Payment Types (comma separated)
+                  </label>
+                  <input
                     name="paymentTypes"
                     type="text"
                     required
                     value={form.paymentTypes}
                     onChange={handleChange}
                     placeholder="personal, agent, merchant"
+                    className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
                   />
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-emerald-300 font-medium mb-2">
+                      Minimum Amount
+                    </label>
+                    <input
+                      name="minAmount"
+                      type="number"
+                      required
+                      value={form.minAmount}
+                      onChange={handleChange}
+                      placeholder="100"
+                      className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-emerald-300 font-medium mb-2">
+                      Maximum Amount
+                    </label>
+                    <input
+                      name="maxAmount"
+                      type="number"
+                      required
+                      value={form.maxAmount}
+                      onChange={handleChange}
+                      placeholder="50000"
+                      className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <Label>Method Icon (optional)</Label>
+                  <label className="block text-emerald-300 font-medium mb-2">
+                    Method Icon (optional)
+                  </label>
                   <div className="flex items-center gap-4">
-                    {preview && <PreviewImg src={preview} alt="preview" />}
+                    {preview && (
+                      <img
+                        src={preview}
+                        alt="preview"
+                        className="w-16 h-16 object-contain rounded-lg border border-emerald-700/50"
+                      />
+                    )}
                     <label className="cursor-pointer">
                       <input
                         ref={fileInputRef}
@@ -538,87 +397,88 @@ const AddWithdrawMethod = () => {
                         onChange={handleImageChange}
                         className="hidden"
                       />
-                      <div className="flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200">
+                      <div className="flex items-center gap-2 px-5 py-3 bg-emerald-700/60 hover:bg-emerald-600/70 text-white rounded-xl transition-all">
                         <Upload size={18} />
-                        Upload
+                        Upload Icon
                       </div>
                     </label>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Min Amount</Label>
-                    <Input
-                      whileFocus={{ scale: 1.02 }}
-                      name="minAmount"
-                      type="number"
-                      required
-                      value={form.minAmount}
-                      onChange={handleChange}
-                    />
-                  </div>
-                  <div>
-                    <Label>Max Amount</Label>
-                    <Input
-                      whileFocus={{ scale: 1.02 }}
-                      name="maxAmount"
-                      type="number"
-                      required
-                      value={form.maxAmount}
-                      onChange={handleChange}
-                    />
-                  </div>
-                </div>
+                <div className="flex flex-col sm:flex-row gap-4 mt-10">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.97 }}
+                    type="submit"
+                    disabled={saving}
+                    className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-4 rounded-xl font-bold cursor-pointer transition-all shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+                  >
+                    {saving && <Loader2 className="animate-spin" size={20} />}
+                    {saving ? "Saving..." : editId ? "Update Method" : "Save Method"}
+                  </motion.button>
 
-                <SubmitBtn
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  disabled={saving}
-                >
-                  {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
-                  {saving ? "Saving..." : editId ? "Update" : "Save"}
-                </SubmitBtn>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.97 }}
+                    type="button"
+                    onClick={closeModal}
+                    className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-4 rounded-xl font-bold cursor-pointer transition-all border border-gray-600"
+                  >
+                    Cancel
+                  </motion.button>
+                </div>
               </form>
-            </ModalContent>
-          </ModalOverlay>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
       {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {deleteModal && (
-          <ModalOverlay onClick={() => setDeleteModal(false)}>
-            <ModalContent onClick={(e) => e.stopPropagation()}>
-              <div className="text-center py-8">
-                <div className="bg-red-100 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <Trash2 size={32} className="text-red-600" />
-                </div>
-                <h3 className="text-2xl font-bold mb-2">Delete Method?</h3>
-                <p className="text-gray-600 mb-6">This action cannot be undone.</p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setDeleteModal(false)}
-                    className="flex-1 py-3 border border-gray-300 rounded-xl"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={confirmDelete}
-                    disabled={deleting}
-                    className="flex-1 py-3 bg-red-600 text-white rounded-xl flex items-center justify-center gap-2"
-                  >
-                    {deleting ? <Loader2 className="animate-spin" /> : "Delete"}
-                  </button>
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-lg border border-rose-800/50 rounded-2xl p-8 max-w-md w-full shadow-2xl text-center"
+            >
+              <div className="mb-6">
+                <div className="bg-rose-900/30 rounded-full w-20 h-20 mx-auto flex items-center justify-center">
+                  <Trash2 size={40} className="text-rose-400" />
                 </div>
               </div>
-            </ModalContent>
-          </ModalOverlay>
+
+              <h3 className="text-2xl font-bold text-white mb-4">
+                Delete Withdraw Method?
+              </h3>
+              <p className="text-gray-300 mb-8">
+                This action cannot be undone. The method will be permanently removed.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <button
+                  onClick={() => setDeleteModal(false)}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-xl font-bold cursor-pointer transition-all border border-gray-600"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={confirmDelete}
+                  disabled={deleting}
+                  className="flex-1 bg-gradient-to-r from-rose-700 to-red-700 hover:from-rose-600 hover:to-red-600 text-white py-3 rounded-xl font-bold cursor-pointer transition-all shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {deleting && <Loader2 className="animate-spin" size={20} />}
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
-    </Container>
-  );
-};
 
-export default AddWithdrawMethod;
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+    </div>
+  );
+}

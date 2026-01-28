@@ -1,4 +1,4 @@
-// src/AdminComponents/WithdrawSystem/WithdrawRequest.jsx
+// src/pages/WithdrawRequest.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,157 +11,11 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import { toast } from "react-toastify";
-import styled, { css } from "styled-components";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { API_URL } from "../utils/baseURL";
 
-// ==================== Styled Components (একই রেখেছি) ====================
-
-const Container = styled(motion.div)`
-  min-height: 100vh;
-  padding: 2rem 1.5rem;
-  background: #0f172a;
-  font-family: "Poppins", sans-serif;
-  color: white;
-`;
-
-const Header = styled(motion.div)`
-  text-align: center;
-  margin-bottom: 3rem;
-`;
-
-const Title = styled.h1`
-  font-size: 3.5rem;
-  font-weight: 800;
-  background: linear-gradient(to right, #a855f7, #ec4899);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 0.5rem;
-`;
-
-const Subtitle = styled.p`
-  font-size: 1.25rem;
-  opacity: 0.8;
-`;
-
-const Grid = styled(motion.div)`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 1.5rem;
-`;
-
-const Card = styled(motion.div)`
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 1.5rem;
-  padding: 1.5rem;
-  position: relative;
-  overflow: hidden;
-  ${({ $processed }) =>
-    $processed &&
-    css`
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
-      border-color: rgba(255, 255, 255, 0.6);
-    `}
-`;
-
-const CardHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 1rem;
-`;
-
-const IconName = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-`;
-
-const IconWrapper = styled.div`
-  background: white;
-  padding: 0.5rem;
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const Username = styled.p`
-  font-size: 0.875rem;
-  opacity: 0.7;
-  margin-top: 0.25rem;
-`;
-
-const StatusBadge = styled.span`
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  ${({ $bg }) => $bg && css`background: ${$bg};`}
-  ${({ $color }) => $color && css`color: ${$color};`}
-`;
-
-const InfoRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.75rem;
-  font-size: 1rem;
-`;
-
-const ActionButtons = styled.div`
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-`;
-
-const ActionBtn = styled(motion.button)`
-  flex: 1;
-  padding: 0.75rem;
-  border-radius: 0.75rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.2s;
-  ${({ $type }) =>
-    $type === "approve"
-      ? css`
-          background: #10b981;
-          color: white;
-          &:hover { background: #059669; }
-        `
-      : css`
-          background: #ef4444;
-          color: white;
-          &:hover { background: #dc2626; }
-        `}
-`;
-
-const EmptyState = styled.div`
-  text-align: center;
-  padding: 5rem 1rem;
-`;
-
-const EmptyCard = styled.div`
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  border-radius: 1.5rem;
-  padding: 3rem;
-  max-width: 420px;
-  margin: 0 auto;
-`;
-
-// ==================== Main Component (সব ঠিক করা) ====================
-
-const WithdrawRequest = () => {
+export default function WithdrawRequest() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
@@ -170,11 +24,7 @@ const WithdrawRequest = () => {
   const adminId = localStorage.getItem("userId");
 
   const fetchRequests = async () => {
-    if (!API_URL) {
-      toast.error("API URL not configured");
-      setLoading(false);
-      return;
-    }
+    if (!adminId) return;
 
     try {
       setLoading(true);
@@ -182,18 +32,21 @@ const WithdrawRequest = () => {
       setRequests(res.data || []);
     } catch (err) {
       console.error("Fetch error:", err.response || err);
-      toast.error(err.response?.data?.msg || "Failed to load requests");
+      toast.error(err.response?.data?.msg || "Failed to load withdraw requests");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (adminId) fetchRequests();
-    const interval = setInterval(fetchRequests, 10000);
-    return () => clearInterval(interval);
+    if (adminId) {
+      fetchRequests();
+      const interval = setInterval(fetchRequests, 10000);
+      return () => clearInterval(interval);
+    }
   }, [adminId]);
 
+  // Auto-remove processed cards after 60 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       const now = Date.now();
@@ -222,7 +75,7 @@ const WithdrawRequest = () => {
         [requestId]: { status: "approved", timestamp: Date.now() },
       }));
 
-      toast.success("Approved Successfully!");
+      toast.success("Withdrawal approved successfully!");
     } catch (err) {
       toast.error(err.response?.data?.msg || "Approve failed");
     } finally {
@@ -244,7 +97,7 @@ const WithdrawRequest = () => {
         [requestId]: { status: "rejected", timestamp: Date.now() },
       }));
 
-      toast.error("Rejected – Money Refunded");
+      toast.error("Withdrawal rejected – amount refunded");
     } catch (err) {
       toast.error(err.response?.data?.msg || "Reject failed");
     } finally {
@@ -253,20 +106,21 @@ const WithdrawRequest = () => {
   };
 
   const getMethodIcon = (method) => {
-    if (!method) return <Smartphone size={36} />;
-    if (method.methodIcon)
+    if (!method) return <Smartphone className="w-10 h-10 text-emerald-400" />;
+    if (method.methodIcon) {
       return (
         <img
           src={`${API_URL}${method.methodIcon}`}
           alt={method.methodName}
-          style={{ width: 64, height: 64, objectFit: "contain", borderRadius: 12 }}
+          className="w-12 h-12 object-contain rounded-lg border border-emerald-700/50"
         />
       );
+    }
     const name = (method.methodName || "").toLowerCase();
     if (name.includes("bkash") || name.includes("nagad") || name.includes("rocket"))
-      return <Smartphone size={36} />;
-    if (name.includes("bank")) return <Building2 size={36} />;
-    return <Smartphone size={36} />;
+      return <Smartphone className="w-10 h-10 text-emerald-400" />;
+    if (name.includes("bank")) return <Building2 className="w-10 h-10 text-teal-400" />;
+    return <Smartphone className="w-10 h-10 text-gray-400" />;
   };
 
   const getStatusBadge = (status, reqId) => {
@@ -274,12 +128,32 @@ const WithdrawRequest = () => {
     const currentStatus = processed?.status || status;
 
     if (currentStatus === "pending")
-      return { icon: <Clock size={16} />, bg: "rgba(251, 191, 36, 0.2)", color: "#f59e0b", text: "Pending" };
+      return {
+        icon: <Clock className="w-4 h-4" />,
+        bg: "bg-amber-900/40",
+        color: "text-amber-300",
+        text: "Pending",
+      };
     if (currentStatus === "approved")
-      return { icon: <CheckCircle size={16} />, bg: "rgba(34, 197, 94, 0.2)", color: "#22c55e", text: "Approved" };
+      return {
+        icon: <CheckCircle className="w-4 h-4" />,
+        bg: "bg-emerald-900/40",
+        color: "text-emerald-300",
+        text: "Approved",
+      };
     if (currentStatus === "rejected")
-      return { icon: <XCircle size={16} />, bg: "rgba(239, 68, 68, 0.2)", color: "#ef4444", text: "Rejected" };
-    return { icon: <Clock size={16} />, bg: "rgba(156, 163, 175, 0.2)", color: "#9ca3af", text: "Unknown" };
+      return {
+        icon: <XCircle className="w-4 h-4" />,
+        bg: "bg-rose-900/40",
+        color: "text-rose-300",
+        text: "Rejected",
+      };
+    return {
+      icon: <Clock className="w-4 h-4" />,
+      bg: "bg-gray-800/40",
+      color: "text-gray-300",
+      text: "Unknown",
+    };
   };
 
   const displayedRequests = requests.filter((req) => {
@@ -290,172 +164,166 @@ const WithdrawRequest = () => {
 
   if (!adminId) {
     return (
-      <div style={{ textAlign: "center", paddingTop: "5rem", fontSize: "1.8rem", color: "white" }}>
+      <div className="min-h-screen flex items-center justify-center text-white text-2xl">
         Please Login as Admin
       </div>
     );
   }
 
   return (
-    <Container initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 sm:p-6 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <Header initial={{ y: -50 }} animate={{ y: 0 }}>
-          <Title>Withdraw Requests</Title>
-          <Subtitle>Review and process Super-Affiliate withdrawals</Subtitle>
-        </Header>
+        <motion.div
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-10"
+        >
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+            Withdraw Requests
+          </h1>
+          <p className="text-emerald-300/80 text-lg sm:text-xl">
+            Review and process Super-Affiliate withdrawals
+          </p>
+        </motion.div>
 
         {loading ? (
-          <div style={{ display: "flex", justifyContent: "center", padding: "6rem 0" }}>
-            <Loader2 size={56} className="animate-spin text-white" />
+          <div className="flex justify-center py-20">
+            <Loader2 className="w-14 h-14 text-emerald-400 animate-spin" />
           </div>
         ) : (
           <>
-            <Grid layout>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               <AnimatePresence>
                 {displayedRequests.map((req, i) => {
                   const status = getStatusBadge(req.status, req._id);
                   const isProcessed = !!processedRequests[req._id];
 
                   return (
-                    <Card
+                    <motion.div
                       key={req._id}
-                      layout
-                      initial={{ opacity: 0, y: 60 }}
+                      initial={{ opacity: 0, y: 40 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      transition={{ delay: i * 0.1 }}
-                      whileHover={{ y: -10 }}
-                      $processed={isProcessed}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ delay: i * 0.08 }}
+                      whileHover={{ y: -8, scale: 1.02 }}
+                      className={`bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all relative overflow-hidden ${
+                        isProcessed ? "ring-2 ring-emerald-500/50" : ""
+                      }`}
                     >
-                      <CardHeader>
-                        <IconName>
-                          <IconWrapper>{getMethodIcon(req.methodId)}</IconWrapper>
+                      <div className="flex items-start justify-between mb-5">
+                        <div className="flex items-center gap-4">
+                          {getMethodIcon(req.methodId)}
                           <div>
-                            <h3 style={{ fontSize: "1.3rem", fontWeight: 700 }}>
+                            <h3 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">
                               {req.methodId?.methodName || "Unknown Method"}
                             </h3>
-                            <Username>{req.requesterId?.username || "Unknown User"}</Username>
+                            <p className="text-sm text-gray-400 mt-1">
+                              {req.requesterId?.username || "Unknown User"}
+                            </p>
                           </div>
-                        </IconName>
-                        <StatusBadge $bg={status.bg} $color={status.color}>
-                          {status.icon} {status.text}
-                        </StatusBadge>
-                      </CardHeader>
+                        </div>
 
-                      <div style={{ marginTop: "1rem" }}>
-                        <InfoRow>
+                        <span
+                          className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium ${status.bg} ${status.color}`}
+                        >
+                          {status.icon} {status.text}
+                        </span>
+                      </div>
+
+                      <div className="space-y-4 text-gray-300">
+                        <div className="flex justify-between items-center">
                           <span>Amount:</span>
-                          <strong>৳{req.amount?.toLocaleString()}</strong>
-                        </InfoRow>
-                        <InfoRow>
+                          <span className="text-xl font-bold text-emerald-300">
+                            ৳{req.amount?.toLocaleString()}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between items-center">
                           <span>Account:</span>
-                          <span style={{ fontFamily: "monospace", fontSize: "0.9rem" }}>
+                          <span className="font-mono text-sm break-all">
                             {req.accountNumber}
                           </span>
-                        </InfoRow>
-                        <InfoRow>
+                        </div>
+
+                        <div className="flex justify-between items-center">
                           <span>Type:</span>
                           <span
-                            style={{
-                              padding: "0.35rem 0.9rem",
-                              borderRadius: "9999px",
-                              fontSize: "0.8rem",
-                              fontWeight: 600,
-                              background:
-                                req.paymentType === "personal"
-                                  ? "#dbeafe"
-                                  : req.paymentType === "agent"
-                                  ? "#d1fae5"
-                                  : "#f3e8ff",
-                              color:
-                                req.paymentType === "personal"
-                                  ? "#1e40af"
-                                  : req.paymentType === "agent"
-                                  ? "#065f46"
-                                  : "#9333ea",
-                            }}
+                            className={`px-3 py-1 rounded-full text-sm font-medium ${
+                              req.paymentType === "personal"
+                                ? "bg-blue-900/50 text-blue-300"
+                                : req.paymentType === "agent"
+                                ? "bg-emerald-900/50 text-emerald-300"
+                                : "bg-purple-900/50 text-purple-300"
+                            }`}
                           >
-                            {req.paymentType || "N/A"}
+                            {req.paymentType?.toUpperCase() || "N/A"}
                           </span>
-                        </InfoRow>
+                        </div>
                       </div>
 
                       {req.status === "pending" && (
-                        <ActionButtons>
-                          <ActionBtn
-                            $type="approve"
+                        <div className="flex gap-4 mt-6 pt-5 border-t border-emerald-900/50">
+                          <motion.button
                             whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                            whileTap={{ scale: 0.97 }}
                             onClick={() => handleApprove(req._id)}
                             disabled={processingId === req._id}
+                            className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-3 rounded-xl font-bold cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                           >
                             {processingId === req._id ? (
-                              <Loader2 size={18} className="animate-spin" />
+                              <Loader2 className="w-5 h-5 animate-spin" />
                             ) : (
-                              <CheckCircle size={18} />
+                              <CheckCircle className="w-5 h-5" />
                             )}
                             Approve
-                          </ActionBtn>
+                          </motion.button>
 
-                          <ActionBtn
-                            $type="reject"
+                          <motion.button
                             whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                            whileTap={{ scale: 0.97 }}
                             onClick={() => handleReject(req._id)}
                             disabled={processingId === req._id}
+                            className="flex-1 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white py-3 rounded-xl font-bold cursor-pointer transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                           >
                             {processingId === req._id ? (
-                              <Loader2 size={18} className="animate-spin" />
+                              <Loader2 className="w-5 h-5 animate-spin" />
                             ) : (
-                              <XCircle size={18} />
+                              <XCircle className="w-5 h-5" />
                             )}
                             Reject
-                          </ActionBtn>
-                        </ActionButtons>
+                          </motion.button>
+                        </div>
                       )}
 
                       {isProcessed && (
-                        <p style={{ textAlign: "center", marginTop: "1rem", fontSize: "0.8rem", opacity: 0.7 }}>
-                          This card will disappear in 1 minute
+                        <p className="text-center mt-4 text-sm text-emerald-400/70">
+                          This request will disappear in 1 minute
                         </p>
                       )}
-                    </Card>
+                    </motion.div>
                   );
                 })}
               </AnimatePresence>
-            </Grid>
+            </div>
 
             {displayedRequests.length === 0 && (
-              <EmptyState>
-                <EmptyCard>
-                  <div
-                    style={{
-                      background: "rgba(255,255,255,0.15)",
-                      borderRadius: "9999px",
-                      width: 120,
-                      height: 120,
-                      margin: "0 auto 1.5rem",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <AlertCircle size={64} style={{ opacity: 0.6 }} />
+              <div className="text-center py-20">
+                <div className="bg-gray-800/50 backdrop-blur rounded-3xl p-12 max-w-lg mx-auto border border-emerald-800/50">
+                  <div className="bg-emerald-900/30 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                    <AlertCircle size={48} className="text-emerald-400/60" />
                   </div>
-                  <p style={{ fontSize: "1.6rem", opacity: 0.9, marginBottom: "0.5rem" }}>
-                    No Pending Requests
-                  </p>
-                  <p style={{ opacity: 0.7 }}>
+                  <p className="text-white text-2xl font-bold mb-3">No Pending Requests</p>
+                  <p className="text-gray-400 text-lg">
                     All withdrawal requests will appear here automatically
                   </p>
-                </EmptyCard>
-              </EmptyState>
+                </div>
+              </div>
             )}
           </>
         )}
       </div>
-    </Container>
-  );
-};
 
-export default WithdrawRequest;
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+    </div>
+  );
+}

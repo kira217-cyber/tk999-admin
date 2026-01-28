@@ -1,265 +1,13 @@
 // admin/PartnerSettings.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import styled from "styled-components";
+import { motion } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { API_URL } from "../utils/baseURL";
+import { FaSpinner } from "react-icons/fa";
 
-// Styled Components
-const Page = styled.div`
-  min-height: 100vh;
-  background: #f1f5f9;
-  padding: 20px;
-  font-family: "Inter", "Segoe UI", sans-serif;
-`;
-
-const Container = styled.div`
-  max-width: 900px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-`;
-
-const Header = styled.div`
-  color: #1e293b;
-  padding: 40px 20px;
-  text-align: center;
-`;
-
-const Title = styled.h1`
-  font-size: 36px;
-  font-weight: 800;
-  margin: 0;
-`;
-
-
-
-const FormWrapper = styled.div`
-  padding: 40px;
-`;
-
-const InputGroup = styled.div`
-  margin-bottom: 28px;
-`;
-
-const Label = styled.label`
-  display: block;
-  font-size: 17px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 10px;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 16px;
-  transition: all 0.3s;
-  &:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
-  }
-`;
-
-const Textarea = styled.textarea`
-  width: 100%;
-  padding: 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 16px;
-  min-height: 130px;
-  resize: vertical;
-  transition: all 0.3s;
-  &:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
-  }
-`;
-
-const FileBox = styled.label`
-  display: block;
-  padding: 50px 20px;
-  border: 3px dashed #94a3b8;
-  border-radius: 16px;
-  text-align: center;
-  cursor: pointer;
-  background: #f8faff;
-  transition: all 0.3s;
-  font-size: 18px;
-  font-weight: 600;
-  color: #475569;
-  &:hover {
-    border-color: #3b82f6;
-    background: #eff6ff;
-    color: #1d4ed8;
-  }
-`;
-
-const PreviewImage = styled.img`
-  width: 100%;
-  max-width: 400px;
-  height: 200px;
-  object-fit: cover;
-  border-radius: 16px;
-  margin: 15px auto;
-  display: block;
-  border: 4px solid #3b82f6;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-`;
-
-const RemoveBtn = styled.button`
-  background: #ef4444;
-  color: white;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
-  margin-top: 10px;
-  &:hover {
-    background: #dc2626;
-  }
-`;
-
-const FileName = styled.p`
-  margin-top: 12px;
-  color: #10b981;
-  font-weight: 600;
-  font-size: 15px;
-`;
-
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 28px;
-  @media (min-width: 768px) {
-    grid-template-columns: 1fr 1fr;
-  }
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 20px;
-  margin-top: 40px;
-  flex-wrap: wrap;
-  justify-content: center;
-`;
-
-const SaveButton = styled.button`
-  flex: 1;
-  min-width: 250px;
-  padding: 20px;
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
-  font-size: 22px;
-  font-weight: 800;
-  border: none;
-  border-radius: 50px;
-  cursor: pointer;
-  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
-  transition: all 0.4s;
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 15px 35px rgba(16, 185, 129, 0.4);
-  }
-  &:disabled {
-    background: #94a3b8;
-    cursor: not-allowed;
-    transform: none;
-  }
-`;
-
-const DeleteAllButton = styled.button`
-  flex: 1;
-  min-width: 250px;
-  padding: 20px;
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  color: white;
-  font-size: 22px;
-  font-weight: 800;
-  border: none;
-  border-radius: 50px;
-  cursor: pointer;
-  box-shadow: 0 10px 30px rgba(239, 68, 68, 0.3);
-  transition: all 0.4s;
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 15px 35px rgba(239, 68, 68, 0.4);
-  }
-`;
-
-// Custom Confirm Modal
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-`;
-
-const Modal = styled.div`
-  background: white;
-  padding: 30px;
-  border-radius: 20px;
-  text-align: center;
-  max-width: 400px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-`;
-
-const ModalButtons = styled.div`
-  margin-top: 20px;
-  display: flex;
-  gap: 15px;
-  justify-content: center;
-`;
-
-const ConfirmBtn = styled.button`
-  padding: 12px 30px;
-  background: #ef4444;
-  color: white;
-  border: none;
-  border-radius: 50px;
-  font-weight: bold;
-  cursor: pointer;
-  &:hover {
-    background: #dc2626;
-  }
-`;
-
-const CancelBtn = styled.button`
-  padding: 12px 30px;
-  background: #6b7280;
-  color: white;
-  border: none;
-  border-radius: 50px;
-  font-weight: bold;
-  cursor: pointer;
-  &:hover {
-    background: #4b5563;
-  }
-`;
-
-const LoadingScreen = styled.div`
-  min-height: 100vh;
-  background: #f8fafc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: #64748b;
-`;
-
-const PartnerSettings = () => {
+export default function PartnerSettings() {
   const [form, setForm] = useState({
     titleBn: "",
     titleEn: "",
@@ -294,13 +42,15 @@ const PartnerSettings = () => {
           bgImageFile: null,
         });
       })
-      .catch(() => alert("Failed to load data! Check server."))
+      .catch(() => {
+        toast.error("Failed to load partner settings");
+      })
       .finally(() => setLoading(false));
   }, []);
 
   const handleSave = async () => {
     if (!form.titleBn.trim() || !form.description.trim()) {
-      alert("Bangla Title and Description are required!");
+      toast.error("Bangla Title and Description are required!");
       return;
     }
 
@@ -316,10 +66,10 @@ const PartnerSettings = () => {
 
     try {
       await axios.put(`${API_URL}/api/partner`, data);
-      alert("Saved successfully!");
+      toast.success("Partner settings saved successfully!");
       window.location.reload();
     } catch (err) {
-      alert("Save failed: " + (err.response?.data?.message || "Server error"));
+      toast.error(err.response?.data?.message || "Save failed");
     } finally {
       setSaving(false);
     }
@@ -334,12 +84,10 @@ const PartnerSettings = () => {
     setShowConfirm(false);
     try {
       await axios.delete(`${API_URL}/api/partner`);
-      alert("All data deleted successfully!");
+      toast.success("All partner data deleted successfully!");
       window.location.reload();
     } catch (err) {
-      alert(
-        "Delete failed: " + (err.response?.data?.message || "Error occurred")
-      );
+      toast.error(err.response?.data?.message || "Delete failed");
     } finally {
       setDeleting(false);
     }
@@ -354,181 +102,243 @@ const PartnerSettings = () => {
   };
 
   if (loading) {
-    return <LoadingScreen>Loading... Please wait</LoadingScreen>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/30 to-black flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+          className="text-emerald-400 text-6xl"
+        >
+          <FaSpinner />
+        </motion.div>
+      </div>
+    );
   }
 
   return (
-    <Page>
-      <Container>
-        <Header>
-          <Title>Partner Section Settings</Title>
-        </Header>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 sm:p-6 md:p-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-8 text-center">
+          Partner Section Settings
+        </h1>
 
-        <FormWrapper>
-          <Grid>
-            <InputGroup>
-              <Label>Bangla Title</Label>
-              <Input
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 sm:p-8 shadow-2xl"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+            {/* Bangla Title */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Bangla Title
+              </label>
+              <input
                 type="text"
                 placeholder="Special Partner"
                 value={form.titleBn}
                 onChange={(e) => setForm({ ...form, titleBn: e.target.value })}
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
               />
-            </InputGroup>
+            </div>
 
-            <InputGroup>
-              <Label>English Title</Label>
-              <Input
+            {/* English Title */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                English Title
+              </label>
+              <input
                 type="text"
                 placeholder="Special Partner"
                 value={form.titleEn}
                 onChange={(e) => setForm({ ...form, titleEn: e.target.value })}
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
               />
-            </InputGroup>
-          </Grid>
+            </div>
+          </div>
 
-          <InputGroup>
-            <Label>Description</Label>
-            <Textarea
+          {/* Description */}
+          <div className="mb-10">
+            <label className="block text-emerald-300 font-medium mb-2">
+              Description
+            </label>
+            <textarea
               placeholder="Register now and earn up to 50% revenue share..."
               value={form.description}
-              onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
-              }
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              rows={5}
+              className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all resize-y"
             />
-          </InputGroup>
+          </div>
 
-          <Grid>
-            <InputGroup>
-              <Label>Highlight Text (e.g. 50%)</Label>
-              <Input
+          {/* Highlight Text & Button */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Highlight Text (e.g. 50%)
+              </label>
+              <input
                 type="text"
                 placeholder="Up to 50% revenue share"
                 value={form.highlightText}
                 onChange={(e) =>
                   setForm({ ...form, highlightText: e.target.value })
                 }
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
               />
-            </InputGroup>
+            </div>
 
-            <InputGroup>
-              <Label>Button Text</Label>
-              <Input
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Button Text
+              </label>
+              <input
                 type="text"
                 placeholder="Become Our Partner"
                 value={form.buttonText}
-                onChange={(e) =>
-                  setForm({ ...form, buttonText: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, buttonText: e.target.value })}
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
               />
-            </InputGroup>
-          </Grid>
+            </div>
+          </div>
 
-          <Grid>
-            <InputGroup>
-              <Label>Left Side Image</Label>
+          {/* Images */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+            {/* Left Side Image */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Left Side Image
+              </label>
               {(form.leftImageFile || form.leftImage) && (
-                <PreviewImage
-                  src={
-                    form.leftImageFile
-                      ? URL.createObjectURL(form.leftImageFile)
-                      : form.leftImage
-                  }
-                  alt="Left Preview"
-                />
+                <div className="mb-4">
+                  <img
+                    src={
+                      form.leftImageFile instanceof File
+                        ? URL.createObjectURL(form.leftImageFile)
+                        : form.leftImage
+                    }
+                    alt="Left Preview"
+                    className="w-full max-h-48 object-cover rounded-xl border border-emerald-700/50 shadow-lg"
+                  />
+                </div>
               )}
-              <FileBox>
-                {form.leftImageFile ? "New image selected" : "Upload new image"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  onChange={(e) =>
-                    setForm({ ...form, leftImageFile: e.target.files[0] })
-                  }
-                />
-                Lewandowski
-              </FileBox>
-              {form.leftImageFile && (
-                <FileName>{form.leftImageFile.name}</FileName>
-              )}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) =>
+                  setForm({ ...form, leftImageFile: e.target.files[0] || null })
+                }
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-700/50 file:text-emerald-100 hover:file:bg-emerald-600/70 cursor-pointer"
+              />
               {(form.leftImageFile || form.leftImage) && (
-                <RemoveBtn onClick={removeLeftImage}>Remove Image</RemoveBtn>
+                <button
+                  type="button"
+                  onClick={removeLeftImage}
+                  className="mt-3 bg-rose-700/60 hover:bg-rose-600/70 text-white px-6 py-2 rounded-xl font-medium cursor-pointer transition-all"
+                >
+                  Remove Left Image
+                </button>
               )}
-            </InputGroup>
+            </div>
 
-            <InputGroup>
-              <Label>Background Image</Label>
+            {/* Background Image */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Background Image
+              </label>
               {(form.bgImageFile || form.bgImage) && (
-                <PreviewImage
-                  src={
-                    form.bgImageFile
-                      ? URL.createObjectURL(form.bgImageFile)
-                      : form.bgImage
-                  }
-                  alt="BG Preview"
-                />
+                <div className="mb-4">
+                  <img
+                    src={
+                      form.bgImageFile instanceof File
+                        ? URL.createObjectURL(form.bgImageFile)
+                        : form.bgImage
+                    }
+                    alt="Background Preview"
+                    className="w-full max-h-48 object-cover rounded-xl border border-emerald-700/50 shadow-lg"
+                  />
+                </div>
               )}
-              <FileBox>
-                {form.bgImageFile
-                  ? "New background selected"
-                  : "Upload new background"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  hidden
-                  onChange={(e) =>
-                    setForm({ ...form, bgImageFile: e.target.files[0] })
-                  }
-                />
-              </FileBox>
-              {form.bgImageFile && <FileName>{form.bgImageFile.name}</FileName>}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) =>
+                  setForm({ ...form, bgImageFile: e.target.files[0] || null })
+                }
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-700/50 file:text-emerald-100 hover:file:bg-emerald-600/70 cursor-pointer"
+              />
               {(form.bgImageFile || form.bgImage) && (
-                <RemoveBtn onClick={removeBgImage}>Remove Background</RemoveBtn>
+                <button
+                  type="button"
+                  onClick={removeBgImage}
+                  className="mt-3 bg-rose-700/60 hover:bg-rose-600/70 text-white px-6 py-2 rounded-xl font-medium cursor-pointer transition-all"
+                >
+                  Remove Background
+                </button>
               )}
-            </InputGroup>
-          </Grid>
+            </div>
+          </div>
 
-          <ButtonGroup>
-            <SaveButton onClick={handleSave} disabled={saving}>
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 mt-12">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-4 rounded-xl font-bold cursor-pointer transition-all shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+            >
               {saving ? "Saving..." : "Save All Changes"}
-            </SaveButton>
+            </motion.button>
 
-            <DeleteAllButton onClick={handleDeleteAll} disabled={deleting}>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={handleDeleteAll}
+              disabled={deleting}
+              className="flex-1 bg-gradient-to-r from-rose-700 to-red-700 hover:from-rose-600 hover:to-red-600 text-white py-4 rounded-xl font-bold cursor-pointer transition-all shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+            >
               {deleting ? "Deleting..." : "Delete All Data"}
-            </DeleteAllButton>
-          </ButtonGroup>
-        </FormWrapper>
-      </Container>
+            </motion.button>
+          </div>
+        </motion.div>
+      </div>
 
       {/* Custom Confirm Modal */}
       {showConfirm && (
-        <ModalOverlay onClick={() => setShowConfirm(false)}>
-          <Modal onClick={(e) => e.stopPropagation()}>
-            <h3
-              style={{
-                fontSize: "22px",
-                fontWeight: "bold",
-                marginBottom: "15px",
-              }}
-            >
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-lg border border-rose-800/50 rounded-2xl p-8 max-w-md w-full shadow-2xl text-center"
+          >
+            <h3 className="text-2xl font-bold text-white mb-6">
               Delete All Data?
             </h3>
-            <p style={{ color: "#666", marginBottom: "20px" }}>
+            <p className="text-gray-300 mb-8">
               This action cannot be undone. All partner data and images will be
               permanently deleted.
             </p>
-            <ModalButtons>
-              <CancelBtn onClick={() => setShowConfirm(false)}>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-xl font-bold cursor-pointer transition-all border border-gray-600"
+              >
                 Cancel
-              </CancelBtn>
-              <ConfirmBtn onClick={confirmDelete}>Yes, Delete</ConfirmBtn>
-            </ModalButtons>
-          </Modal>
-        </ModalOverlay>
-      )}
-    </Page>
-  );
-};
+              </button>
 
-export default PartnerSettings;
+              <button
+                onClick={confirmDelete}
+                className="flex-1 bg-gradient-to-r from-rose-700 to-red-700 hover:from-rose-600 hover:to-red-600 text-white py-3 rounded-xl font-bold cursor-pointer transition-all shadow-lg"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+    </div>
+  );
+}

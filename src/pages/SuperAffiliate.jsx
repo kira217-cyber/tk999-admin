@@ -1,5 +1,5 @@
-// src/pages/SuperAffiliate.jsx
 import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   FaToggleOn,
   FaToggleOff,
@@ -12,457 +12,17 @@ import {
   FaEdit,
   FaCogs,
   FaPlus,
+  FaSpinner,
 } from "react-icons/fa";
 import toast from "react-hot-toast";
-import styled, { keyframes } from "styled-components";
 import { API_URL } from "../utils/baseURL";
 
-// Keyframes
-const pulse = keyframes`
-  0%, 100% { opacity: 0.7; }
-  50% { opacity: 1; }
-`;
-
-// Styled Components (আগের সব অপরিবর্তিত)
-const Container = styled.div`
-  min-height: 100vh;
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
-  color: #e2e8f0;
-  padding: 12px;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-`;
-const ContentWrapper = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-`;
-const Header = styled.div`
-  text-align: center;
-  margin-bottom: 30px;
-`;
-const Title = styled.h1`
-  font-size: 2.8rem;
-  margin-top: 0px;
-  font-weight: 800;
-  color: #ffffff;
-`;
-const Subtitle = styled.p`
-  color: #94a3b8;
-  margin-top: 8px;
-  font-size: 1.1rem;
-`;
-
-// Desktop Table
-const TableContainer = styled.div`
-  display: block;
-  width: 100%;
-  overflow-x: auto;
-  border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  @media (max-width: 768px) {
-    display: none;
-  }
-`;
-const StyledTable = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 900px;
-`;
-const Thead = styled.thead`
-  background: linear-gradient(to right, #7acc39, #7acc39);
-`;
-const Th = styled.th`
-  padding: 16px 12px;
-  text-align: left;
-  font-weight: 600;
-  font-size: 1rem;
-  color: #ffffff;
-`;
-const Tr = styled.tr`
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  transition: all 0.2s ease;
-  &:hover {
-    background: rgba(255, 255, 255, 0.08);
-  }
-`;
-const Td = styled.td`
-  padding: 14px 12px;
-  font-size: 0.95rem;
-  color: #cbd5e1;
-`;
-
-// Mobile Cards
-const CardsContainer = styled.div`
-  display: none;
-  flex-direction: column;
-  gap: 16px;
-  @media (max-width: 768px) {
-    display: flex;
-  }
-`;
-const Card = styled.div`
-  background: rgba(30, 41, 59, 0.6);
-  border-radius: 16px;
-  padding: 16px;
-  border: 1px solid rgba(20, 184, 166, 0.3);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
-  }
-`;
-const CardHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-`;
-const CardTitle = styled.h3`
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #fbbf24;
-`;
-const CardStatus = styled.span`
-  padding: 4px 12px;
-  border-radius: 50px;
-  font-size: 0.75rem;
-  font-weight: bold;
-  background: ${(props) => (props.active ? "#064e3b" : "#7c2d12")};
-  color: ${(props) => (props.active ? "#6ee7b7" : "#fdba74")};
-  border: 1px solid ${(props) => (props.active ? "#34d399" : "#fb923c")};
-`;
-const CardBody = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  font-size: 0.9rem;
-  color: #94a3b8;
-  margin-bottom: 12px;
-`;
-const CardItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #cbd5e1;
-`;
-const CardActions = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 12px;
-`;
-const ActionButton = styled.button`
-  flex: 1;
-  padding: 8px;
-  border: none;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  &.toggle {
-    background: ${(props) => (props.active ? "#dc2626" : "#16a34a")};
-    color: white;
-    &:hover {
-      background: ${(props) => (props.active ? "#b91c1c" : "#15803d")};
-      transform: translateY(-2px);
-    }
-  }
-  &.edit {
-    background: #1e293b;
-    color: #22d3ee;
-    border: 1px solid #22d3ee;
-    &:hover {
-      background: #22d3ee;
-      color: #0f172a;
-    }
-  }
-  &.commission {
-    background: linear-gradient(to right, #a78bfa, #c084fc);
-    color: white;
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(167, 139, 250, 0.3);
-    }
-  }
-`;
-
-// Shared Components
-const StatusBadge = styled.span`
-  display: inline-block;
-  padding: 6px 14px;
-  border-radius: 50px;
-  font-size: 0.8rem;
-  font-weight: bold;
-  text-align: center;
-  min-width: 80px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  background: ${(props) => (props.active ? "#064e3b" : "#7c2d12")};
-  color: ${(props) => (props.active ? "#6ee7b7" : "#fdba74")};
-  border: 1px solid ${(props) => (props.active ? "#34d399" : "#fb923c")};
-`;
-const ToggleButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 26px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  padding: 8px;
-  border-radius: 50%;
-  color: ${(props) => (props.active ? "#fb923c" : "#94a3b8")};
-  &:hover {
-    transform: scale(1.15);
-    background: rgba(255, 255, 255, 0.1);
-  }
-`;
-const EditButton = styled.button`
-  background: none;
-  border: none;
-  font-size: 22px;
-  color: #22d3ee;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  padding: 8px;
-  border-radius: 50%;
-  &:hover {
-    color: #67e8f9;
-    transform: scale(1.15);
-    background: rgba(34, 211, 238, 0.1);
-  }
-`;
-const CommissionButton = styled.button`
-  background: linear-gradient(to right, #a78bfa, #c084fc);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 50px;
-  font-size: 0.85rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(167, 139, 250, 0.3);
-  }
-`;
-
-// Loading & Error
-const LoadingScreen = styled.div`
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-`;
-const PulseText = styled.div`
-  font-size: 1.4rem;
-  font-weight: 600;
-  animation: ${pulse} 1.5s ease-in-out infinite;
-  color: #fbbf24;
-`;
-const ErrorScreen = styled.div`
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
-`;
-const ErrorBox = styled.div`
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  padding: 30px;
-  border-radius: 20px;
-  max-width: 500px;
-  width: 100%;
-  border: 1px solid #ef4444;
-  text-align: center;
-`;
-const RetryButton = styled.button`
-  margin-top: 20px;
-  padding: 12px 30px;
-  background: #dc2626;
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  &:hover {
-    background: #b91c1c;
-    transform: translateY(-2px);
-  }
-`;
-const NoData = styled.div`
-  text-align: center;
-  padding: 60px 20px;
-  color: #94a3b8;
-  font-size: 1.2rem;
-`;
-
-// Modal Components
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(5px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-`;
-const Modal = styled.div`
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-  padding: 30px;
-  border-radius: 24px;
-  width: 100%;
-  max-width: 500px;
-  border: 1px solid #14b8a6;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
-`;
-const ModalTitle = styled.h3`
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #fbbf24;
-  text-align: center;
-  margin-bottom: 24px;
-`;
-const FormGroup = styled.div`
-  margin-bottom: 18px;
-`;
-const Label = styled.label`
-  display: block;
-  margin-bottom: 8px;
-  color: #94a3b8;
-  font-size: 0.95rem;
-  font-weight: 500;
-`;
-const Input = styled.input`
-  width: 100%;
-  padding: 12px 14px;
-  background: rgba(30, 41, 59, 0.5);
-  border: 1px solid #14b8a6;
-  border-radius: 12px;
-  color: white;
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
-  &:focus {
-    outline: none;
-    border-color: #06b6d4;
-    box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
-  }
-`;
-const PasswordWrapper = styled.div`
-  position: relative;
-`;
-const EyeButton = styled.button`
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #94a3b8;
-  cursor: pointer;
-  font-size: 18px;
-  transition: color 0.3s ease;
-  &:hover {
-    color: #06b6d4;
-  }
-`;
-const ModalButtons = styled.div`
-  display: flex;
-  gap: 12px;
-  margin-top: 24px;
-`;
-const PrimaryButton = styled.button`
-  flex: 1;
-  padding: 12px;
-  background: linear-gradient(to right, #06b6d4, #22d3ee);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.95rem;
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(6, 182, 212, 0.3);
-  }
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
-const SecondaryButton = styled.button`
-  flex: 1;
-  padding: 12px;
-  background: linear-gradient(to right, #475569, #64748b);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.95rem;
-  &:hover {
-    background: linear-gradient(to right, #334155, #475569);
-    transform: translateY(-2px);
-  }
-`;
-
-// NEW: Create Button
-const CreateButton = styled.button`
-  position: fixed;
-  bottom: 40px;
-  right: 24px;
-  background: linear-gradient(to right, #7acc39, #4ade80);
-  color: white;
-  border: none;
-  padding: 14px 20px;
-  border-radius: 50px;
-  font-weight: bold;
-  font-size: 1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  box-shadow: 0 8px 20px rgba(74, 222, 128, 0.4);
-  transition: all 0.3s ease;
-  z-index: 900;
-
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 12px 25px rgba(74, 222, 128, 0.5);
-  }
-
-  @media (max-width: 768px) {
-    bottom: 16px;
-    right: 16px;
-    padding: 12px 16px;
-    font-size: 0.9rem;
-  }
-`;
-
-// Main Component
-const SuperAffiliate = () => {
+export default function SuperAffiliate() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Edit Modal
+  // View/Edit Modal
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [viewUser, setViewUser] = useState(null);
   const [passwordForm, setPasswordForm] = useState({
@@ -480,7 +40,7 @@ const SuperAffiliate = () => {
     referCommission: 0,
   });
 
-  // CREATE MODAL
+  // Create Modal
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createForm, setCreateForm] = useState({
     username: "",
@@ -498,13 +58,11 @@ const SuperAffiliate = () => {
     setError(null);
     try {
       const res = await fetch(`${API_URL}/api/super-affiliates`);
-      const contentType = res.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await res.text();
-        throw new Error("Server returned HTML. Check backend.");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to load super affiliates");
       }
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to load");
       setUsers(data.users || []);
     } catch (err) {
       setError(err.message);
@@ -521,7 +79,7 @@ const SuperAffiliate = () => {
   const handleToggleClick = (user) => {
     const isActive = user.isActive ?? false;
     if (isActive) {
-      if (window.confirm("Deactivate this user?")) {
+      if (window.confirm("Deactivate this super affiliate?")) {
         deactivateUser(user._id);
       }
     } else {
@@ -541,10 +99,7 @@ const SuperAffiliate = () => {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Deactivate failed");
-      }
+      if (!res.ok) throw new Error("Deactivate failed");
       toast.success("User deactivated!");
       fetchSuperAffiliates();
     } catch (err) {
@@ -561,12 +116,9 @@ const SuperAffiliate = () => {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(commissionForm),
-        }
+        },
       );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Update failed");
-      }
+      if (!res.ok) throw new Error("Update failed");
       toast.success("User activated & commission updated!");
       setCommissionModalOpen(false);
       setSelectedUser(null);
@@ -586,7 +138,7 @@ const SuperAffiliate = () => {
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     if (!passwordForm.password) {
-      toast.warn("Password is required!");
+      toast.error("Password is required!");
       return;
     }
     try {
@@ -599,12 +151,9 @@ const SuperAffiliate = () => {
             username: passwordForm.username,
             password: passwordForm.password,
           }),
-        }
+        },
       );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Update failed");
-      }
+      if (!res.ok) throw new Error("Update failed");
       toast.success("Credentials updated!");
       setViewModalOpen(false);
       fetchSuperAffiliates();
@@ -613,17 +162,6 @@ const SuperAffiliate = () => {
     }
   };
 
-  const handleCommissionClick = (user) => {
-    setSelectedUser(user);
-    setCommissionForm({
-      gameLossCommission: user.gameLossCommission || 0,
-      depositCommission: user.depositCommission || 0,
-      referCommission: user.referCommission || 0,
-    });
-    setCommissionModalOpen(true);
-  };
-
-  // CREATE USER
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
     if (
@@ -645,9 +183,9 @@ const SuperAffiliate = () => {
           email: createForm.email,
           password: createForm.password,
           whatsapp: createForm.whatsapp,
-          gameLossCommission: createForm.gameLossCommission || 0,
-          depositCommission: createForm.depositCommission || 0,
-          referCommission: createForm.referCommission || 0,
+          gameLossCommission: Number(createForm.gameLossCommission) || 0,
+          depositCommission: Number(createForm.depositCommission) || 0,
+          referCommission: Number(createForm.referCommission) || 0,
         }),
       });
 
@@ -671,458 +209,599 @@ const SuperAffiliate = () => {
     }
   };
 
+  // Animation variants
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i) => ({ opacity: 1, y: 0, transition: { delay: i * 0.05 } }),
+  };
+
+  const modalVariants = {
+    hidden: { scale: 0.85, opacity: 0 },
+    visible: { scale: 1, opacity: 1, transition: { duration: 0.3 } },
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/30 to-black flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+          className="text-emerald-400 text-6xl"
+        >
+          <FaSpinner />
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/30 to-black flex items-center justify-center p-4">
+        <div className="bg-gradient-to-br from-red-950/70 to-rose-950/60 backdrop-blur-md border border-red-800/50 rounded-2xl p-8 max-w-lg text-center shadow-2xl">
+          <FaExclamationTriangle className="text-6xl text-red-400 mx-auto mb-6" />
+          <h2 className="text-2xl font-bold text-white mb-4">Error</h2>
+          <p className="text-red-300 text-lg">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <>
-      {loading && (
-        <LoadingScreen>
-          <PulseText>Loading Super Affiliates...</PulseText>
-        </LoadingScreen>
-      )}
-      {error && (
-        <ErrorScreen>
-          <ErrorBox>
-            <h2
-              style={{
-                color: "#fca5a5",
-                marginBottom: "16px",
-                fontSize: "1.8rem",
-              }}
-            >
-              Error
-            </h2>
-            <p style={{ marginBottom: "20px", color: "#fecaca" }}>{error}</p>
-            <RetryButton onClick={fetchSuperAffiliates}>Retry</RetryButton>
-          </ErrorBox>
-        </ErrorScreen>
-      )}
-      {!loading && !error && (
-        <Container>
-          <ContentWrapper>
-            <Header>
-              <Title>Super Affiliate Users</Title>
-              <Subtitle>Manage your super affiliates with ease</Subtitle>
-            </Header>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 sm:p-6 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3">
+            Super Affiliate Users
+          </h1>
+          <p className="text-emerald-300/80 text-lg sm:text-xl">
+            Manage your super affiliates with ease
+          </p>
+        </div>
 
-            {users.length === 0 ? (
-              <NoData>No Super Affiliates found</NoData>
-            ) : (
-              <>
-                {/* Desktop Table */}
-                <TableContainer>
-                  <StyledTable>
-                    <Thead>
-                      <tr>
-                        <Th>Username</Th>
-                        <Th>Email</Th>
-                        <Th>WhatsApp</Th>
-                        <Th>Balance</Th>
-                        <Th>Status</Th>
-                        <Th>Toggle</Th>
-                        <Th>Edit</Th>
-                        <Th>Set Commission</Th>
-                      </tr>
-                    </Thead>
-                    <tbody>
-                      {users.map((user) => {
-                        const isActive = user.isActive ?? false;
-                        return (
-                          <Tr key={user._id}>
-                            <Td style={{ fontWeight: "500", color: "#e2e8f0" }}>
-                              {user.username}
-                            </Td>
-                            <Td
-                              style={{
-                                fontSize: "0.9rem",
-                                wordBreak: "break-all",
-                                color: "#94a3b8",
-                              }}
-                            >
-                              {user.email}
-                            </Td>
-                            <Td
-                              style={{ fontSize: "0.9rem", color: "#94a3b8" }}
-                            >
-                              {user.whatsapp}
-                            </Td>
-                            <Td
-                              style={{ fontWeight: "bold", color: "#34d399" }}
-                            >
-                              ৳{user.balance || 0}
-                            </Td>
-                            <Td style={{ textAlign: "center" }}>
-                              <StatusBadge active={isActive}>
-                                {isActive ? "Active" : "Inactive"}
-                              </StatusBadge>
-                            </Td>
-                            <Td style={{ textAlign: "center" }}>
-                              <ToggleButton
-                                onClick={() => handleToggleClick(user)}
-                                active={isActive}
-                              >
-                                {isActive ? <FaToggleOn /> : <FaToggleOff />}
-                              </ToggleButton>
-                            </Td>
-                            <Td style={{ textAlign: "center" }}>
-                              <EditButton onClick={() => handleViewUser(user)}>
-                                <FaEye />
-                              </EditButton>
-                            </Td>
-                            <Td style={{ textAlign: "center" }}>
-                              <CommissionButton
-                                onClick={() => handleCommissionClick(user)}
-                              >
-                                Edit Commission
-                              </CommissionButton>
-                            </Td>
-                          </Tr>
-                        );
-                      })}
-                    </tbody>
-                  </StyledTable>
-                </TableContainer>
+        {/* Create Button */}
+        <div className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 z-50">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setCreateModalOpen(true)}
+            className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-5 sm:px-6 py-3 sm:py-4 rounded-full font-bold shadow-2xl cursor-pointer"
+          >
+            <FaPlus className="text-xl" />
+            Create
+          </motion.button>
+        </div>
 
-                {/* Mobile Cards */}
-                <CardsContainer>
-                  {users.map((user) => {
+        {users.length === 0 ? (
+          <div className="text-center py-20 text-gray-400 text-xl">
+            No Super Affiliates found
+          </div>
+        ) : (
+          <>
+            {/* Desktop Table */}
+            <div className="hidden lg:block overflow-x-auto rounded-2xl border border-emerald-800/40 bg-gray-900/40 backdrop-blur-md shadow-2xl mb-10">
+              <table className="w-full min-w-[1000px] text-left">
+                <thead>
+                  <tr className="bg-gradient-to-r from-emerald-950/80 to-gray-900/80 border-b border-emerald-800/50">
+                    <th className="px-6 py-5 text-emerald-300 font-semibold cursor-default">
+                      Username
+                    </th>
+                    <th className="px-6 py-5 text-emerald-300 font-semibold cursor-default">
+                      Email
+                    </th>
+                    <th className="px-6 py-5 text-emerald-300 font-semibold cursor-default">
+                      WhatsApp
+                    </th>
+                    <th className="px-6 py-5 text-emerald-300 font-semibold cursor-default">
+                      Balance
+                    </th>
+                    <th className="px-6 py-5 text-emerald-300 font-semibold cursor-default">
+                      Status
+                    </th>
+                    <th className="px-6 py-5 text-emerald-300 font-semibold cursor-default">
+                      Toggle
+                    </th>
+                    <th className="px-6 py-5 text-emerald-300 font-semibold cursor-default">
+                      Edit
+                    </th>
+                    <th className="px-6 py-5 text-emerald-300 font-semibold cursor-default">
+                      Commission
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((user, idx) => {
                     const isActive = user.isActive ?? false;
                     return (
-                      <Card key={user._id}>
-                        <CardHeader>
-                          <CardTitle>{user.username}</CardTitle>
-                          <CardStatus active={isActive}>
+                      <motion.tr
+                        key={user._id}
+                        custom={idx}
+                        variants={cardVariants}
+                        initial="hidden"
+                        animate="visible"
+                        className="border-b border-emerald-900/40 hover:bg-emerald-950/40 transition-colors cursor-pointer group"
+                      >
+                        <td className="px-6 py-5 text-gray-200 font-medium group-hover:text-emerald-300 transition-colors">
+                          {user.username}
+                        </td>
+                        <td className="px-6 py-5 text-gray-300 break-all">
+                          {user.email}
+                        </td>
+                        <td className="px-6 py-5 text-gray-300">
+                          {user.whatsapp}
+                        </td>
+                        <td className="px-6 py-5 text-emerald-400 font-bold">
+                          ৳{user.balance || 0}
+                        </td>
+                        <td className="px-6 py-5 text-center">
+                          <span
+                            className={`inline-block px-4 py-1.5 rounded-full text-sm font-semibold ${
+                              isActive
+                                ? "bg-emerald-700/50 text-emerald-200 border border-emerald-600/50"
+                                : "bg-rose-700/50 text-rose-200 border border-rose-600/50"
+                            }`}
+                          >
                             {isActive ? "Active" : "Inactive"}
-                          </CardStatus>
-                        </CardHeader>
-                        <CardBody>
-                          <CardItem>
-                            <FaEnvelope /> {user.email}
-                          </CardItem>
-                          <CardItem>
-                            <FaPhone /> {user.whatsapp}
-                          </CardItem>
-                          <CardItem>
-                            <FaDollarSign style={{ color: "#34d399" }} /> ৳
-                            {user.balance || 0}
-                          </CardItem>
-                        </CardBody>
-                        <CardActions>
-                          <ActionButton
-                            className="toggle"
-                            active={isActive}
+                          </span>
+                        </td>
+                        <td className="px-6 py-5 text-center">
+                          <button
                             onClick={() => handleToggleClick(user)}
+                            className="text-3xl text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer p-2 rounded-full hover:bg-emerald-950/50"
                           >
                             {isActive ? <FaToggleOn /> : <FaToggleOff />}
-                            {isActive ? "Deactivate" : "Activate"}
-                          </ActionButton>
-                          <ActionButton
-                            className="edit"
+                          </button>
+                        </td>
+                        <td className="px-6 py-5 text-center">
+                          <button
                             onClick={() => handleViewUser(user)}
+                            className="text-emerald-400 hover:text-emerald-300 text-2xl transition-colors cursor-pointer p-2 rounded-full hover:bg-emerald-950/50"
                           >
-                            <FaEdit /> Edit
-                          </ActionButton>
-                          <ActionButton
-                            className="commission"
-                            onClick={() => handleCommissionClick(user)}
+                            <FaEdit />
+                          </button>
+                        </td>
+                        <td className="px-6 py-5 text-center">
+                          <button
+                            onClick={() => handleToggleClick(user)}
+                            className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white px-5 py-2 rounded-xl font-medium shadow-lg cursor-pointer transition-all hover:shadow-xl"
                           >
-                            <FaCogs /> Commission
-                          </ActionButton>
-                        </CardActions>
-                      </Card>
+                            Edit Commission
+                          </button>
+                        </td>
+                      </motion.tr>
                     );
                   })}
-                </CardsContainer>
-              </>
-            )}
-          </ContentWrapper>
+                </tbody>
+              </table>
+            </div>
 
-          {/* CREATE BUTTON */}
-          <CreateButton onClick={() => setCreateModalOpen(true)}>
-            <FaPlus /> Create Super Affiliate
-          </CreateButton>
-
-          {/* CREATE MODAL */}
-          {createModalOpen && (
-            <ModalOverlay onClick={() => setCreateModalOpen(false)}>
-              <Modal onClick={(e) => e.stopPropagation()}>
-                <ModalTitle>Create Super Affiliate</ModalTitle>
-                <form onSubmit={handleCreateSubmit}>
-                  <FormGroup>
-                    <Label>Username *</Label>
-                    <Input
-                      type="text"
-                      value={createForm.username}
-                      onChange={(e) =>
-                        setCreateForm({
-                          ...createForm,
-                          username: e.target.value,
-                        })
-                      }
-                      required
-                    />
-                  </FormGroup>
-                  <FormGroup>
-                    <Label>Email *</Label>
-                    <Input
-                      type="email"
-                      value={createForm.email}
-                      onChange={(e) =>
-                        setCreateForm({ ...createForm, email: e.target.value })
-                      }
-                      required
-                    />
-                  </FormGroup>
-                  <FormGroup>
-                    <Label>Password *</Label>
-                    <PasswordWrapper>
-                      <Input
-                        type={showCreatePassword ? "text" : "password"}
-                        value={createForm.password}
-                        onChange={(e) =>
-                          setCreateForm({
-                            ...createForm,
-                            password: e.target.value,
-                          })
-                        }
-                        required
-                        style={{ paddingRight: "45px" }}
-                      />
-                      <EyeButton
-                        type="button"
-                        onClick={() =>
-                          setShowCreatePassword(!showCreatePassword)
-                        }
+            {/* Mobile Cards */}
+            <div className="lg:hidden space-y-5 mt-6">
+              {users.map((user, idx) => {
+                const isActive = user.isActive ?? false;
+                return (
+                  <motion.div
+                    key={user._id}
+                    custom={idx}
+                    variants={cardVariants}
+                    initial="hidden"
+                    animate="visible"
+                    whileHover={{ scale: 1.02 }}
+                    className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-5 shadow-xl cursor-pointer group"
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-white group-hover:text-emerald-300 transition-colors">
+                          {user.username}
+                        </h3>
+                        <p className="text-emerald-400 text-sm mt-1">
+                          ৳{user.balance || 0}
+                        </p>
+                      </div>
+                      <span
+                        className={`px-4 py-1.5 rounded-full text-sm font-semibold ${
+                          isActive
+                            ? "bg-emerald-700/50 text-emerald-200 border border-emerald-600/50"
+                            : "bg-rose-700/50 text-rose-200 border border-rose-600/50"
+                        }`}
                       >
-                        {showCreatePassword ? <FaEyeSlash /> : <FaEye />}
-                      </EyeButton>
-                    </PasswordWrapper>
-                  </FormGroup>
-                  <FormGroup>
-                    <Label>WhatsApp *</Label>
-                    <Input
-                      type="text"
-                      value={createForm.whatsapp}
-                      onChange={(e) =>
-                        setCreateForm({
-                          ...createForm,
-                          whatsapp: e.target.value,
-                        })
-                      }
-                      required
-                    />
-                  </FormGroup>
-                  <FormGroup>
-                    <Label>Game Loss Commission (%)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={createForm.gameLossCommission}
-                      onChange={(e) =>
-                        setCreateForm({
-                          ...createForm,
-                          gameLossCommission: e.target.value,
-                        })
-                      }
-                      placeholder="0.00"
-                    />
-                  </FormGroup>
-                  <FormGroup>
-                    <Label>Deposit Commission (%)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={createForm.depositCommission}
-                      onChange={(e) =>
-                        setCreateForm({
-                          ...createForm,
-                          depositCommission: e.target.value,
-                        })
-                      }
-                      placeholder="0.00"
-                    />
-                  </FormGroup>
-                  <FormGroup>
-                    <Label>Refer Commission (%)</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={createForm.referCommission}
-                      onChange={(e) =>
-                        setCreateForm({
-                          ...createForm,
-                          referCommission: e.target.value,
-                        })
-                      }
-                      placeholder="0.00"
-                    />
-                  </FormGroup>
+                        {isActive ? "Active" : "Inactive"}
+                      </span>
+                    </div>
 
-                  <ModalButtons>
-                    <PrimaryButton type="submit">Create User</PrimaryButton>
-                    <SecondaryButton
-                      type="button"
-                      onClick={() => {
-                        setCreateModalOpen(false);
-                        setCreateForm({
-                          username: "",
-                          email: "",
-                          password: "",
-                          whatsapp: "",
-                          gameLossCommission: "",
-                          depositCommission: "",
-                          referCommission: "",
-                        });
-                      }}
-                    >
-                      Cancel
-                    </SecondaryButton>
-                  </ModalButtons>
-                </form>
-              </Modal>
-            </ModalOverlay>
-          )}
+                    <div className="grid grid-cols-2 gap-4 text-sm mb-5 text-gray-300">
+                      <div>
+                        <p className="text-gray-400">Email</p>
+                        <p className="break-all">{user.email}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-400">WhatsApp</p>
+                        <p>{user.whatsapp}</p>
+                      </div>
+                    </div>
 
-          {/* Edit Modal */}
-          {viewModalOpen && viewUser && (
-            <ModalOverlay onClick={() => setViewModalOpen(false)}>
-              <Modal onClick={(e) => e.stopPropagation()}>
-                <ModalTitle>Edit: {viewUser.username}</ModalTitle>
-                <form onSubmit={handlePasswordSubmit}>
-                  <FormGroup>
-                    <Label>Username</Label>
-                    <Input
-                      type="text"
-                      value={passwordForm.username}
-                      onChange={(e) =>
-                        setPasswordForm({
-                          ...passwordForm,
-                          username: e.target.value,
-                        })
-                      }
-                      required
-                    />
-                  </FormGroup>
-                  <FormGroup>
-                    <Label>New Password</Label>
-                    <PasswordWrapper>
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        value={passwordForm.password}
-                        onChange={(e) =>
-                          setPasswordForm({
-                            ...passwordForm,
-                            password: e.target.value,
-                          })
-                        }
-                        placeholder="Leave blank to keep current"
-                        style={{ paddingRight: "45px" }}
-                      />
-                      <EyeButton
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <button
+                        onClick={() => handleToggleClick(user)}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-medium cursor-pointer transition-all ${
+                          isActive
+                            ? "bg-rose-700/60 hover:bg-rose-600/70 text-white"
+                            : "bg-emerald-700/60 hover:bg-emerald-600/70 text-white"
+                        }`}
                       >
-                        {showPassword ? <FaEyeSlash /> : <FaEye />}
-                      </EyeButton>
-                    </PasswordWrapper>
-                  </FormGroup>
-                  <ModalButtons>
-                    <PrimaryButton type="submit">Save Changes</PrimaryButton>
-                    <SecondaryButton
-                      type="button"
-                      onClick={() => {
-                        setViewModalOpen(false);
-                        setViewUser(null);
-                        setPasswordForm({ username: "", password: "" });
-                      }}
-                    >
-                      Cancel
-                    </SecondaryButton>
-                  </ModalButtons>
-                </form>
-              </Modal>
-            </ModalOverlay>
-          )}
+                        {isActive ? <FaToggleOn /> : <FaToggleOff />}
+                        {isActive ? "Deactivate" : "Activate"}
+                      </button>
 
-          {/* Commission Modal */}
-          {commissionModalOpen && selectedUser && (
-            <ModalOverlay onClick={() => setCommissionModalOpen(false)}>
-              <Modal onClick={(e) => e.stopPropagation()}>
-                <ModalTitle>
-                  {selectedUser.isActive ? "Update" : "Set"} Commission:{" "}
-                  {selectedUser.username}
-                </ModalTitle>
-                <form onSubmit={handleCommissionSubmit}>
-                  <FormGroup>
-                    <Label>Game Loss Commission (%)</Label>
-                    <Input
-                      type="number"
-                      value={commissionForm.gameLossCommission}
-                      onChange={(e) =>
-                        setCommissionForm({
-                          ...commissionForm,
-                          gameLossCommission: e.target.value,
-                        })
-                      }
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                    />
-                  </FormGroup>
-                  <FormGroup>
-                    <Label>Deposit Commission (%)</Label>
-                    <Input
-                      type="number"
-                      value={commissionForm.depositCommission}
-                      onChange={(e) =>
-                        setCommissionForm({
-                          ...commissionForm,
-                          depositCommission: e.target.value,
-                        })
-                      }
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                    />
-                  </FormGroup>
-                  <FormGroup>
-                    <Label>Refer Commission (%)</Label>
-                    <Input
-                      type="number"
-                      value={commissionForm.referCommission}
-                      onChange={(e) =>
-                        setCommissionForm({
-                          ...commissionForm,
-                          referCommission: e.target.value,
-                        })
-                      }
-                      min="0"
-                      step="0.01"
-                      placeholder="0.00"
-                    />
-                  </FormGroup>
-                  <ModalButtons>
-                    <PrimaryButton type="submit">
-                      {selectedUser.isActive
-                        ? "Update Commission"
-                        : "Update & Activate"}
-                    </PrimaryButton>
-                    <SecondaryButton
-                      type="button"
-                      onClick={() => {
-                        setCommissionModalOpen(false);
-                        setSelectedUser(null);
-                      }}
-                    >
-                      Cancel
-                    </SecondaryButton>
-                  </ModalButtons>
-                </form>
-              </Modal>
-            </ModalOverlay>
-          )}
-        </Container>
+                      <button
+                        onClick={() => handleViewUser(user)}
+                        className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-800/70 hover:bg-gray-700/70 text-emerald-300 rounded-xl font-medium border border-emerald-700/50 cursor-pointer transition-all"
+                      >
+                        <FaEdit />
+                        Edit
+                      </button>
+
+                      <button
+                           onClick={() => handleToggleClick(user)}
+                        className="flex-1 flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white rounded-xl font-medium cursor-pointer transition-all"
+                      >
+                        <FaCogs />
+                        Commission
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Create Modal - Scrollable on Mobile */}
+      {createModalOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            className="bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-lg border border-emerald-800/50 rounded-2xl p-6 sm:p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl my-4"
+          >
+            <h3 className="text-2xl font-bold text-white mb-6 text-center sticky top-0 bg-gradient-to-br from-gray-800/95 to-gray-900/95 z-10 py-2">
+              Create Super Affiliate
+            </h3>
+
+            <form onSubmit={handleCreateSubmit} className="space-y-5">
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Username *
+                </label>
+                <input
+                  type="text"
+                  value={createForm.username}
+                  onChange={(e) =>
+                    setCreateForm({ ...createForm, username: e.target.value })
+                  }
+                  required
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-text"
+                />
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  value={createForm.email}
+                  onChange={(e) =>
+                    setCreateForm({ ...createForm, email: e.target.value })
+                  }
+                  required
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-text"
+                />
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Password *
+                </label>
+                <div className="relative">
+                  <input
+                    type={showCreatePassword ? "text" : "password"}
+                    value={createForm.password}
+                    onChange={(e) =>
+                      setCreateForm({ ...createForm, password: e.target.value })
+                    }
+                    required
+                    className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-text pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCreatePassword(!showCreatePassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-emerald-300 cursor-pointer"
+                  >
+                    {showCreatePassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  WhatsApp *
+                </label>
+                <input
+                  type="text"
+                  value={createForm.whatsapp}
+                  onChange={(e) =>
+                    setCreateForm({ ...createForm, whatsapp: e.target.value })
+                  }
+                  required
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-text"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                <div>
+                  <label className="block text-emerald-300 font-medium mb-2">
+                    Game Loss (%)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={createForm.gameLossCommission}
+                    onChange={(e) =>
+                      setCreateForm({
+                        ...createForm,
+                        gameLossCommission: e.target.value,
+                      })
+                    }
+                    className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-text"
+                  />
+                </div>
+                <div>
+                  <label className="block text-emerald-300 font-medium mb-2">
+                    Deposit (%)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={createForm.depositCommission}
+                    onChange={(e) =>
+                      setCreateForm({
+                        ...createForm,
+                        depositCommission: e.target.value,
+                      })
+                    }
+                    className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-text"
+                  />
+                </div>
+                <div>
+                  <label className="block text-emerald-300 font-medium mb-2">
+                    Refer (%)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={createForm.referCommission}
+                    onChange={(e) =>
+                      setCreateForm({
+                        ...createForm,
+                        referCommission: e.target.value,
+                      })
+                    }
+                    className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-text"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 mt-8 sticky bottom-0 bg-gradient-to-t from-gray-900/95 to-transparent pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-3 rounded-xl font-bold cursor-pointer transition-all shadow-lg"
+                >
+                  Create User
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCreateModalOpen(false);
+                    setCreateForm({
+                      username: "",
+                      email: "",
+                      password: "",
+                      whatsapp: "",
+                      gameLossCommission: "",
+                      depositCommission: "",
+                      referCommission: "",
+                    });
+                  }}
+                  className="flex-1 bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-xl font-bold cursor-pointer transition-all border border-gray-600"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
       )}
-    </>
-  );
-};
 
-export default SuperAffiliate;
+      {/* Edit/View Modal */}
+      {viewModalOpen && viewUser && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-2xl"
+          >
+            <h3 className="text-2xl font-bold text-white mb-6 text-center">
+              Edit: {viewUser.username}
+            </h3>
+
+            <form onSubmit={handlePasswordSubmit} className="space-y-5">
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  value={passwordForm.username}
+                  onChange={(e) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      username: e.target.value,
+                    })
+                  }
+                  required
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-text"
+                />
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  New Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={passwordForm.password}
+                    onChange={(e) =>
+                      setPasswordForm({
+                        ...passwordForm,
+                        password: e.target.value,
+                      })
+                    }
+                    placeholder="Leave blank to keep current"
+                    className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-text pr-12"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-emerald-300 cursor-pointer"
+                  >
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 mt-8">
+                <button
+                  type="submit"
+                  className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-3 rounded-xl font-bold cursor-pointer transition-all shadow-lg"
+                >
+                  Save Changes
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewModalOpen(false);
+                    setViewUser(null);
+                    setPasswordForm({ username: "", password: "" });
+                  }}
+                  className="flex-1 bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-xl font-bold cursor-pointer transition-all border border-gray-600"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Commission Modal */}
+      {commissionModalOpen && selectedUser && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-gradient-to-br from-gray-800/90 to-gray-900/90 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 sm:p-8 max-w-lg w-full shadow-2xl"
+          >
+            <h3 className="text-2xl font-bold text-white mb-6 text-center">
+              {selectedUser.isActive ? "Update" : "Set"} Commission:{" "}
+              {selectedUser.username}
+            </h3>
+
+            <form onSubmit={handleCommissionSubmit} className="space-y-5">
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Game Loss Commission (%)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={commissionForm.gameLossCommission}
+                  onChange={(e) =>
+                    setCommissionForm({
+                      ...commissionForm,
+                      gameLossCommission: Number(e.target.value),
+                    })
+                  }
+                  min="0"
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-text"
+                />
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Deposit Commission (%)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={commissionForm.depositCommission}
+                  onChange={(e) =>
+                    setCommissionForm({
+                      ...commissionForm,
+                      depositCommission: Number(e.target.value),
+                    })
+                  }
+                  min="0"
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-text"
+                />
+              </div>
+
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Refer Commission (%)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={commissionForm.referCommission}
+                  onChange={(e) =>
+                    setCommissionForm({
+                      ...commissionForm,
+                      referCommission: Number(e.target.value),
+                    })
+                  }
+                  min="0"
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-text"
+                />
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 mt-8">
+                <button
+                  type="submit"
+                  className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-3 rounded-xl font-bold cursor-pointer transition-all shadow-lg"
+                >
+                  {selectedUser.isActive
+                    ? "Update Commission"
+                    : "Update & Activate"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCommissionModalOpen(false);
+                    setSelectedUser(null);
+                  }}
+                  className="flex-1 bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-xl font-bold cursor-pointer transition-all border border-gray-600"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+    </div>
+  );
+}

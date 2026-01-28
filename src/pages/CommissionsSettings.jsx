@@ -1,197 +1,13 @@
-// admin/CommissionsSettings.jsx
+// src/pages/CommissionsSettings.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import styled from "styled-components";
+import { motion } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { API_URL } from "../utils/baseURL";
+import { FaSpinner } from "react-icons/fa";
 
-// Mobile-friendly White Design
-const Page = styled.div`
-  min-height: 100vh;
-  background: #f8fafc;
-  padding: 40px 20px;
-  font-family: "Inter", "Segoe UI", sans-serif;
-`;
-
-const Container = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 20px;
-  padding: 40px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e2e8f0;
-`;
-
-const Title = styled.h1`
-  text-align: center;
-  font-size: 38px;
-  font-weight: 800;
-  color: #1e293b;
-  margin-bottom: 40px;
-`;
-
-const Section = styled.div`
-  background: #f1f5f9;
-  padding: 25px;
-  border-radius: 16px;
-  margin-bottom: 35px;
-  border: 1px solid #cbd5e1;
-`;
-
-const SectionTitle = styled.h2`
-  font-size: 24px;
-  color: #0f172a;
-  margin-bottom: 20px;
-  font-weight: 700;
-  border-bottom: 3px solid #3b82f6;
-  display: inline-block;
-  padding-bottom: 6px;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 14px;
-  background: white;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  color: #1e293b;
-  font-size: 16px;
-  margin-bottom: 16px;
-  &:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
-  }
-`;
-
-const Textarea = styled.textarea`
-  width: 100%;
-  padding: 14px;
-  background: white;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  color: #1e293b;
-  font-size: 16px;
-  min-height: 120px;
-  resize: vertical;
-  margin-bottom: 16px;
-  &:focus {
-    outline: none;
-    border-color: #3b82f6;
-  }
-`;
-
-const FileBox = styled.label`
-  display: block;
-  padding: 40px;
-  background: white;
-  border: 3px dashed #94a3b8;
-  border-radius: 16px;
-  text-align: center;
-  cursor: pointer;
-  margin-bottom: 16px;
-  font-size: 17px;
-  color: #64748b;
-  font-weight: 600;
-  &:hover {
-    border-color: #3b82f6;
-    background: #f0f7ff;
-  }
-`;
-
-const Preview = styled.img`
-  width: 120px;
-  height: 120px;
-  object-fit: cover;
-  border-radius: 14px;
-  border: 4px solid #3b82f6;
-  margin: 10px auto;
-  display: block;
-`;
-
-// Mobile Scrollable Table Wrapper
-const TableWrapper = styled.div`
-  overflow-x: auto;
-  border-radius: 12px;
-  margin: 20px 0;
-  border: 2px solid #e2e8f0;
-  background: white;
-`;
-
-const Table = styled.table`
-  width: 100%;
-  min-width: 800px; /* Force horizontal scroll on mobile */
-  border-collapse: collapse;
-`;
-
-const Th = styled.th`
-  background: #3b82f6;
-  color: white;
-  padding: 16px 12px;
-  text-align: center;
-  font-weight: 700;
-  font-size: 15px;
-`;
-
-const Td = styled.td`
-  padding: 14px 12px;
-  text-align: center;
-  border-bottom: 1px solid #e2e8f0;
-`;
-
-const DeleteBtn = styled.button`
-  background: #ef4444;
-  color: white;
-  border: none;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  font-size: 24px;
-  font-weight: bold;
-  cursor: pointer;
-  &:hover {
-    background: #dc2626;
-  }
-`;
-
-const AddBtn = styled.button`
-  background: #3b82f6;
-  color: white;
-  padding: 14px 28px;
-  border: none;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 16px;
-  cursor: pointer;
-  margin-top: 10px;
-  &:hover {
-    background: #2563eb;
-  }
-`;
-
-// Small Save Button
-const SaveBtn = styled.button`
-  width: 100%;
-  max-width: 400px;
-  margin: 40px auto 0;
-  display: block;
-  padding: 18px;
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
-  font-size: 22px;
-  font-weight: 800;
-  border: none;
-  border-radius: 14px;
-  cursor: pointer;
-  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
-  transition: all 0.3s;
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 15px 30px rgba(16, 185, 129, 0.4);
-  }
-`;
-
-const CommissionsSettings = () => {
+export default function CommissionsSettings() {
   const [form, setForm] = useState({
     title: "",
     subtitle: "",
@@ -215,10 +31,11 @@ const CommissionsSettings = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios
-      .get(`${API_URL}/api/commission/admin`)
-      .then((res) => {
+    const fetchData = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/commission/admin`);
         const d = res.data;
+
         setForm({
           title: d.title || "",
           subtitle: d.subtitle || "",
@@ -242,13 +59,20 @@ const CommissionsSettings = () => {
           leftImage: d.leftImage || "",
           leftImageFile: null,
         });
-      })
-      .catch(() => alert("Failed to load data!"))
-      .finally(() => setLoading(false));
+      } catch (err) {
+        console.error("Failed to load commission settings:", err);
+        toast.error("Failed to load settings");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const saveAll = async () => {
     const data = new FormData();
+
     data.append("title", form.title);
     data.append("subtitle", form.subtitle);
     data.append("leftTitle", form.leftTitle);
@@ -277,244 +101,304 @@ const CommissionsSettings = () => {
 
     try {
       await axios.put(`${API_URL}/api/commission`, data);
-      alert("Successfully Saved!");
+      toast.success("Commission settings saved successfully!");
     } catch (err) {
-      alert("Save Failed: " + (err.response?.data?.message || err.message));
+      console.error("Save error:", err);
+      toast.error(err.response?.data?.message || "Failed to save");
     }
   };
 
   if (loading) {
     return (
-      <Page className="flex items-center justify-center">
-        <Title>Loading... Please wait</Title>
-      </Page>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/30 to-black flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+          className="text-emerald-400 text-6xl"
+        >
+          <FaSpinner />
+        </motion.div>
+      </div>
     );
   }
 
   return (
-    <Page>
-      <Container>
-        <Title>Commission Settings Panel</Title>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 sm:p-6 md:p-8">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-8 text-center">
+          Commission Settings Panel
+        </h1>
 
-        {/* Main Title */}
-        <Section>
-          <SectionTitle>Main Title & Subtitle</SectionTitle>
-          <Input
-            placeholder="e.g. Best Commission Rate!"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-          />
-          <Textarea
-            placeholder="Write subtitle here..."
-            value={form.subtitle}
-            onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
-          />
-        </Section>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 sm:p-8 shadow-2xl"
+        >
+          {/* Main Title & Subtitle */}
+          <div className="mb-10">
+            <h3 className="text-xl font-bold text-white mb-4">Main Title & Subtitle</h3>
+            <input
+              placeholder="e.g. Best Commission Rate!"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all mb-4"
+            />
+            <textarea
+              placeholder="Write subtitle here..."
+              value={form.subtitle}
+              onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
+              rows={3}
+              className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all resize-y"
+            />
+          </div>
 
-        {/* Left Content */}
-        <Section>
-          <SectionTitle>Left Section Content</SectionTitle>
-          <Input
-            placeholder="Title"
-            value={form.leftTitle}
-            onChange={(e) => setForm({ ...form, leftTitle: e.target.value })}
-          />
-          <Textarea
-            placeholder="Write description..."
-            value={form.leftDesc}
-            onChange={(e) => setForm({ ...form, leftDesc: e.target.value })}
-          />
-          <Input
-            placeholder="Button Text"
-            value={form.buttonText}
-            onChange={(e) => setForm({ ...form, buttonText: e.target.value })}
-          />
-          <FileBox>
-            Upload Image (Click Here)
+          {/* Left Section */}
+          <div className="mb-10">
+            <h3 className="text-xl font-bold text-white mb-4">Left Section Content</h3>
+            <input
+              placeholder="Title"
+              value={form.leftTitle}
+              onChange={(e) => setForm({ ...form, leftTitle: e.target.value })}
+              className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all mb-4"
+            />
+            <textarea
+              placeholder="Write description..."
+              value={form.leftDesc}
+              onChange={(e) => setForm({ ...form, leftDesc: e.target.value })}
+              rows={4}
+              className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all resize-y mb-4"
+            />
+            <input
+              placeholder="Button Text"
+              value={form.buttonText}
+              onChange={(e) => setForm({ ...form, buttonText: e.target.value })}
+              className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all mb-4"
+            />
+
+            <label className="block text-emerald-300 font-medium mb-2">Left Image</label>
             <input
               type="file"
               accept="image/*"
-              hidden
               onChange={(e) =>
-                setForm({ ...form, leftImageFile: e.target.files[0] })
+                setForm({ ...form, leftImageFile: e.target.files[0] || null })
               }
+              className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-700/50 file:text-emerald-100 hover:file:bg-emerald-600/70 cursor-pointer"
             />
-          </FileBox>
-          {form.leftImageFile ? (
-            <Preview src={URL.createObjectURL(form.leftImageFile)} />
-          ) : form.leftImage ? (
-            <Preview src={`${API_URL}${form.leftImage}`} />
-          ) : null}
-        </Section>
+            {(form.leftImageFile || form.leftImage) && (
+              <div className="mt-4">
+                <img
+                  src={
+                    form.leftImageFile instanceof File
+                      ? URL.createObjectURL(form.leftImageFile)
+                      : form.leftImage.startsWith("http")
+                      ? form.leftImage
+                      : `${API_URL}${form.leftImage}`
+                  }
+                  alt="Left Section Preview"
+                  className="w-full max-h-48 object-cover rounded-xl border border-emerald-700/50 shadow-lg"
+                />
+              </div>
+            )}
+          </div>
 
-        {/* Calculation Items */}
-        <Section>
-          <SectionTitle>How Commission is Calculated</SectionTitle>
-          {form.calcItems.map((item, i) => (
-            <div key={i} style={{ marginBottom: "25px" }}>
-              <Textarea
-                placeholder="e.g. % Commission: (Profit - Bonus) × 50%"
-                value={item.text}
-                onChange={(e) => {
-                  const items = [...form.calcItems];
-                  items[i].text = e.target.value;
-                  setForm({ ...form, calcItems: items });
-                }}
-              />
-              <FileBox style={{ padding: "25px" }}>
-                Upload Icon
+          {/* How Commission is Calculated */}
+          <div className="mb-10">
+            <h3 className="text-xl font-bold text-white mb-4">How Commission is Calculated</h3>
+
+            {form.calcItems.map((item, i) => (
+              <div key={i} className="bg-gray-900/50 border border-emerald-800/50 rounded-xl p-5 mb-6">
+                <textarea
+                  placeholder="e.g. % Commission: (Profit - Bonus) × 50%"
+                  value={item.text}
+                  onChange={(e) => {
+                    const items = [...form.calcItems];
+                    items[i].text = e.target.value;
+                    setForm({ ...form, calcItems: items });
+                  }}
+                  rows={3}
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all resize-y mb-4"
+                />
+
+                <label className="block text-emerald-300 font-medium mb-2">Icon</label>
                 <input
                   type="file"
                   accept="image/*"
-                  hidden
                   onChange={(e) => {
                     const items = [...form.calcItems];
-                    items[i].file = e.target.files[0];
+                    items[i].file = e.target.files[0] || null;
                     setForm({ ...form, calcItems: items });
                   }}
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-700/50 file:text-emerald-100 hover:file:bg-emerald-600/70 cursor-pointer"
                 />
-              </FileBox>
-              {item.file ? (
-                <Preview src={URL.createObjectURL(item.file)} />
-              ) : item.icon ? (
-                <Preview src={`${API_URL}${item.icon}`} />
-              ) : null}
-              <DeleteBtn
-                onClick={() =>
-                  setForm({
-                    ...form,
-                    calcItems: form.calcItems.filter((_, idx) => idx !== i),
-                  })
-                }
-              >
-                X
-              </DeleteBtn>
-            </div>
-          ))}
-          <AddBtn
-            onClick={() =>
-              setForm({
-                ...form,
-                calcItems: [
-                  ...form.calcItems,
-                  { text: "", icon: "", file: null },
-                ],
-              })
-            }
-          >
-            + Add New Item
-          </AddBtn>
-        </Section>
 
-        {/* Commission Table - Mobile Friendly */}
-        <Section>
-          <SectionTitle>Commission Table</SectionTitle>
-          <TableWrapper>
-            <Table>
-              <thead>
-                <tr>
-                  <Th>Member</Th>
-                  <Th>Win/Loss</Th>
-                  <Th>Operation Fee</Th>
-                  <Th>Bonus</Th>
-                  <Th>Action</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {form.tableData.map((row, i) => (
-                  <tr key={i}>
-                    <Td>
-                      <Input
-                        placeholder="Name"
-                        value={row.member}
-                        onChange={(e) => {
-                          const newData = [...form.tableData];
-                          newData[i].member = e.target.value;
-                          setForm({ ...form, tableData: newData });
-                        }}
-                      />
-                    </Td>
-                    <Td>
-                      <Input
-                        type="number"
-                        value={row.win}
-                        onChange={(e) => {
-                          const newData = [...form.tableData];
-                          newData[i].win = Number(e.target.value);
-                          setForm({ ...form, tableData: newData });
-                        }}
-                      />
-                    </Td>
-                    <Td>
-                      <Input
-                        type="number"
-                        value={row.operation}
-                        onChange={(e) => {
-                          const newData = [...form.tableData];
-                          newData[i].operation = Number(e.target.value);
-                          setForm({ ...form, tableData: newData });
-                        }}
-                      />
-                    </Td>
-                    <Td>
-                      <Input
-                        type="number"
-                        value={row.bonus}
-                        onChange={(e) => {
-                          const newData = [...form.tableData];
-                          newData[i].bonus = Number(e.target.value);
-                          setForm({ ...form, tableData: newData });
-                        }}
-                      />
-                    </Td>
-                    <Td>
-                      <DeleteBtn
-                        onClick={() =>
-                          setForm({
-                            ...form,
-                            tableData: form.tableData.filter(
-                              (_, idx) => idx !== i
-                            ),
-                          })
-                        }
-                      >
-                        X
-                      </DeleteBtn>
-                    </Td>
+                {(item.file || item.icon) && (
+                  <div className="mt-4">
+                    <img
+                      src={
+                        item.file instanceof File
+                          ? URL.createObjectURL(item.file)
+                          : item.icon.startsWith("http")
+                          ? item.icon
+                          : `${API_URL}${item.icon}`
+                      }
+                      alt="Calc Icon"
+                      className="w-16 h-16 object-contain rounded-lg border border-emerald-700/50 shadow-md"
+                    />
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setForm({
+                      ...form,
+                      calcItems: form.calcItems.filter((_, idx) => idx !== i),
+                    })
+                  }
+                  className="mt-4 bg-rose-700/60 hover:bg-rose-600/70 text-white px-6 py-2 rounded-xl font-medium cursor-pointer transition-all"
+                >
+                  Remove Item
+                </button>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={() =>
+                setForm({
+                  ...form,
+                  calcItems: [...form.calcItems, { text: "", icon: "", file: null }],
+                })
+              }
+              className="bg-emerald-700/60 hover:bg-emerald-600/70 text-white px-6 py-3 rounded-xl font-medium cursor-pointer transition-all"
+            >
+              + Add New Item
+            </button>
+          </div>
+
+          {/* Commission Table */}
+          <div className="mb-10">
+            <h3 className="text-xl font-bold text-white mb-4">Commission Table</h3>
+
+            <div className="overflow-x-auto rounded-xl border border-emerald-800/50 bg-gray-900/40 backdrop-blur-md shadow-lg">
+              <table className="w-full min-w-[800px] text-left">
+                <thead>
+                  <tr className="bg-gradient-to-r from-emerald-950/80 to-gray-900/80 border-b border-emerald-800/50">
+                    <th className="px-6 py-4 text-emerald-300 font-semibold">Member</th>
+                    <th className="px-6 py-4 text-emerald-300 font-semibold">Win/Loss</th>
+                    <th className="px-6 py-4 text-emerald-300 font-semibold">Operation Fee</th>
+                    <th className="px-6 py-4 text-emerald-300 font-semibold">Bonus</th>
+                    <th className="px-6 py-4 text-emerald-300 font-semibold">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </Table>
-          </TableWrapper>
-          <AddBtn
-            onClick={() =>
-              setForm({
-                ...form,
-                tableData: [
-                  ...form.tableData,
-                  { member: "", win: 0, operation: 0, bonus: 0 },
-                ],
-              })
-            }
+                </thead>
+                <tbody>
+                  {form.tableData.map((row, i) => (
+                    <tr key={i} className="border-b border-emerald-900/40 hover:bg-emerald-950/40 transition-colors">
+                      <td className="px-6 py-4">
+                        <input
+                          placeholder="Name"
+                          value={row.member}
+                          onChange={(e) => {
+                            const newData = [...form.tableData];
+                            newData[i].member = e.target.value;
+                            setForm({ ...form, tableData: newData });
+                          }}
+                          className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30"
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        <input
+                          type="number"
+                          value={row.win}
+                          onChange={(e) => {
+                            const newData = [...form.tableData];
+                            newData[i].win = Number(e.target.value);
+                            setForm({ ...form, tableData: newData });
+                          }}
+                          className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30"
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        <input
+                          type="number"
+                          value={row.operation}
+                          onChange={(e) => {
+                            const newData = [...form.tableData];
+                            newData[i].operation = Number(e.target.value);
+                            setForm({ ...form, tableData: newData });
+                          }}
+                          className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30"
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        <input
+                          type="number"
+                          value={row.bonus}
+                          onChange={(e) => {
+                            const newData = [...form.tableData];
+                            newData[i].bonus = Number(e.target.value);
+                            setForm({ ...form, tableData: newData });
+                          }}
+                          className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30"
+                        />
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setForm({
+                              ...form,
+                              tableData: form.tableData.filter((_, idx) => idx !== i),
+                            })
+                          }
+                          className="bg-rose-700/60 hover:bg-rose-600/70 text-white px-4 py-2 rounded-xl font-medium cursor-pointer transition-all"
+                        >
+                          X
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                setForm({
+                  ...form,
+                  tableData: [...form.tableData, { member: "", win: 0, operation: 0, bonus: 0 }],
+                })
+              }
+              className="bg-emerald-700/60 hover:bg-emerald-600/70 text-white px-6 py-3 rounded-xl font-medium cursor-pointer transition-all mt-4"
+            >
+              + Add New Member
+            </button>
+
+            <div className="mt-6">
+              <label className="block text-emerald-300 font-medium mb-2">Total Commission</label>
+              <input
+                type="number"
+                value={form.totalCommission}
+                onChange={(e) => setForm({ ...form, totalCommission: Number(e.target.value) })}
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Save Button */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={saveAll}
+            className="w-full max-w-md mx-auto mt-12 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-5 rounded-xl font-bold text-xl cursor-pointer transition-all shadow-2xl"
           >
-            + Add New Member
-          </AddBtn>
-          <Input
-            style={{ marginTop: "20px" }}
-            placeholder="Total Commission"
-            type="number"
-            value={form.totalCommission}
-            onChange={(e) =>
-              setForm({ ...form, totalCommission: Number(e.target.value) })
-            }
-          />
-        </Section>
+            SAVE ALL CHANGES
+          </motion.button>
+        </motion.div>
+      </div>
 
-        {/* Small Save Button */}
-        <SaveBtn onClick={saveAll}>SAVE ALL CHANGES</SaveBtn>
-      </Container>
-    </Page>
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+    </div>
   );
-};
-
-export default CommissionsSettings;
+}

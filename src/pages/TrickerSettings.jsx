@@ -1,201 +1,13 @@
-// admin/TrickerSettings.jsx
+// src/pages/TrickerSettings.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import styled from "styled-components";
+import { motion } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { API_URL } from "../utils/baseURL";
+import { FaSpinner } from "react-icons/fa";
 
-// Styled Components
-const Page = styled.div`
-  min-height: 100vh;
-  background: #f9fafb;
-  padding: 40px 20px;
-  font-family: "Inter", "Segoe UI", sans-serif;
-`;
-
-const Container = styled.div`
-  max-width: 1100px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 24px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
-  padding: 50px;
-`;
-
-const Header = styled.div`
-  text-align: center;
-  margin-bottom: 40px;
-`;
-
-const Title = styled.h1`
-  font-size: 42px;
-  font-weight: 800;
-  color: #1f2937;
-  margin: 0;
-`;
-
-const Subtitle = styled.p`
-  font-size: 18px;
-  color: #6b7280;
-  margin-top: 12px;
-`;
-
-const UploadSection = styled.div`
-  background: #f3f4f6;
-  border: 3px dashed #9ca3af;
-  border-radius: 20px;
-  padding: 50px;
-  text-align: center;
-  transition: all 0.3s;
-  &:hover {
-    border-color: #3b82f6;
-    background: #eff6ff;
-  }
-`;
-
-const FileInput = styled.input`
-  display: none;
-`;
-
-const ChooseButton = styled.label`
-  background: #3b82f6;
-  color: white;
-  padding: 16px 40px;
-  font-size: 18px;
-  font-weight: 700;
-  border-radius: 12px;
-  cursor: pointer;
-  display: inline-block;
-  transition: all 0.3s;
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
-  &:hover {
-    background: #2563eb;
-    transform: translateY(-3px);
-  }
-`;
-
-const PreviewBox = styled.div`
-  margin-top: 30px;
-`;
-
-const PreviewText = styled.p`
-  font-size: 18px;
-  color: #374151;
-  margin-bottom: 15px;
-`;
-
-const PreviewImage = styled.img`
-  max-height: 280px;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-`;
-
-const UploadButton = styled.button`
-  margin-top: 20px;
-  background: #10b981;
-  color: white;
-  padding: 14px 40px;
-  font-size: 18px;
-  font-weight: 700;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s;
-  &:hover {
-    background: #059669;
-  }
-  &:disabled {
-    background: #9ca3af;
-    cursor: not-allowed;
-  }
-`;
-
-const ImageGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 24px;
-  margin-top: 50px;
-`;
-
-const ImageCard = styled.div`
-  position: relative;
-  background: white;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s;
-  &:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-  }
-`;
-
-const CardImage = styled.img`
-  width: 100%;
-  height: 160px;
-  object-fit: contain;
-  background: white;
-  padding: 20px;
-`;
-
-const DeleteBtn = styled.button`
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: #ef4444;
-  color: white;
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 50%;
-  font-size: 20px;
-  font-weight: bold;
-  cursor: pointer;
-  opacity: 0;
-  transition: all 0.3s;
-  ${ImageCard}:hover & {
-    opacity: 1;
-  }
-  &:hover {
-    background: #dc2626;
-  }
-`;
-
-const DeleteAllButton = styled.button`
-  display: block;
-  margin: 50px auto 0;
-  background: #dc2626;
-  color: white;
-  padding: 18px 50px;
-  font-size: 20px;
-  font-weight: 800;
-  border: none;
-  border-radius: 50px;
-  cursor: pointer;
-  box-shadow: 0 10px 30px rgba(220, 38, 38, 0.4);
-  transition: all 0.4s;
-  &:hover {
-    transform: translateY(-5px);
-    background: #b91c1c;
-  }
-`;
-
-const EmptyMessage = styled.div`
-  text-align: center;
-  margin-top: 80px;
-  font-size: 22px;
-  color: #6b7280;
-`;
-
-const LoadingScreen = styled.div`
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-  color: #6b7280;
-`;
-
-const TrickerSettings = () => {
+export default function TrickerSettings() {
   const [images, setImages] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -206,17 +18,17 @@ const TrickerSettings = () => {
     loadData();
   }, []);
 
-  const loadData = () => {
-    axios
-      .get(`${API_URL}/api/tricker`)
-      .then((res) => {
-        setImages(res.data.images || []);
-        setLoading(false);
-      })
-      .catch(() => {
-        alert("Failed to load images!");
-        setLoading(false);
-      });
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API_URL}/api/tricker`);
+      setImages(res.data.images || []);
+    } catch (err) {
+      console.error("Failed to load tricker images:", err);
+      toast.error("Failed to load images");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleFileChange = (e) => {
@@ -225,12 +37,12 @@ const TrickerSettings = () => {
 
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
-      alert("Only JPG, JPEG, PNG, WebP allowed!");
+      toast.error("Only JPG, JPEG, PNG, WebP allowed!");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("Image must be less than 5MB!");
+      toast.error("Image must be less than 5MB!");
       return;
     }
 
@@ -251,12 +63,12 @@ const TrickerSettings = () => {
       } else {
         await axios.put(`${API_URL}/api/tricker`, formData);
       }
-      alert("Uploaded successfully!");
+      toast.success("Image uploaded successfully!");
       setSelectedFile(null);
       setPreview(null);
       loadData();
     } catch (err) {
-      alert("Upload failed!");
+      toast.error("Upload failed!");
     } finally {
       setUploading(false);
     }
@@ -264,75 +76,155 @@ const TrickerSettings = () => {
 
   const handleDelete = async (index) => {
     if (!window.confirm("Delete this image?")) return;
-    await axios.delete(`${API_URL}/api/tricker/${index}`);
-    loadData();
+
+    try {
+      await axios.delete(`${API_URL}/api/tricker/${index}`);
+      toast.success("Image deleted!");
+      loadData();
+    } catch (err) {
+      toast.error("Failed to delete image");
+    }
   };
 
   const handleDeleteAll = async () => {
-    if (!window.confirm("Delete ALL images?")) return;
-    await axios.delete(`${API_URL}/api/tricker`);
-    loadData();
+    if (!window.confirm("Delete ALL tricker images?")) return;
+
+    try {
+      await axios.delete(`${API_URL}/api/tricker`);
+      toast.success("All images deleted!");
+      loadData();
+    } catch (err) {
+      toast.error("Failed to delete all images");
+    }
   };
 
   if (loading) {
-    return <LoadingScreen>Loading Tricker Images...</LoadingScreen>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/30 to-black flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+          className="text-emerald-400 text-6xl"
+        >
+          <FaSpinner />
+        </motion.div>
+      </div>
+    );
   }
 
   return (
-    <Page>
-      <Container>
-        <Header>
-          <Title>Tricker Settings</Title>
-          <Subtitle>
-            Add one image at a time (JPG, PNG, WebP - Max 5MB)
-          </Subtitle>
-        </Header>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 sm:p-6 md:p-8">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3 text-center">
+          Tricker Settings
+        </h1>
+        <p className="text-emerald-300/80 text-lg sm:text-xl text-center mb-10">
+          Add one image at a time (JPG, PNG, WebP - Max 5MB)
+        </p>
 
-        <UploadSection>
-          <FileInput
-            type="file"
-            accept="image/jpeg,image/jpg,image/png,image/webp"
-            onChange={handleFileChange}
-            id="file-input"
-          />
-          <ChooseButton htmlFor="file-input">Choose Image</ChooseButton>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 sm:p-8 shadow-2xl"
+        >
+          {/* Upload Area */}
+          <div className="mb-12">
+            <label className="block text-emerald-300 font-medium mb-4 text-lg">
+              Upload Tricker Image
+            </label>
 
-          {preview && (
-            <PreviewBox>
-              <PreviewText>Preview:</PreviewText>
-              <PreviewImage src={preview} alt="Preview" />
-              <UploadButton onClick={handleUpload} disabled={uploading}>
-                {uploading ? "Uploading..." : "Upload Image"}
-              </UploadButton>
-            </PreviewBox>
+            <input
+              type="file"
+              accept="image/jpeg,image/jpg,image/png,image/webp"
+              onChange={handleFileChange}
+              className="hidden"
+              id="tricker-file-input"
+            />
+
+            <label
+              htmlFor="tricker-file-input"
+              className="block w-full bg-gray-900/60 border-2 border-dashed border-emerald-700/50 rounded-xl px-6 py-16 text-center cursor-pointer hover:border-emerald-500/70 hover:bg-gray-900/70 transition-all"
+            >
+              <span className="text-gray-400 text-lg font-medium">
+                Click or drag image here (JPG, PNG, WebP)
+              </span>
+              <span className="text-emerald-400 text-sm mt-2 block">
+                Max 5MB
+              </span>
+            </label>
+
+            {preview && (
+              <div className="mt-8 text-center">
+                <p className="text-emerald-300 font-medium mb-4">Preview:</p>
+                <img
+                  src={preview}
+                  alt="Preview"
+                  className="max-h-64 mx-auto object-contain rounded-xl border border-emerald-700/50 shadow-xl"
+                />
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleUpload}
+                  disabled={uploading}
+                  className="mt-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-10 py-4 rounded-xl font-bold cursor-pointer transition-all shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {uploading ? "Uploading..." : "Upload Image"}
+                </motion.button>
+              </div>
+            )}
+          </div>
+
+          {/* Existing Images */}
+          {images.length > 0 ? (
+            <>
+              <h3 className="text-xl font-bold text-white mb-6">
+                Current Tricker Images
+              </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {images.map((img, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    className="relative bg-gray-900/50 border border-emerald-800/50 rounded-xl overflow-hidden shadow-xl group hover:shadow-2xl transition-all"
+                  >
+                    <img
+                      src={`${API_URL}${img.url}`}
+                      alt={`Tricker ${i + 1}`}
+                      className="w-full h-48 object-contain p-6 bg-gray-950/50"
+                    />
+
+                    <button
+                      onClick={() => handleDelete(i)}
+                      className="absolute top-3 right-3 bg-rose-700/80 hover:bg-rose-600/90 text-white w-10 h-10 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-lg"
+                    >
+                      ×
+                    </button>
+                  </motion.div>
+                ))}
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleDeleteAll}
+                className="mt-10 mx-auto block bg-gradient-to-r from-rose-700 to-red-700 hover:from-rose-600 hover:to-red-600 text-white px-10 py-4 rounded-xl font-bold cursor-pointer transition-all shadow-lg"
+              >
+                Delete All Images
+              </motion.button>
+            </>
+          ) : (
+            <div className="text-center py-20 text-gray-400 text-xl">
+              No tricker images added yet. Upload your first image above.
+            </div>
           )}
-        </UploadSection>
+        </motion.div>
+      </div>
 
-        {images.length > 0 && (
-          <>
-            <ImageGrid>
-              {images.map((img, i) => (
-                <ImageCard key={i}>
-                  <CardImage src={`${API_URL}${img.url}`} alt={img.alt} />
-                  <DeleteBtn onClick={() => handleDelete(i)}>×</DeleteBtn>
-                </ImageCard>
-              ))}
-            </ImageGrid>
-
-            <DeleteAllButton onClick={handleDeleteAll}>
-              Delete All Images
-            </DeleteAllButton>
-          </>
-        )}
-
-        {images.length === 0 && !preview && (
-          <EmptyMessage>
-            No images added yet. Click "Choose Image" to start.
-          </EmptyMessage>
-        )}
-      </Container>
-    </Page>
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+    </div>
   );
-};
-
-export default TrickerSettings;
+}

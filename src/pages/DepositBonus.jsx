@@ -1,245 +1,12 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+// src/pages/DepositBonus.jsx
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import styled from "styled-components";
+import { motion } from "framer-motion";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Loader2 } from "lucide-react";
 import { API_URL } from "../utils/baseURL";
 
-// === তোমার সব Styled Components (একদম আগের মতোই) ===
-const Container = styled.div`
-  padding: 40px 20px;
-  max-width: 1440px;
-  margin: 0 auto;
-  background: linear-gradient(135deg, #e0e7ff 0%, #dbeafe 100%);
-  min-height: 100vh;
-  @media (max-width: 768px) {
-    padding: 20px 15px;
-  }
-`;
-
-const Header = styled.div`
-  margin-bottom: 40px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  @media (max-width: 600px) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-`;
-
-const Title = styled.h1`
-  font-size: 2.5rem;
-  color: #1e1b4b;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  background: linear-gradient(90deg, #7c3aed, #db2777);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  @media (max-width: 600px) {
-    font-size: 1.8rem;
-  }
-`;
-
-const FormCard = styled.form`
-  background: white;
-  padding: 40px;
-  border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  margin-bottom: 48px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
-  }
-  @media (max-width: 768px) {
-    padding: 24px;
-  }
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 12px;
-  margin: 8px 0;
-  border: 2px solid #c3dafe;
-  border-radius: 10px;
-  font-size: 1rem;
-  color: #1e1b4b;
-  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
-  &:focus {
-    outline: none;
-    border-color: #7c3aed;
-    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.2);
-    transform: scale(1.02);
-  }
-  &::placeholder {
-    color: #6b7280;
-    opacity: 0.8;
-  }
-`;
-
-const Select = styled.select`
-  width: 100%;
-  padding: 12px;
-  margin: 8px 0;
-  border: 2px solid #c3dafe;
-  border-radius: 10px;
-  font-size: 1rem;
-  color: #1e1b4b;
-  background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  &:focus {
-    outline: none;
-    border-color: #7c3aed;
-    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.2);
-  }
-`;
-
-const MultiSelectContainer = styled.div`
-  margin: 8px 0;
-`;
-
-const MultiSelectOption = styled.label`
-  display: flex;
-  align-items: center;
-  margin: 12px 0;
-  font-size: 1rem;
-  color: #1e1b4b;
-  cursor: pointer;
-`;
-
-const Checkbox = styled.input`
-  margin-right: 10px;
-  accent-color: #7c3aed;
-  transform: scale(1.2);
-`;
-
-const Button = styled.button`
-  background: linear-gradient(90deg, #7c3aed 0%, #db2777 100%);
-  color: white;
-  padding: 12px 28px;
-  border: none;
-  border-radius: 10px;
-  font-size: 1rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4);
-  }
-  &:disabled {
-    background: #94a3b8;
-    cursor: not-allowed;
-    transform: none;
-  }
-`;
-
-const SecondaryButton = styled(Button)`
-  background: linear-gradient(90deg, #f97316 0%, #facc15 100%);
-  &:hover {
-    box-shadow: 0 8px 20px rgba(249, 115, 22, 0.4);
-  }
-`;
-
-const PromotionGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-  gap: 32px;
-  @media (max-width: 768px) {
-    gap: 20px;
-  }
-`;
-
-const PromotionCard = styled.div`
-  background: white;
-  padding: 28px;
-  border-radius: 16px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  &:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-  }
-`;
-
-const ErrorMessage = styled.p`
-  color: #dc2626;
-  background: #fee2e2;
-  padding: 16px;
-  border-radius: 10px;
-  border-left: 5px solid #dc2626;
-  font-weight: 600;
-`;
-
-const LoadingMessage = styled.p`
-  text-align: center;
-  padding: 20px;
-  background: #e0e7ff;
-  border-radius: 10px;
-  color: #4c1d95;
-  font-weight: 600;
-`;
-
-const FormSection = styled.div`
-  margin-bottom: 32px;
-  padding: 28px;
-  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-  border-radius: 12px;
-`;
-
-const SectionTitle = styled.h3`
-  font-size: 1.5rem;
-  color: #1e1b4b;
-  font-weight: 700;
-  margin-bottom: 20px;
-  background: linear-gradient(90deg, #7c3aed, #db2777);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-`;
-
-const BonusTitle = styled.h4`
-  font-size: 1.1rem;
-  color: #1e1b4b;
-  font-weight: 600;
-  margin: 16px 0 10px;
-  background: linear-gradient(90deg, #3b82f6, #06b6d4);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-`;
-
-const CardText = styled.p`
-  font-size: 1rem;
-  color: #4b5563;
-  margin-bottom: 12px;
-  line-height: 1.7;
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 16px;
-  margin-top: 24px;
-  flex-wrap: wrap;
-`;
-
-const BonusGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  margin-top: 16px;
-`;
-
-const BonusField = styled.div`
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e0e7ff;
-`;
-
-// === Main Component ===
 export default function DepositBonus() {
   const [promotions, setPromotions] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
@@ -256,11 +23,11 @@ export default function DepositBonus() {
 
   // Fetch Data
   const fetchData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
       const [bonusRes, methodRes] = await Promise.all([
         axios.get(`${API_URL}/api/deposit-bonus`),
-        axios.get(`${API_URL}/api/deposit-payment-method/methods`), // তোমার এই API আছে তো?
+        axios.get(`${API_URL}/api/deposit-payment-method/methods`),
       ]);
 
       setPromotions(bonusRes.data.data || []);
@@ -320,10 +87,10 @@ export default function DepositBonus() {
     try {
       if (editingId) {
         await axios.put(`${API_URL}/api/deposit-bonus/${editingId}`, formData);
-        toast.success("Bonus updated successfully!");
+        toast.success("Deposit bonus updated successfully!");
       } else {
         await axios.post(`${API_URL}/api/deposit-bonus`, formData);
-        toast.success("Bonus created successfully!");
+        toast.success("Deposit bonus created successfully!");
       }
       fetchData();
       setFormData(initialForm);
@@ -351,13 +118,13 @@ export default function DepositBonus() {
 
   // Delete
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this bonus permanently?")) return;
+    if (!window.confirm("Delete this deposit bonus permanently?")) return;
     try {
       await axios.delete(`${API_URL}/api/deposit-bonus/${id}`);
-      toast.success("Deleted successfully");
+      toast.success("Deposit bonus deleted!");
       fetchData();
     } catch (err) {
-      toast.error("Delete failed");
+      toast.error("Delete failed!");
     }
   };
 
@@ -368,136 +135,217 @@ export default function DepositBonus() {
   };
 
   return (
-    <Container>
-      <ToastContainer position="top-right" theme="colored" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 sm:p-6 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-10"
+        >
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+            Deposit Bonus Management
+          </h1>
+          <p className="text-emerald-300/80 text-lg sm:text-xl">
+            Configure bonuses for different deposit payment methods
+          </p>
+        </motion.div>
 
-      <Header>
-        <Title>Deposit Bonus Management</Title>
-      </Header>
+        <motion.form
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          onSubmit={handleSubmit}
+          className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 sm:p-8 shadow-2xl mb-12"
+        >
+          <h2 className="text-2xl font-bold text-emerald-300 mb-8 flex items-center gap-3">
+            {editingId ? "Edit Deposit Bonus" : "Create New Deposit Bonus"}
+          </h2>
 
-      <FormCard onSubmit={handleSubmit}>
-        <SectionTitle>
-          {editingId ? "Edit Bonus" : "Create New Bonus"}
-        </SectionTitle>
+          {/* Payment Methods Selection */}
+          <div className="mb-10">
+            <h3 className="text-xl font-bold text-white mb-4">
+              Select Payment Methods
+            </h3>
 
-        <FormSection>
-          <SectionTitle>Select Payment Methods</SectionTitle>
-          {paymentMethods.length === 0 ? (
-            <LoadingMessage>No payment methods found</LoadingMessage>
-          ) : (
-            <MultiSelectContainer>
-              {paymentMethods.map((method) => (
-                <MultiSelectOption key={method._id}>
-                  <Checkbox
-                    type="checkbox"
-                    checked={formData.payment_methods.includes(method._id)}
-                    onChange={() => handleMethodChange(method._id)}
-                  />
-                  {method.methodName}{" "}
-                  {method.methodNameBD && `(${method.methodNameBD})`}
-                </MultiSelectOption>
-              ))}
-            </MultiSelectContainer>
-          )}
-        </FormSection>
-
-        {formData.payment_methods.length > 0 && (
-          <FormSection>
-            <SectionTitle>Bonus Configuration</SectionTitle>
-            <BonusGrid>
-              {formData.payment_methods.map((methodId) => {
-                const method = paymentMethods.find((m) => m._id === methodId);
-                const bonus = formData.promotion_bonuses.find(
-                  (b) => b.payment_method === methodId
-                ) || {
-                  bonus_type: "Fix",
-                  bonus: 0,
-                };
-
-                return (
-                  <BonusField key={methodId}>
-                    <BonusTitle>
-                      {method?.methodName || "Unknown"} Bonus
-                    </BonusTitle>
-                    <Select
-                      value={bonus.bonus_type}
-                      onChange={(e) =>
-                        handleBonusChange(
-                          methodId,
-                          "bonus_type",
-                          e.target.value
-                        )
-                      }
-                    >
-                      <option value="Fix">Fixed Amount</option>
-                      <option value="Percentage">Percentage (%)</option>
-                    </Select>
-                    <Input
-                      type="number"
-                      value={bonus.bonus}
-                      onChange={(e) =>
-                        handleBonusChange(methodId, "bonus", e.target.value)
-                      }
-                      placeholder="Enter bonus value"
-                      min="0"
-                      required
+            {paymentMethods.length === 0 ? (
+              <div className="text-center py-10 text-gray-400">
+                No payment methods found. Add some first.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {paymentMethods.map((method) => (
+                  <label
+                    key={method._id}
+                    className="flex items-center gap-3 p-4 bg-gray-900/50 border border-emerald-800/50 rounded-xl cursor-pointer hover:bg-gray-900/70 transition-all"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={formData.payment_methods.includes(method._id)}
+                      onChange={() => handleMethodChange(method._id)}
+                      className="w-5 h-5 accent-emerald-500 cursor-pointer"
                     />
-                  </BonusField>
-                );
-              })}
-            </BonusGrid>
-          </FormSection>
-        )}
+                    <span className="text-gray-200 font-medium">
+                      {method.methodName}{" "}
+                      {method.methodNameBD && `(${method.methodNameBD})`}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
 
-        <ButtonGroup>
-          <Button type="submit" disabled={submitting || loading}>
-            {editingId ? "Update Bonus" : "Create Bonus"}
-          </Button>
-          {editingId && (
-            <SecondaryButton type="button" onClick={cancelEdit}>
-              Cancel
-            </SecondaryButton>
+          {/* Bonus Configuration */}
+          {formData.payment_methods.length > 0 && (
+            <div className="mb-10">
+              <h3 className="text-xl font-bold text-white mb-4">
+                Bonus Configuration
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {formData.payment_methods.map((methodId) => {
+                  const method = paymentMethods.find((m) => m._id === methodId);
+                  const bonus = formData.promotion_bonuses.find(
+                    (b) => b.payment_method === methodId
+                  ) || {
+                    bonus_type: "Fix",
+                    bonus: 0,
+                  };
+
+                  return (
+                    <div
+                      key={methodId}
+                      className="bg-gray-900/50 border border-emerald-800/50 rounded-xl p-6"
+                    >
+                      <h4 className="text-lg font-bold text-emerald-300 mb-4">
+                        {method?.methodName || "Unknown"} Bonus
+                      </h4>
+
+                      <select
+                        value={bonus.bonus_type}
+                        onChange={(e) =>
+                          handleBonusChange(methodId, "bonus_type", e.target.value)
+                        }
+                        className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-pointer mb-4"
+                      >
+                        <option value="Fix">Fixed Amount</option>
+                        <option value="Percentage">Percentage (%)</option>
+                      </select>
+
+                      <input
+                        type="number"
+                        value={bonus.bonus}
+                        onChange={(e) =>
+                          handleBonusChange(methodId, "bonus", e.target.value)
+                        }
+                        placeholder="Enter bonus value"
+                        min="0"
+                        required
+                        className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
-        </ButtonGroup>
-      </FormCard>
 
-      {loading ? (
-        <LoadingMessage>Loading bonuses...</LoadingMessage>
-      ) : promotions.length === 0 ? (
-        <ErrorMessage>No deposit bonuses created yet.</ErrorMessage>
-      ) : (
-        <PromotionGrid>
-          {promotions.map((bonus) => (
-            <PromotionCard key={bonus._id}>
-              <CardText>
-                <strong>Methods:</strong>{" "}
-                {bonus.payment_methods
-                  .map((m) => m.methodName || m._id)
-                  .join(" • ")}
-              </CardText>
-              <CardText>
-                <strong>Bonuses:</strong>{" "}
-                {bonus.promotion_bonuses
-                  .map(
-                    (b) =>
-                      `${b.payment_method?.methodName || "Unknown"}: ${
-                        b.bonus
-                      } ${b.bonus_type === "Percentage" ? "%" : "৳"} (${
-                        b.bonus_type
-                      })`
-                  )
-                  .join(" | ")}
-              </CardText>
-              <ButtonGroup>
-                <Button onClick={() => handleEdit(bonus)}>Edit</Button>
-                <SecondaryButton onClick={() => handleDelete(bonus._id)}>
-                  Delete
-                </SecondaryButton>
-              </ButtonGroup>
-            </PromotionCard>
-          ))}
-        </PromotionGrid>
-      )}
-    </Container>
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 mt-12">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              type="submit"
+              disabled={submitting || loading}
+              className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-4 rounded-xl font-bold cursor-pointer transition-all shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+            >
+              {submitting && <Loader2 className="w-5 h-5 animate-spin" />}
+              {submitting
+                ? "Saving..."
+                : editingId
+                ? "Update Bonus"
+                : "Create Bonus"}
+            </motion.button>
+
+            {editingId && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.97 }}
+                type="button"
+                onClick={cancelEdit}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-4 rounded-xl font-bold cursor-pointer transition-all border border-gray-600"
+              >
+                Cancel
+              </motion.button>
+            )}
+          </div>
+        </motion.form>
+
+        {/* Existing Promotions */}
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="w-12 h-12 text-emerald-400 animate-spin" />
+          </div>
+        ) : promotions.length === 0 ? (
+          <div className="text-center py-20 text-gray-400 text-xl">
+            No deposit bonuses created yet.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {promotions.map((bonus) => (
+              <motion.div
+                key={bonus._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all group"
+              >
+                <h3 className="text-lg font-bold text-emerald-300 mb-4">
+                  Deposit Bonus Configuration
+                </h3>
+
+                <div className="space-y-3 text-gray-300 mb-6">
+                  <div>
+                    <span className="text-emerald-400 font-medium">Methods:</span>{" "}
+                    {bonus.payment_methods
+                      .map((m) => m.methodName || m._id)
+                      .join(" • ")}
+                  </div>
+
+                  <div>
+                    <span className="text-emerald-400 font-medium">Bonuses:</span>{" "}
+                    {bonus.promotion_bonuses
+                      .map(
+                        (b) =>
+                          `${b.payment_method?.methodName || "Unknown"}: ${
+                            b.bonus
+                          } ${b.bonus_type === "Percentage" ? "%" : "৳"} (${
+                            b.bonus_type
+                          })`
+                      )
+                      .join(" | ")}
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => handleEdit(bonus)}
+                    className="flex-1 bg-emerald-700/60 hover:bg-emerald-600/70 text-white py-3 rounded-xl font-medium cursor-pointer transition-all"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(bonus._id)}
+                    className="flex-1 bg-rose-700/60 hover:bg-rose-600/70 text-white py-3 rounded-xl font-medium cursor-pointer transition-all"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+    </div>
   );
 }

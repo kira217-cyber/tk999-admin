@@ -1,153 +1,31 @@
-// admin/HowToProcessSettings.jsx (ঠিক করা ভার্সন)
+// src/pages/HowToProcessSettings.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import styled from "styled-components";
+import { motion } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { API_URL } from "../utils/baseURL";
+import { FaSpinner } from "react-icons/fa";
 
-const Container = styled.div`
-  padding: 24px;
-  background: #f9fafb;
-  min-height: 100vh;
-`;
-const Title = styled.h1`
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 24px;
-  color: #111827;
-`;
-const Form = styled.form`
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  max-width: 900px;
-`;
-const Label = styled.label`
-  display: block;
-  font-weight: 500;
-  font-size: 14px;
-  margin-bottom: 6px;
-  color: #374151;
-`;
-const Input = styled.input`
-  padding: 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  width: 100%;
-  font-size: 14px;
-  &:focus {
-    outline: none;
-    border-color: #99ff47;
-  }
-`;
-const Textarea = styled.textarea`
-  padding: 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  width: 100%;
-  min-height: 100px;
-  resize: vertical;
-  &:focus {
-    outline: none;
-    border-color: #99ff47;
-  }
-`;
-const FileInput = styled.input.attrs({ type: "file", accept: "image/*" })`
-  padding: 10px;
-  border: 1px dashed #9ca3af;
-  border-radius: 8px;
-  background: #f3f4f6;
-  width: 100%;
-  cursor: pointer;
-`;
-const StepCard = styled.div`
-  border: 1px solid #e5e7eb;
-  padding: 16px;
-  border-radius: 10px;
-  margin-bottom: 16px;
-  background: #fcfcfc;
-`;
-const RemoveBtn = styled.button`
-  background: #ef4444;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 8px;
-  &:hover {
-    background: #dc2626;
-  }
-`;
-const AddStepBtn = styled.button`
-  background: #2563eb;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  &:hover {
-    background: #1d4ed8;
-  }
-`;
-const ActionButtons = styled.div`
-  margin-top: 24px;
-  display: flex;
-  gap: 12px;
-`;
-const SaveBtn = styled.button`
-  background: #16a34a;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  &:hover {
-    opacity: 0.9;
-  }
-`;
-const ResetBtn = styled.button`
-  background: #ef4444;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  &:hover {
-    opacity: 0.9;
-  }
-`;
-const ImagePreview = styled.img`
-  margin-top: 8px;
-  height: 60px;
-  width: 60px;
-  object-fit: contain;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
-`;
-
-const HowToProcessSettings = () => {
+export default function HowToProcessSettings() {
   const [form, setForm] = useState({
     mainHeading: "",
     buttonText: "",
     steps: [],
   });
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios
-      .get(`${API_URL}/api/how-to-process/admin`)
-      .then((res) => {
+    const fetchData = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/how-to-process/admin`);
+        const data = res.data;
+
         setForm({
-          mainHeading: res.data.mainHeading || "",
-          buttonText: res.data.buttonText || "",
-          steps: (res.data.steps || []).map((s) => ({
+          mainHeading: data.mainHeading || "",
+          buttonText: data.buttonText || "",
+          steps: (data.steps || []).map((s) => ({
             _id: s._id,
             title: s.title || "",
             desc: s.desc || "",
@@ -156,8 +34,15 @@ const HowToProcessSettings = () => {
             previewUrl: null,
           })),
         });
-      })
-      .finally(() => setLoading(false));
+      } catch (err) {
+        console.error("Failed to load How To Process settings:", err);
+        toast.error("Failed to load settings");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   const handleIconChange = (index, file) => {
@@ -175,7 +60,7 @@ const HowToProcessSettings = () => {
       ...form,
       steps: [
         ...form.steps,
-        { title: "", desc: "", iconFile: null, iconUrl: "", previewUrl: null },
+        { _id: null, title: "", desc: "", iconFile: null, iconUrl: "", previewUrl: null },
       ],
     });
   };
@@ -187,134 +72,217 @@ const HowToProcessSettings = () => {
     });
   };
 
-  const submit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const data = new FormData();
 
-    data.append("mainHeading", form.mainHeading);
-    data.append("buttonText", form.buttonText);
+    const formData = new FormData();
 
-    // JSON payload
+    formData.append("mainHeading", form.mainHeading);
+    formData.append("buttonText", form.buttonText);
+
+    // Steps JSON (keep _id for updates)
     const stepsPayload = form.steps.map((s) => ({
       _id: s._id,
       title: s.title,
       desc: s.desc,
-      icon: s.iconUrl, // পুরানো URL
+      icon: s.iconUrl || "",
     }));
-    data.append("steps", JSON.stringify(stepsPayload));
+    formData.append("steps", JSON.stringify(stepsPayload));
 
-    // ফাইলগুলো অর্ডার অনুযায়ী পাঠানো হবে → icons[0], icons[1], icons[2]
+    // Append new icon files with index
     form.steps.forEach((step, index) => {
       if (step.iconFile) {
-        data.append(`icons[${index}]`, step.iconFile);
+        formData.append(`icons[${index}]`, step.iconFile);
       }
     });
 
-    // ডিবাগ: কনসোলে দেখুন
-    console.log("FormData entries:");
-    for (let [key, value] of data.entries()) {
-      console.log(key, value);
-    }
-
     try {
-      await axios.put(`${API_URL}/api/how-to-process`, data, {
+      await axios.put(`${API_URL}/api/how-to-process`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      alert("সফলভাবে আপডেট হয়েছে!");
+      toast.success("How To Process settings updated successfully!");
+    } catch (err) {
+      console.error("Submit error:", err);
+      toast.error(err.response?.data?.message || "Failed to update");
+    }
+  };
+
+  const handleReset = async () => {
+    if (!window.confirm("Reset all How To Process settings to default?")) return;
+
+    try {
+      await axios.delete(`${API_URL}/api/how-to-process`);
+      toast.success("Settings reset to default!");
       window.location.reload();
     } catch (err) {
-      console.error("Error:", err.response?.data);
-      alert("Error: " + (err.response?.data?.message || err.message));
+      toast.error(err.response?.data?.message || "Failed to reset");
     }
   };
 
-  const handleDelete = async () => {
-    if (window.confirm("সব মুছে ফেলবেন?")) {
-      await axios.delete(`${API_URL}/api/how-to-process`);
-      alert("রিসেট হয়েছে।");
-      window.location.reload();
-    }
-  };
-
-  if (loading)
+  if (loading) {
     return (
-      <Container>
-        <Title>লোড হচ্ছে...</Title>
-      </Container>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/30 to-black flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+          className="text-emerald-400 text-6xl"
+        >
+          <FaSpinner />
+        </motion.div>
+      </div>
     );
+  }
 
   return (
-    <Container>
-      <Title>How To Process Settings</Title>
-      <Form onSubmit={submit}>
-        <Label>Main Heading</Label>
-        <Input
-          value={form.mainHeading}
-          onChange={(e) => setForm({ ...form, mainHeading: e.target.value })}
-        />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 sm:p-6 md:p-8">
+      <div className="max-w-5xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-8 text-center">
+          How To Process Settings
+        </h1>
 
-        <Label className="mt-4">Button Text</Label>
-        <Input
-          value={form.buttonText}
-          onChange={(e) => setForm({ ...form, buttonText: e.target.value })}
-        />
+        <motion.form
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          onSubmit={handleSubmit}
+          className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 sm:p-8 shadow-2xl mb-12"
+        >
+          {/* Main Heading */}
+          <div className="mb-8">
+            <label className="block text-emerald-300 font-medium mb-3 text-lg">
+              Main Heading
+            </label>
+            <input
+              type="text"
+              value={form.mainHeading}
+              onChange={(e) => setForm({ ...form, mainHeading: e.target.value })}
+              className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+            />
+          </div>
 
-        <Label className="mt-6">Steps</Label>
-        {form.steps.map((step, i) => (
-          <StepCard key={i}>
-            <Input
-              placeholder="Title"
-              value={step.title}
-              onChange={(e) => {
-                const newSteps = [...form.steps];
-                newSteps[i].title = e.target.value;
-                setForm({ ...form, steps: newSteps });
-              }}
-              style={{ marginBottom: "12px" }}
+          {/* Button Text */}
+          <div className="mb-10">
+            <label className="block text-emerald-300 font-medium mb-3 text-lg">
+              Button Text
+            </label>
+            <input
+              type="text"
+              value={form.buttonText}
+              onChange={(e) => setForm({ ...form, buttonText: e.target.value })}
+              className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
             />
-            <Textarea
-              placeholder="Description"
-              value={step.desc}
-              onChange={(e) => {
-                const newSteps = [...form.steps];
-                newSteps[i].desc = e.target.value;
-                setForm({ ...form, steps: newSteps });
-              }}
-              style={{ marginBottom: "12px" }}
-            />
-            <Label>Icon Image</Label>
-            <FileInput
-              onChange={(e) => handleIconChange(i, e.target.files[0])}
-            />
-            {(step.previewUrl || step.iconUrl) && (
-              <ImagePreview
-                src={
-                  step.previewUrl ||
-                  (step.iconUrl.includes("http")
-                    ? step.iconUrl
-                    : `${API_URL}${step.iconUrl}`)
-                }
-                alt="icon"
-              />
-            )}
-            <RemoveBtn type="button" onClick={() => removeStep(i)}>
-              Remove
-            </RemoveBtn>
-          </StepCard>
-        ))}
-        <AddStepBtn type="button" onClick={addStep}>
-          + Add Step
-        </AddStepBtn>
+          </div>
 
-        <ActionButtons>
-          <SaveBtn type="submit">Save Changes</SaveBtn>
-          <ResetBtn type="button" onClick={handleDelete}>
-            Reset All
-          </ResetBtn>
-        </ActionButtons>
-      </Form>
-    </Container>
+          {/* Steps Section */}
+          <div className="mb-10">
+            <h3 className="text-xl font-bold text-white mb-4">Process Steps</h3>
+
+            {form.steps.map((step, index) => (
+              <motion.div
+                key={step._id || index}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-gray-900/50 border border-emerald-800/50 rounded-xl p-5 mb-6 shadow-lg"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-emerald-300 font-medium mb-2">Step Title</label>
+                    <input
+                      type="text"
+                      value={step.title}
+                      onChange={(e) => {
+                        const newSteps = [...form.steps];
+                        newSteps[index].title = e.target.value;
+                        setForm({ ...form, steps: newSteps });
+                      }}
+                      placeholder="e.g. Step 1 - Register"
+                      className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-emerald-300 font-medium mb-2">Description</label>
+                    <textarea
+                      value={step.desc}
+                      onChange={(e) => {
+                        const newSteps = [...form.steps];
+                        newSteps[index].desc = e.target.value;
+                        setForm({ ...form, steps: newSteps });
+                      }}
+                      placeholder="Detailed step description..."
+                      rows={4}
+                      className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all resize-y"
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-emerald-300 font-medium mb-2">Step Icon</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleIconChange(index, e.target.files[0])}
+                      className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-700/50 file:text-emerald-100 hover:file:bg-emerald-600/70 cursor-pointer"
+                    />
+                    {(step.previewUrl || step.iconUrl) && (
+                      <div className="mt-4">
+                        <img
+                          src={
+                            step.previewUrl ||
+                            (step.iconUrl.startsWith("http")
+                              ? step.iconUrl
+                              : `${API_URL}${step.iconUrl}`)
+                          }
+                          alt="Step Icon Preview"
+                          className="w-16 h-16 object-contain rounded-lg border border-emerald-700/50 shadow-md"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => removeStep(index)}
+                  className="mt-4 bg-rose-700/60 hover:bg-rose-600/70 text-white px-6 py-2 rounded-xl font-medium cursor-pointer transition-all"
+                >
+                  Remove Step
+                </button>
+              </motion.div>
+            ))}
+
+            <button
+              type="button"
+              onClick={addStep}
+              className="bg-emerald-700/60 hover:bg-emerald-600/70 text-white px-6 py-3 rounded-xl font-medium cursor-pointer transition-all mt-4"
+            >
+              + Add New Step
+            </button>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 mt-12">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              type="submit"
+              className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-4 rounded-xl font-bold cursor-pointer transition-all shadow-lg"
+            >
+              Save Changes
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              type="button"
+              onClick={handleReset}
+              className="flex-1 bg-gradient-to-r from-rose-700 to-red-700 hover:from-rose-600 hover:to-red-600 text-white py-4 rounded-xl font-bold cursor-pointer transition-all shadow-lg"
+            >
+              Reset to Default
+            </motion.button>
+          </div>
+        </motion.form>
+      </div>
+
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+    </div>
   );
-};
-
-export default HowToProcessSettings;
+}

@@ -1,257 +1,13 @@
-import { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-import styled from "styled-components";
-import { FaSave, FaTimes, FaUpload } from "react-icons/fa";
+import { motion } from "framer-motion";
+import { FaSave, FaTimes, FaUpload, FaSpinner } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { baseURL_For_IMG_UPLOAD, API_URL } from "../../utils/baseURL";
 
-// Colorful & Modern Styled Components
-const EditContainer = styled.div`
-  padding: 2.5rem;
-  background: #ffffff;
-  border-radius: 1rem;
-  box-shadow: 0 15px 40px rgba(99, 86, 246, 0.2);
-  max-width: 1200px;
-  margin: 0 auto;
-`;
-
-const EditTitle = styled.h2`
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #4f46e5;
-  margin-bottom: 2rem;
-  text-align: center;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-`;
-
-const FormGrid = styled.div`
-  display: grid;
-  gap: 1.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-`;
-
-const FormItem = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-`;
-
-const FormLabel = styled.label`
-  font-weight: 700;
-  color: #4f46e5;
-  font-size: 1rem;
-`;
-
-const FormInput = styled.input`
-  height: 3rem;
-  padding: 0 1rem;
-  border: 2px solid #e0e7ff;
-  border-radius: 0.75rem;
-  font-size: 1rem;
-  background: #f8fafc;
-  outline: none;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 10px rgba(99, 86, 246, 0.1);
-
-  &:focus {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 4px rgba(99, 86, 246, 0.3);
-    background: #ffffff;
-  }
-
-  &::placeholder {
-    color: #94a3b8;
-  }
-`;
-
-const FormSelect = styled.select`
-  height: 3rem;
-  padding: 0 1rem;
-  border: 2px solid #e0e7ff;
-  border-radius: 0.75rem;
-  background: #f8fafc;
-  font-size: 1rem;
-  outline: none;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 10px rgba(99, 86, 246, 0.1);
-
-  &:focus {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 4px rgba(99, 86, 246, 0.3);
-  }
-`;
-
-const FormCheckbox = styled.input`
-  width: 24px;
-  height: 24px;
-  accent-color: #6366f1;
-  cursor: pointer;
-`;
-
-const ButtonContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  gap: 1.5rem;
-  margin-top: 3rem;
-`;
-
-const SaveButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 1rem 2rem;
-  background: linear-gradient(90deg, #10b981, #34d399);
-  color: white;
-  border: none;
-  border-radius: 0.75rem;
-  font-weight: 600;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 15px 35px rgba(16, 185, 129, 0.4);
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    transform: none;
-  }
-`;
-
-const CancelButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 1rem 2rem;
-  background: linear-gradient(90deg, #ef4444, #f87171);
-  color: white;
-  border: none;
-  border-radius: 0.75rem;
-  font-weight: 600;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 15px 35px rgba(239, 68, 68, 0.4);
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    transform: none;
-  }
-`;
-
-const ImageUploadContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  align-items: center;
-`;
-
-const ImagePreview = styled.img`
-  width: 140px;
-  height: 140px;
-  object-fit: cover;
-  border-radius: 1rem;
-  border: 4px solid #6366f1;
-  box-shadow: 0 15px 30px rgba(99, 86, 246, 0.3);
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: scale(1.05);
-  }
-`;
-
-const UploadButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6);
-  color: white;
-  border: none;
-  border-radius: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 8px 20px rgba(99, 86, 246, 0.3);
-
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 30px rgba(99, 86, 246, 0.4);
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-`;
-
-const HiddenFileInput = styled.input`
-  display: none;
-`;
-
-const LoadingContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 70vh;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #6366f1;
-  gap: 1.5rem;
-`;
-
-const StyledSpinner = styled.div`
-  border: 6px solid #e0e7ff;
-  border-top: 6px solid #6366f1;
-  border-right: 6px solid #ec4899;
-  border-radius: 50%;
-  width: 4.5rem;
-  height: 4.5rem;
-  animation: spin 1s linear infinite;
-
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-`;
-
-const ErrorAlert = styled.div`
-  padding: 2rem;
-  background: linear-gradient(90deg, #fee2e2, #fecaca);
-  color: #dc2626;
-  border-radius: 1rem;
-  text-align: center;
-  font-weight: 700;
-  font-size: 1.25rem;
-  box-shadow: 0 15px 35px rgba(220, 38, 38, 0.15);
-  border: 2px solid #fca5a5;
-  margin: 2rem;
-`;
-
-const UserDetailsEditProfile = ({ onCancel }) => {
+export default function UserDetailsEditProfile({ onCancel }) {
   const { userId } = useParams();
   const fileInputRef = useRef(null);
 
@@ -293,9 +49,13 @@ const UserDetailsEditProfile = ({ onCancel }) => {
         setImagePreview(user.profileImage || null);
         setOriginalImage(user.profileImage || null);
       } catch (err) {
-        const msg = err.response?.data?.message || "Failed to load user";
+        const msg = err.response?.data?.message || "Failed to load user data";
         setError(msg);
-        toast.error(msg);
+        toast.error(msg, {
+          position: "top-right",
+          autoClose: 4000,
+          theme: "dark",
+        });
       } finally {
         setLoading(false);
       }
@@ -312,8 +72,8 @@ const UserDetailsEditProfile = ({ onCancel }) => {
         type === "checkbox"
           ? checked
           : type === "number"
-          ? Number(value)
-          : value,
+            ? Number(value)
+            : value,
     }));
   };
 
@@ -338,9 +98,19 @@ const UserDetailsEditProfile = ({ onCancel }) => {
 
     try {
       const res = await axios.post(baseURL_For_IMG_UPLOAD, form);
+      toast.success("Image uploaded successfully!", {
+        position: "top-right",
+        autoClose: 3000,
+        theme: "dark",
+      });
       return res.data.imageUrl;
     } catch (err) {
-      toast.error("Image upload failed");
+      const msg = err.response?.data?.message || "Image upload failed";
+      toast.error(msg, {
+        position: "top-right",
+        autoClose: 5000,
+        theme: "dark",
+      });
       return null;
     } finally {
       setUploading(false);
@@ -375,12 +145,21 @@ const UserDetailsEditProfile = ({ onCancel }) => {
 
       await axios.put(`${API_URL}/api/users/${userId}`, payload);
 
-      toast.success("Profile updated successfully!");
-      onCancel();
+      toast.success("Profile updated successfully!", {
+        position: "top-right",
+        autoClose: 3000,
+        theme: "dark",
+      });
+
+      onCancel(); // Close edit mode
     } catch (err) {
-      console.error(err);
+      console.error("Update error:", err);
       const msg = err.response?.data?.message || "Failed to update profile";
-      toast.error(msg);
+      toast.error(msg, {
+        position: "top-right",
+        autoClose: 5000,
+        theme: "dark",
+      });
     } finally {
       setSaving(false);
     }
@@ -388,257 +167,257 @@ const UserDetailsEditProfile = ({ onCancel }) => {
 
   if (loading) {
     return (
-      <LoadingContainer>
-        <StyledSpinner />
-        <div>Loading user data...</div>
-      </LoadingContainer>
+      <div className="min-h-[70vh] flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+          className="text-emerald-400 text-6xl"
+        >
+          <FaSpinner />
+        </motion.div>
+      </div>
     );
   }
 
   if (error) {
-    return <ErrorAlert>{error}</ErrorAlert>;
+    return (
+      <div className="bg-gradient-to-br from-red-950/70 to-rose-950/60 backdrop-blur-md border border-red-800/40 rounded-2xl p-8 sm:p-10 text-center shadow-2xl max-w-lg mx-auto">
+        <FaExclamationTriangle className="text-6xl text-red-400 mx-auto mb-6" />
+        <h2 className="text-2xl font-bold text-white mb-4">Error</h2>
+        <p className="text-red-300 text-base sm:text-lg">{error}</p>
+      </div>
+    );
   }
 
   return (
-    <>
-      <EditContainer>
-        <EditTitle>Edit User Profile</EditTitle>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 md:p-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-6xl mx-auto bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl shadow-2xl p-6 md:p-10"
+      >
+        <h2 className="text-3xl md:text-4xl font-bold text-white mb-10 text-center">
+          Edit User Profile
+        </h2>
 
         <form onSubmit={handleSubmit}>
-          <FormGrid>
-            <FormItem>
-              <FormLabel>Username</FormLabel>
-              <FormInput
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Username */}
+            <div className="space-y-2">
+              <label className="block text-emerald-300 font-medium">
+                Username
+              </label>
+              <input
                 type="text"
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
               />
-            </FormItem>
+            </div>
 
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormInput
+            {/* Email */}
+            <div className="space-y-2">
+              <label className="block text-emerald-300 font-medium">
+                Email
+              </label>
+              <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
               />
-            </FormItem>
+            </div>
 
-            <FormItem>
-              <FormLabel>Whatsapp (Phone)</FormLabel>
-              <FormInput
+            {/* Whatsapp */}
+            <div className="space-y-2">
+              <label className="block text-emerald-300 font-medium">
+                Whatsapp / Phone
+              </label>
+              <input
                 type="text"
                 name="whatsapp"
                 value={formData.whatsapp}
                 onChange={handleChange}
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
               />
-            </FormItem>
+            </div>
 
-            <FormItem>
-              <FormLabel>Password (leave blank to keep current)</FormLabel>
-              <FormInput
+            {/* Password */}
+            <div className="space-y-2">
+              <label className="block text-emerald-300 font-medium">
+                Password (leave blank to keep current)
+              </label>
+              <input
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="New password only"
+                placeholder="New password (optional)"
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
               />
-            </FormItem>
+            </div>
 
-            <FormItem>
-              <FormLabel>Role</FormLabel>
-              <FormSelect
+            {/* Role */}
+            <div className="space-y-2">
+              <label className="block text-emerald-300 font-medium">Role</label>
+              <select
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all cursor-pointer"
               >
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
-              </FormSelect>
-            </FormItem>
+              </select>
+            </div>
 
-            <FormItem>
-              <FormLabel>Active Status</FormLabel>
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.75rem",
-                }}
-              >
-                <FormCheckbox
+            {/* Active Status */}
+            <div className="space-y-2">
+              <label className="block text-emerald-300 font-medium">
+                Active Status
+              </label>
+              <div className="flex items-center gap-3">
+                <input
                   type="checkbox"
                   name="isActive"
                   checked={formData.isActive}
                   onChange={handleChange}
+                  className="w-6 h-6 accent-emerald-500 cursor-pointer"
                 />
                 <span
-                  style={{
-                    color: formData.isActive ? "#10b981" : "#ef4444",
-                    fontWeight: "600",
-                  }}
+                  className={`font-semibold text-lg ${
+                    formData.isActive ? "text-emerald-400" : "text-rose-400"
+                  }`}
                 >
                   {formData.isActive ? "Active" : "Inactive"}
                 </span>
               </div>
-            </FormItem>
+            </div>
 
-            <FormItem>
-              <FormLabel>Balance</FormLabel>
-              <FormInput
-                type="number"
-                name="balance"
-                value={formData.balance}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-              />
-            </FormItem>
+            {/* Balance & Commission Fields */}
+            {[
+              { label: "Balance", name: "balance" },
+              { label: "Commission Balance", name: "commissionBalance" },
+              { label: "Game Loss Commission", name: "gameLossCommission" },
+              { label: "Deposit Commission", name: "depositCommission" },
+              { label: "Refer Commission", name: "referCommission" },
+              {
+                label: "Game Loss Comm. Balance",
+                name: "gameLossCommissionBalance",
+              },
+              {
+                label: "Deposit Comm. Balance",
+                name: "depositCommissionBalance",
+              },
+              { label: "Refer Comm. Balance", name: "referCommissionBalance" },
+              { label: "Referral Code", name: "referralCode" },
+            ].map((field) => (
+              <div key={field.name} className="space-y-2">
+                <label className="block text-emerald-300 font-medium">
+                  {field.label}
+                </label>
+                <input
+                  type={field.name === "referralCode" ? "text" : "number"}
+                  name={field.name}
+                  value={formData[field.name]}
+                  onChange={handleChange}
+                  min={
+                    field.name.includes("Commission") ||
+                    field.name === "balance"
+                      ? "0"
+                      : undefined
+                  }
+                  step="0.01"
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                />
+              </div>
+            ))}
 
-            <FormItem>
-              <FormLabel>Commission Balance</FormLabel>
-              <FormInput
-                type="number"
-                name="commissionBalance"
-                value={formData.commissionBalance}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-              />
-            </FormItem>
-
-            <FormItem>
-              <FormLabel>Game Loss Commission</FormLabel>
-              <FormInput
-                type="number"
-                name="gameLossCommission"
-                value={formData.gameLossCommission}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-              />
-            </FormItem>
-
-            <FormItem>
-              <FormLabel>Deposit Commission</FormLabel>
-              <FormInput
-                type="number"
-                name="depositCommission"
-                value={formData.depositCommission}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-              />
-            </FormItem>
-
-            <FormItem>
-              <FormLabel>Refer Commission</FormLabel>
-              <FormInput
-                type="number"
-                name="referCommission"
-                value={formData.referCommission}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-              />
-            </FormItem>
-
-            <FormItem>
-              <FormLabel>Game Loss Comm. Balance</FormLabel>
-              <FormInput
-                type="number"
-                name="gameLossCommissionBalance"
-                value={formData.gameLossCommissionBalance}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-              />
-            </FormItem>
-
-            <FormItem>
-              <FormLabel>Deposit Comm. Balance</FormLabel>
-              <FormInput
-                type="number"
-                name="depositCommissionBalance"
-                value={formData.depositCommissionBalance}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-              />
-            </FormItem>
-
-            <FormItem>
-              <FormLabel>Refer Comm. Balance</FormLabel>
-              <FormInput
-                type="number"
-                name="referCommissionBalance"
-                value={formData.referCommissionBalance}
-                onChange={handleChange}
-                min="0"
-                step="0.01"
-              />
-            </FormItem>
-
-            <FormItem>
-              <FormLabel>Referral Code</FormLabel>
-              <FormInput
-                type="text"
-                name="referralCode"
-                value={formData.referralCode}
-                onChange={handleChange}
-              />
-            </FormItem>
-
-            <FormItem>
-              <FormLabel>Profile Image</FormLabel>
-              <ImageUploadContainer>
+            {/* Profile Image */}
+            <div className="space-y-3 md:col-span-2 lg:col-span-1">
+              <label className="block text-emerald-300 font-medium">
+                Profile Image
+              </label>
+              <div className="flex flex-col items-center gap-4">
                 {imagePreview && (
-                  <ImagePreview
-                    src={
-                      imagePreview.startsWith("data:")
-                        ? imagePreview
-                        : `${baseURL_For_IMG_UPLOAD}s/${imagePreview}`
-                    }
-                    alt="Profile Preview"
-                  />
+                  <div className="w-40 h-40 rounded-2xl overflow-hidden border-4 border-emerald-600/70 shadow-2xl">
+                    <img
+                      src={
+                        imagePreview.startsWith("data:")
+                          ? imagePreview
+                          : `${baseURL_For_IMG_UPLOAD}s/${imagePreview}`
+                      }
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 )}
-                <UploadButton
+
+                <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={saving || uploading}
+                  className="flex items-center gap-2 bg-emerald-700/50 hover:bg-emerald-600/70 text-emerald-100 px-6 py-3 rounded-xl border border-emerald-600/50 transition-all cursor-pointer disabled:opacity-50"
                 >
-                  <FaUpload /> {uploading ? "Uploading..." : "Change Image"}
-                </UploadButton>
-                <HiddenFileInput
+                  <FaUpload />
+                  {uploading ? "Uploading..." : "Change Image"}
+                </button>
+
+                <input
                   type="file"
                   ref={fileInputRef}
                   accept="image/*"
                   onChange={handleFileChange}
+                  className="hidden"
                 />
-              </ImageUploadContainer>
-            </FormItem>
-          </FormGrid>
+              </div>
+            </div>
+          </div>
 
-          <ButtonContainer>
-            <CancelButton
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row justify-center gap-6 mt-12">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
               type="button"
               onClick={onCancel}
               disabled={saving || uploading}
+              className="flex items-center gap-2 bg-rose-700/50 hover:bg-rose-600/70 text-white px-10 py-4 rounded-xl border border-rose-600/50 transition-all cursor-pointer font-semibold disabled:opacity-50 shadow-lg"
             >
-              <FaTimes /> Cancel
-            </CancelButton>
-            <SaveButton type="submit" disabled={saving || uploading}>
-              <FaSave /> {saving ? "Saving..." : "Save Changes"}
-            </SaveButton>
-          </ButtonContainer>
+              <FaTimes />
+              Cancel
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              type="submit"
+              disabled={saving || uploading}
+              className="flex items-center gap-2 bg-emerald-700/50 hover:bg-emerald-600/70 text-white px-10 py-4 rounded-xl border border-emerald-600/50 transition-all cursor-pointer font-semibold disabled:opacity-50 shadow-lg"
+            >
+              <FaSave />
+              {saving ? "Saving..." : "Save Changes"}
+            </motion.button>
+          </div>
         </form>
-      </EditContainer>
 
-      <ToastContainer position="top-right" autoClose={3000} theme="colored" />
-    </>
+        {/* Toast Container */}
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="dark"
+        />
+      </motion.div>
+    </div>
   );
-};
-
-export default UserDetailsEditProfile;
+}

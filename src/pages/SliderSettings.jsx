@@ -1,247 +1,147 @@
-// admin/SliderSettings.jsx
+// src/pages/SliderSettings.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import styled from "styled-components";
+import { motion } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { API_URL } from "../utils/baseURL";
+import { FaSpinner } from "react-icons/fa";
 
-// Styled Components (same as before)
-const Container = styled.div`
-  padding: 24px;
-  background-color: #f9fafb;
-  min-height: 100vh;
-  font-family: 'Inter', sans-serif;
-`;
-
-const Title = styled.h1`
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 24px;
-  color: #111827;
-`;
-
-const Form = styled.form`
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  margin-bottom: 32px;
-`;
-
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  @media (min-width: 768px) {
-    grid-template-columns: 1fr 1fr;
-  }
-`;
-
-const Label = styled.label`
-  display: block;
-  font-size: 14px;
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 6px;
-`;
-
-const Input = styled.input`
-  padding: 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  width: 100%;
-  &:focus {
-    outline: none;
-    border-color: #99ff47;
-    box-shadow: 0 0 0 3px rgba(153,255,71,0.2);
-  }
-`;
-
-const Select = styled.select`
-  padding: 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  width: 100%;
-  background: white;
-  &:focus {
-    outline: none;
-    border-color: #99ff47;
-    box-shadow: 0 0 0 3px rgba(153,255,71,0.2);
-  }
-`;
-
-const ColorInput = styled.input.attrs({ type: "color" })`
-  width: 100%;
-  height: 44px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  cursor: pointer;
-`;
-
-const FileInput = styled.input.attrs({ type: "file", accept: "image/*" })`
-  padding: 10px;
-  border: 1px dashed #9ca3af;
-  border-radius: 8px;
-  background: #f3f4f6;
-`;
-
-const Button = styled.button`
-  padding: 10px 20px;
-  margin-top: 16px;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  &:hover { transform: translateY(-1px); }
-`;
-
-const SubmitBtn = styled(Button)`
-  background-color: #16a34a;
-  color: white;
-  margin-right: ${props => props.$hasCancel ? "8px" : "0"};
-`;
-
-const CancelBtn = styled(Button)`
-  background-color: #6b7280;
-  color: white;
-`;
-
-const SliderGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  @media (min-width: 768px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-`;
-
-const SliderCard = styled.div`
-  background: white;
-  padding: 16px;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-`;
-
-const SliderImage = styled.img`
-  width: 100%;
-  height: 128px;
-  object-fit: cover;
-  border-radius: 8px;
-`;
-
-const CardTitle = styled.p`
-  font-weight: bold;
-  color: #111827;
-  margin: 0;
-  font-size: 15px;
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 8px;
-  margin-top: auto;
-`;
-
-const EditBtn = styled.button`
-  flex: 1;
-  padding: 8px;
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  &:hover { background-color: #2563eb; }
-`;
-
-const DeleteBtn = styled.button`
-  flex: 1;
-  padding: 8px;
-  background-color: #ef4444;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  &:hover { background-color: #dc2626; }
-`;
-
-// Main Component
-const SliderSettings = () => {
+export default function SliderSettings() {
   const [sliders, setSliders] = useState([]);
-  const [form, setForm] = useState({
-    title: "", subtitle: "", button1Text: "", button1Link: "#",
-    button2Text: "", button2Link: "#", titleColor: "#99FF47",
-    subtitleColor: "#e5e7eb", button1Color: "#99FF47", button1TextColor: "#000000",
-    button2Color: "#7c3aed", button2TextColor: "#ffffff",
-    titleSize: "text-5xl", subtitleSize: "text-xl", isActive: true, order: 0
-  });
-  const [image, setImage] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [editId, setEditId] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
+  const [form, setForm] = useState({
+    title: "",
+    subtitle: "",
+    button1Text: "",
+    button1Link: "#",
+    button2Text: "",
+    button2Link: "#",
+    titleColor: "#99FF47",
+    subtitleColor: "#e5e7eb",
+    button1Color: "#99FF47",
+    button1TextColor: "#000000",
+    button2Color: "#7c3aed",
+    button2TextColor: "#ffffff",
+    titleSize: "text-5xl",
+    subtitleSize: "text-xl",
+    isActive: true,
+    order: 0,
+  });
+
+  const [image, setImage] = useState(null);
 
   useEffect(() => {
     fetchSliders();
   }, []);
 
-  const fetchSliders = () => {
-    axios.get(`${API_URL}/api/sliders/admin`)
-      .then(res => setSliders(res.data))
-      .catch(() => console.log("Failed to load sliders"));
+  const fetchSliders = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get(`${API_URL}/api/sliders/admin`);
+      setSliders(res.data || []);
+    } catch (err) {
+      console.error("Failed to load sliders:", err);
+      toast.error("Failed to load sliders");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const submit = async (e) => {
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const data = new FormData();
-    Object.keys(form).forEach(k => data.append(k, form[k]));
-    if (image) data.append("image", image);
+
+    const formData = new FormData();
+    Object.keys(form).forEach((key) => formData.append(key, form[key]));
+    if (image) formData.append("image", image);
 
     try {
       if (editId) {
-        await axios.put(`${API_URL}/api/sliders/${editId}`, data);
+        await axios.put(`${API_URL}/api/sliders/${editId}`, formData);
+        toast.success("Slider updated successfully!");
       } else {
-        await axios.post(`${API_URL}/api/sliders`, data);
+        await axios.post(`${API_URL}/api/sliders`, formData);
+        toast.success("Slider added successfully!");
       }
-      reset();
+
+      resetForm();
       fetchSliders();
     } catch (err) {
-      alert("Error: " + (err.response?.data?.message || err.message));
+      toast.error(err.response?.data?.message || "Failed to save slider");
     }
   };
 
-  const edit = (s) => {
-    setForm({ ...s });
-    setEditId(s._id);
-    setImage(null);
-  };
-
-  const del = async (id) => {
-    if (window.confirm("Delete this slider?")) {
-      await axios.delete(`${API_URL}/api/sliders/${id}`);
-      setSliders(prev => prev.filter(x => x._id !== id));
-    }
-  };
-
-  const reset = () => {
+  const handleEdit = (slider) => {
+    setEditId(slider._id);
     setForm({
-      title: "", subtitle: "", button1Text: "", button1Link: "#",
-      button2Text: "", button2Link: "#", titleColor: "#99FF47",
-      subtitleColor: "#e5e7eb", button1Color: "#99FF47", button1TextColor: "#000000",
-      button2Color: "#7c3aed", button2TextColor: "#ffffff",
-      titleSize: "text-5xl", subtitleSize: "text-xl", isActive: true, order: 0
+      title: slider.title || "",
+      subtitle: slider.subtitle || "",
+      button1Text: slider.button1Text || "",
+      button1Link: slider.button1Link || "#",
+      button2Text: slider.button2Text || "",
+      button2Link: slider.button2Link || "#",
+      titleColor: slider.titleColor || "#99FF47",
+      subtitleColor: slider.subtitleColor || "#e5e7eb",
+      button1Color: slider.button1Color || "#99FF47",
+      button1TextColor: slider.button1TextColor || "#000000",
+      button2Color: slider.button2Color || "#7c3aed",
+      button2TextColor: slider.button2TextColor || "#ffffff",
+      titleSize: slider.titleSize || "text-5xl",
+      subtitleSize: slider.subtitleSize || "text-xl",
+      isActive: slider.isActive ?? true,
+      order: slider.order || 0,
     });
     setImage(null);
-    setEditId(null);
+    setImagePreview(`${API_URL}${slider.image}`);
   };
 
-  // Size Options
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this slider?")) return;
+
+    try {
+      await axios.delete(`${API_URL}/api/sliders/${id}`);
+      toast.success("Slider deleted!");
+      fetchSliders();
+    } catch (err) {
+      toast.error("Failed to delete slider");
+    }
+  };
+
+  const resetForm = () => {
+    setEditId(null);
+    setForm({
+      title: "",
+      subtitle: "",
+      button1Text: "",
+      button1Link: "#",
+      button2Text: "",
+      button2Link: "#",
+      titleColor: "#99FF47",
+      subtitleColor: "#e5e7eb",
+      button1Color: "#99FF47",
+      button1TextColor: "#000000",
+      button2Color: "#7c3aed",
+      button2TextColor: "#ffffff",
+      titleSize: "text-5xl",
+      subtitleSize: "text-xl",
+      isActive: true,
+      order: 0,
+    });
+    setImage(null);
+    setImagePreview(null);
+  };
+
   const titleSizeOptions = [
     { value: "text-3xl", label: "Small (text-3xl)" },
     { value: "text-4xl", label: "Medium (text-4xl)" },
@@ -254,115 +154,354 @@ const SliderSettings = () => {
     { value: "text-2xl", label: "Large (text-2xl)" },
   ];
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/30 to-black flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+          className="text-emerald-400 text-6xl"
+        >
+          <FaSpinner />
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
-    <Container>
-      <Title>Slider Settings</Title>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 sm:p-6 md:p-8">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-8 text-center">
+          Slider Settings
+        </h1>
 
-      <Form onSubmit={submit}>
-        <Grid>
-          <div>
-            <Label>Title</Label>
-            <Input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} required />
-          </div>
-          <div>
-            <Label>Subtitle</Label>
-            <Input value={form.subtitle} onChange={e => setForm({ ...form, subtitle: e.target.value })} required />
+        <motion.form
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          onSubmit={handleSubmit}
+          className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 sm:p-8 shadow-2xl mb-12"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Title */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Title
+              </label>
+              <input
+                type="text"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                required
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+              />
+            </div>
+
+            {/* Subtitle */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Subtitle
+              </label>
+              <input
+                type="text"
+                value={form.subtitle}
+                onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
+                required
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+              />
+            </div>
+
+            {/* Title Size */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Title Text Size
+              </label>
+              <select
+                value={form.titleSize}
+                onChange={(e) =>
+                  setForm({ ...form, titleSize: e.target.value })
+                }
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
+              >
+                {titleSizeOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Subtitle Size */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Subtitle Text Size
+              </label>
+              <select
+                value={form.subtitleSize}
+                onChange={(e) =>
+                  setForm({ ...form, subtitleSize: e.target.value })
+                }
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
+              >
+                {subtitleSizeOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Button 1 */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Button 1 Text
+              </label>
+              <input
+                type="text"
+                value={form.button1Text}
+                onChange={(e) =>
+                  setForm({ ...form, button1Text: e.target.value })
+                }
+                required
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Button 1 Link
+              </label>
+              <input
+                type="text"
+                value={form.button1Link}
+                onChange={(e) =>
+                  setForm({ ...form, button1Link: e.target.value })
+                }
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+              />
+            </div>
+
+            {/* Button 2 */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Button 2 Text
+              </label>
+              <input
+                type="text"
+                value={form.button2Text}
+                onChange={(e) =>
+                  setForm({ ...form, button2Text: e.target.value })
+                }
+                required
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+              />
+            </div>
+
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Button 2 Link
+              </label>
+              <input
+                type="text"
+                value={form.button2Link}
+                onChange={(e) =>
+                  setForm({ ...form, button2Link: e.target.value })
+                }
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+              />
+            </div>
+
+            {/* Image Upload */}
+            <div className="md:col-span-2">
+              <label className="block text-emerald-300 font-medium mb-2">
+                Upload Image
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-700/50 file:text-emerald-100 hover:file:bg-emerald-600/70 cursor-pointer"
+              />
+              {(imagePreview || form.currentImageUrl) && (
+                <div className="mt-4">
+                  <img
+                    src={imagePreview || `${API_URL}${form.currentImageUrl}`}
+                    alt="Preview"
+                    className="w-full max-h-48 object-cover rounded-xl border border-emerald-700/50 shadow-lg"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Order */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Order (Lower = Top)
+              </label>
+              <input
+                type="number"
+                value={form.order}
+                onChange={(e) =>
+                  setForm({ ...form, order: Number(e.target.value) })
+                }
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+              />
+            </div>
           </div>
 
-          {/* Title Size */}
-          <div>
-            <Label>Title Text Size</Label>
-            <Select value={form.titleSize} onChange={e => setForm({ ...form, titleSize: e.target.value })}>
-              {titleSizeOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </Select>
+          {/* Color Pickers */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 mt-10">
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Title Color
+              </label>
+              <input
+                type="color"
+                value={form.titleColor}
+                onChange={(e) =>
+                  setForm({ ...form, titleColor: e.target.value })
+                }
+                className="w-full h-12 bg-gray-900/60 border border-emerald-800/50 rounded-xl cursor-pointer"
+              />
+            </div>
+
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Subtitle Color
+              </label>
+              <input
+                type="color"
+                value={form.subtitleColor}
+                onChange={(e) =>
+                  setForm({ ...form, subtitleColor: e.target.value })
+                }
+                className="w-full h-12 bg-gray-900/60 border border-emerald-800/50 rounded-xl cursor-pointer"
+              />
+            </div>
+
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Button 1 BG
+              </label>
+              <input
+                type="color"
+                value={form.button1Color}
+                onChange={(e) =>
+                  setForm({ ...form, button1Color: e.target.value })
+                }
+                className="w-full h-12 bg-gray-900/60 border border-emerald-800/50 rounded-xl cursor-pointer"
+              />
+            </div>
+
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Button 1 Text
+              </label>
+              <input
+                type="color"
+                value={form.button1TextColor}
+                onChange={(e) =>
+                  setForm({ ...form, button1TextColor: e.target.value })
+                }
+                className="w-full h-12 bg-gray-900/60 border border-emerald-800/50 rounded-xl cursor-pointer"
+              />
+            </div>
+
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Button 2 BG
+              </label>
+              <input
+                type="color"
+                value={form.button2Color}
+                onChange={(e) =>
+                  setForm({ ...form, button2Color: e.target.value })
+                }
+                className="w-full h-12 bg-gray-900/60 border border-emerald-800/50 rounded-xl cursor-pointer"
+              />
+            </div>
+
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Button 2 Text
+              </label>
+              <input
+                type="color"
+                value={form.button2TextColor}
+                onChange={(e) =>
+                  setForm({ ...form, button2TextColor: e.target.value })
+                }
+                className="w-full h-12 bg-gray-900/60 border border-emerald-800/50 rounded-xl cursor-pointer"
+              />
+            </div>
           </div>
 
-          {/* Subtitle Size */}
-          <div>
-            <Label>Subtitle Text Size</Label>
-            <Select value={form.subtitleSize} onChange={e => setForm({ ...form, subtitleSize: e.target.value })}>
-              {subtitleSizeOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </Select>
-          </div>
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 mt-12">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              type="submit"
+              className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-4 rounded-xl font-bold cursor-pointer transition-all shadow-lg"
+            >
+              {editId ? "Update Slider" : "Add Slider"}
+            </motion.button>
 
-          <div>
-            <Label>Button 1 Text</Label>
-            <Input value={form.button1Text} onChange={e => setForm({ ...form, button1Text: e.target.value })} required />
+            {editId && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.97 }}
+                type="button"
+                onClick={resetForm}
+                className="flex-1 bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 text-white py-4 rounded-xl font-bold cursor-pointer transition-all border border-gray-600"
+              >
+                Cancel Edit
+              </motion.button>
+            )}
           </div>
-          <div>
-            <Label>Button 1 Link</Label>
-            <Input value={form.button1Link} onChange={e => setForm({ ...form, button1Link: e.target.value })} />
-          </div>
-          <div>
-            <Label>Button 2 Text</Label>
-            <Input value={form.button2Text} onChange={e => setForm({ ...form, button2Text: e.target.value })} required />
-          </div>
-          <div>
-            <Label>Button 2 Link</Label>
-            <Input value={form.button2Link} onChange={e => setForm({ ...form, button2Link: e.target.value })} />
-          </div>
-          <div>
-            <Label>Upload Image</Label>
-            <FileInput onChange={e => setImage(e.target.files[0])} />
-          </div>
-          <div>
-            <Label>Order (Lower = Top)</Label>
-            <Input type="number" value={form.order} onChange={e => setForm({ ...form, order: Number(e.target.value) })} />
-          </div>
+        </motion.form>
 
-          {/* Colors */}
-          <div>
-            <Label>Title Color</Label>
-            <ColorInput value={form.titleColor} onChange={e => setForm({ ...form, titleColor: e.target.value })} />
-          </div>
-          <div>
-            <Label>Subtitle Color</Label>
-            <ColorInput value={form.subtitleColor} onChange={e => setForm({ ...form, subtitleColor: e.target.value })} />
-          </div>
-          <div>
-            <Label>Button 1 BG Color</Label>
-            <ColorInput value={form.button1Color} onChange={e => setForm({ ...form, button1Color: e.target.value })} />
-          </div>
-          <div>
-            <Label>Button 1 Text Color</Label>
-            <ColorInput value={form.button1TextColor} onChange={e => setForm({ ...form, button1TextColor: e.target.value })} />
-          </div>
-          <div>
-            <Label>Button 2 BG Color</Label>
-            <ColorInput value={form.button2Color} onChange={e => setForm({ ...form, button2Color: e.target.value })} />
-          </div>
-          <div>
-            <Label>Button 2 Text Color</Label>
-            <ColorInput value={form.button2TextColor} onChange={e => setForm({ ...form, button2TextColor: e.target.value })} />
-          </div>
-        </Grid>
+        {/* Existing Sliders Grid */}
+        <h2 className="text-2xl font-bold text-white mb-6">Existing Sliders</h2>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <SubmitBtn type="submit" $hasCancel={editId}>
-            {editId ? "Update" : "Add Slider"}
-          </SubmitBtn>
-          {editId && <CancelBtn type="button" onClick={reset}>Cancel</CancelBtn>}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {sliders.map((slider, idx) => (
+            <motion.div
+              key={slider._id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.1 }}
+              className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all group cursor-pointer"
+            >
+              <img
+                src={`${API_URL}${slider.image}`}
+                alt={slider.title}
+                className="w-full h-40 object-cover rounded-xl mb-4 border border-emerald-700/50"
+              />
+              <h3 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors mb-2">
+                {slider.title}
+              </h3>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => handleEdit(slider)}
+                  className="flex-1 bg-emerald-700/60 hover:bg-emerald-600/70 text-white py-2 rounded-xl font-medium cursor-pointer transition-all"
+                >
+                  Edit
+                </button>
+
+                <button
+                  onClick={() => handleDelete(slider._id)}
+                  className="flex-1 bg-rose-700/60 hover:bg-rose-600/70 text-white py-2 rounded-xl font-medium cursor-pointer transition-all"
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          ))}
         </div>
-      </Form>
+      </div>
 
-      <SliderGrid>
-        {sliders.map(s => (
-          <SliderCard key={s._id}>
-            <SliderImage src={`${API_URL}${s.image}`} alt={s.title} />
-            <CardTitle>{s.title}</CardTitle>
-            <ButtonGroup>
-              <EditBtn onClick={() => edit(s)}>Edit</EditBtn>
-              <DeleteBtn onClick={() => del(s._id)}>Delete</DeleteBtn>
-            </ButtonGroup>
-          </SliderCard>
-        ))}
-      </SliderGrid>
-    </Container>
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+    </div>
   );
-};
-
-export default SliderSettings;
+}

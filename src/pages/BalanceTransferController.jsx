@@ -1,95 +1,12 @@
-// BalanceTransferController.jsx (Styled-Components)
+// src/pages/BalanceTransferController.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { toast } from "react-toastify";
-import styled, { keyframes } from "styled-components";
+import { motion } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { API_URL } from "../utils/baseURL";
 
-const fadeIn = keyframes` from { opacity: 0; } to { opacity: 1; }`;
-
-const Container = styled.div`
-  min-height: 100vh;
-  background: #0f172a;
-  color: white;
-  padding: 3rem 1rem;
-`;
-const Wrapper = styled.div`
-  max-width: 1100px;
-  margin: 0 auto;
-`;
-const Title = styled.h1`
-  font-size: 3.5rem;
-  text-align: center;
-  margin-bottom: 3rem;
-  background: linear-gradient(to right, #06b6d4, #8b5cf6);
-  -webkit-background-clip: text;
-  color: transparent;
-`;
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 2rem;
-`;
-
-const Card = styled.div`
-  background: rgba(30, 41, 59, 0.9);
-  border-radius: 20px;
-  padding: 2rem;
-  border: 2px solid rgba(100, 100, 255, 0.3);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-`;
-
-const CardTitle = styled.h3`
-  font-size: 1.6rem;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  color: #06b6d4;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  background: #1e293b;
-  border: 2px solid #334155;
-  border-radius: 12px;
-  color: white;
-  font-size: 1.1rem;
-  &:focus {
-    outline: none;
-    border-color: #06b6d4;
-  }
-`;
-
-const Toggle = styled.label`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  cursor: pointer;
-  font-size: 1.3rem;
-`;
-
-const SaveBtn = styled.button`
-  width: 100%;
-  padding: 1rem;
-  background: linear-gradient(90deg, #06b6d4, #3b82f6);
-  border: none;
-  border-radius: 12px;
-  color: white;
-  font-weight: bold;
-  font-size: 1.2rem;
-  cursor: pointer;
-  &:hover {
-    transform: translateY(-3px);
-  }
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
-
-const BalanceTransferController = () => {
+export default function BalanceTransferController() {
   const [data, setData] = useState({});
 
   const sources = [
@@ -116,82 +33,139 @@ const BalanceTransferController = () => {
   ];
 
   useEffect(() => {
-    axios
-      .get(`${API_URL}/api/balance-transfer`)
-      .then((res) => setData(res.data.data || {}))
-      .catch(() => toast.error("Failed to load"));
+    fetchData();
   }, []);
 
-  const handleSave = async (sourceKey) => {
-    const formData = {
-      source: sourceKey,
-      enabled: data[sourceKey]?.enabled ?? true,
-      minAmount: data[sourceKey]?.minAmount || 100,
-      maxAmount: data[sourceKey]?.maxAmount || 50000,
-    };
-
+  const fetchData = async () => {
     try {
-      await axios.post(`${API_URL}/api/balance-transfer`, formData);
-      toast.success(`${sources.find((s) => s.key === sourceKey).label} saved!`);
-    } catch {
-      toast.error("Failed to save");
+      const res = await axios.get(`${API_URL}/api/balance-transfer`);
+      setData(res.data.data || {});
+    } catch (err) {
+      toast.error("Failed to load balance transfer rules");
     }
   };
 
-  const updateField = (source, field, value) => {
+  const handleSave = async (sourceKey) => {
+    const sourceData = data[sourceKey] || {};
+    const payload = {
+      source: sourceKey,
+      enabled: sourceData.enabled ?? true,
+      minAmount: sourceData.minAmount || 100,
+      maxAmount: sourceData.maxAmount || 50000,
+    };
+
+    try {
+      await axios.post(`${API_URL}/api/balance-transfer`, payload);
+      toast.success(
+        `${sources.find((s) => s.key === sourceKey).label} rule saved!`,
+      );
+      fetchData(); // refresh after save
+    } catch (err) {
+      toast.error("Failed to save rule");
+    }
+  };
+
+  const updateField = (sourceKey, field, value) => {
     setData((prev) => ({
       ...prev,
-      [source]: { ...prev[source], [field]: value },
+      [sourceKey]: {
+        ...prev[sourceKey],
+        [field]: value,
+      },
     }));
   };
 
   return (
-    <Container>
-      <Wrapper>
-        <Title>Balance Transfer Rules</Title>
-        <Grid>
-          {sources.map((src) => (
-            <Card key={src.key}>
-              <CardTitle style={{ color: src.color }}>{src.label}</CardTitle>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 sm:p-6 md:p-8">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-10 text-center bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+          Balance Transfer Rules
+        </h1>
 
-              <Toggle>
-                <input
-                  type="checkbox"
-                  checked={data[src.key]?.enabled ?? true}
-                  onChange={(e) =>
-                    updateField(src.key, "enabled", e.target.checked)
-                  }
-                />
-                Enable Transfer
-              </Toggle>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {sources.map((src) => {
+            const sourceData = data[src.key] || {};
+            const enabled = sourceData.enabled ?? true;
+            const minAmount = sourceData.minAmount ?? 100;
+            const maxAmount = sourceData.maxAmount ?? 50000;
 
-              <Input
-                type="number"
-                placeholder="Min Amount"
-                value={data[src.key]?.minAmount || ""}
-                onChange={(e) =>
-                  updateField(src.key, "minAmount", +e.target.value)
-                }
-              />
+            return (
+              <motion.div
+                key={src.key}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: Math.random() * 0.3 }}
+                className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 shadow-2xl hover:shadow-2xl transition-all"
+              >
+                <h3
+                  className="text-xl font-bold text-center mb-6"
+                  style={{ color: src.color }}
+                >
+                  {src.label}
+                </h3>
 
-              <Input
-                type="number"
-                placeholder="Max Amount"
-                value={data[src.key]?.maxAmount || ""}
-                onChange={(e) =>
-                  updateField(src.key, "maxAmount", +e.target.value)
-                }
-              />
+                {/* Toggle Enabled */}
+                <label className="flex items-center gap-3 mb-6 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={enabled}
+                    onChange={(e) =>
+                      updateField(src.key, "enabled", e.target.checked)
+                    }
+                    className="w-5 h-5 accent-emerald-500 cursor-pointer"
+                  />
+                  <span className="text-gray-200 font-medium">
+                    Enable Transfer
+                  </span>
+                </label>
 
-              <SaveBtn onClick={() => handleSave(src.key)}>
-                Save This Rule
-              </SaveBtn>
-            </Card>
-          ))}
-        </Grid>
-      </Wrapper>
-    </Container>
+                {/* Min Amount */}
+                <div className="mb-5">
+                  <label className="block text-emerald-300 font-medium mb-2">
+                    Minimum Amount
+                  </label>
+                  <input
+                    type="number"
+                    value={minAmount}
+                    onChange={(e) =>
+                      updateField(src.key, "minAmount", +e.target.value)
+                    }
+                    placeholder="Min Amount"
+                    className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                  />
+                </div>
+
+                {/* Max Amount */}
+                <div className="mb-8">
+                  <label className="block text-emerald-300 font-medium mb-2">
+                    Maximum Amount
+                  </label>
+                  <input
+                    type="number"
+                    value={maxAmount}
+                    onChange={(e) =>
+                      updateField(src.key, "maxAmount", +e.target.value)
+                    }
+                    placeholder="Max Amount"
+                    className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                  />
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => handleSave(src.key)}
+                  className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-3 rounded-xl font-bold cursor-pointer transition-all shadow-lg"
+                >
+                  Save This Rule
+                </motion.button>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+    </div>
   );
-};
-
-export default BalanceTransferController;
+}

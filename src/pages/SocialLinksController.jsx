@@ -1,300 +1,44 @@
-// src/admin/SocialLinksController.jsx
+// src/pages/SocialLinksController.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import styled from "styled-components";
+import { motion } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { API_URL } from "../utils/baseURL";
+import { FaSpinner } from "react-icons/fa";
 
-// Styled Components
-const Container = styled.div`
-  padding: 24px;
-  background: #111827;
-  min-height: 100vh;
-  color: white;
-  font-family: Arial, sans-serif;
-`;
-
-const Title = styled.h1`
-  font-size: 2rem;
-  font-weight: bold;
-  margin-bottom: 32px;
-  color: #e0f2fe;
-`;
-
-const FormWrapper = styled.form`
-  background: #1f2937;
-  padding: 24px;
-  border-radius: 12px;
-  margin-bottom: 40px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-`;
-
-const InputGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-  margin-bottom: 20px;
-
-  @media (min-width: 768px) {
-    grid-template-columns: 1fr 1fr 1fr;
-  }
-`;
-
-const Input = styled.input`
-  padding: 12px 16px;
-  background: #374151;
-  border: none;
-  border-radius: 8px;
-  color: white;
-  font-size: 1rem;
-
-  &::placeholder {
-    color: #9ca3af;
-  }
-
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px #22d3ee;
-  }
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-`;
-
-const Button = styled.button`
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    transform: translateY(-2px);
-  }
-`;
-
-const SaveButton = styled(Button)`
-  background: #10b981;
-  color: white;
-
-  &:hover {
-    background: #059669;
-  }
-`;
-
-const CancelButton = styled(Button)`
-  background: #6b7280;
-  color: white;
-
-  &:hover {
-    background: #4b5563;
-  }
-`;
-
-const LinksGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
-
-  @media (min-width: 768px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-`;
-
-const LinkCard = styled.div`
-  background: #1f2937;
-  padding: 20px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-`;
-
-const LinkInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-`;
-
-const Icon = styled.img`
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-  border-radius: 8px;
-`;
-
-const InfoText = styled.div`
-  h3 {
-    font-size: 1.1rem;
-    font-weight: bold;
-    margin-bottom: 4px;
-  }
-  a {
-    color: #60a5fa;
-    font-size: 0.875rem;
-    text-decoration: underline;
-    word-break: break-all;
-  }
-`;
-
-const ActionButtons = styled.div`
-  display: flex;
-  gap: 8px;
-  flex-direction: column;
-`;
-
-const EditButton = styled.button`
-  background: #f59e0b;
-  color: white;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-
-  &:hover {
-    background: #d97706;
-  }
-`;
-
-const DeleteButton = styled.button`
-  background: #ef4444;
-  color: white;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-
-  &:hover {
-    background: #dc2626;
-  }
-`;
-
-// Main Component
-const SocialLinksController = () => {
+export default function SocialLinksController() {
   const [links, setLinks] = useState([]);
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [iconFile, setIconFile] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [game, setGame] = useState(null);
 
   useEffect(() => {
     fetchLinks();
   }, []);
 
-  useEffect(() => {
-    // This runs only once when the component mounts
-    const fetchProviders = async () => {
-      try {
-        const response = await axios.get(
-          "https://apigames.oracleapi.net/api/providers",
-          {
-            headers: {
-              "x-api-key":
-                "b4fb7adb955b1078d8d38b54f5ad7be8ded17cfba85c37e4faa729ddd679d379",
-            },
-          }
-        );
-
-        // This will show the data in browser console
-        console.log("Providers API Response:", response.data);
-      } catch (error) {
-        console.error(
-          "Error fetching providers:",
-          error.response?.data || error.message
-        );
-      }
-    };
-
-    fetchProviders();
-  }, []); // Empty dependency array → runs only on mount
-
-
-  useEffect(() => {
-    const fetchGames = async () => {
-      try {
-        const response = await axios.get(
-          "https://apigames.oracleapi.net/api/games/pagination",
-          {
-            params: {
-              page: 1,
-              limit: 50,
-              provider: "000000000000000000000008",
-            },
-            headers: {
-              "x-api-key":
-                "b4fb7adb955b1078d8d38b54f5ad7be8ded17cfba85c37e4faa729ddd679d379", // ← your key (demo only!)
-            },
-          }
-        );
-
-        // THIS IS WHAT YOU ASKED FOR → data in console
-        console.log("Full API Response:", response);
-        console.log("Games Data (50 items):", response.data);
-
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching games:", err.response || err);
-        setError(err.response?.data || err.message);
-        setLoading(false);
-      }
-    };
-
-    fetchGames();
-  }, []);
-
-  const GAME_ID = "0000000000000000000000bd";
-
-  useEffect(() => {
-    const fetchSingleGame = async () => {
-      try {
-        const response = await axios.get(
-          `https://apigames.oracleapi.net/api/games/${GAME_ID}`, // Correct URL with ID
-          {
-            headers: {
-              "x-api-key":
-                "b4fb7adb955b1078d8d38b54f5ad7be8ded17cfba85c37e4faa729ddd679d379",
-            },
-          }
-        );
-
-        // This will show the single game in console
-        console.log("Single Game API Response:", response);
-        console.log("Game Data:", response.data);
-
-        setGame(response.data); // Usually { id, name, thumbnail, provider, etc. }
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching single game:", err.response || err);
-        setError(
-          err.response?.data?.message || err.message || "Game not found"
-        );
-        setLoading(false);
-      }
-    };
-
-    fetchSingleGame();
-  }, []);
-
   const fetchLinks = async () => {
+    setLoading(true);
     try {
       const res = await axios.get(`${API_URL}/api/social-links`);
-      setLinks(res.data);
+      setLinks(res.data || []);
     } catch (err) {
-      alert("লিংক লোড করতে সমস্যা হয়েছে");
+      toast.error("Failed to load social links");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!name.trim() || !url.trim()) {
+      toast.error("Name and URL are required!");
+      return;
+    }
+
     const formData = new FormData();
     formData.append("name", name);
     formData.append("url", url);
@@ -303,13 +47,16 @@ const SocialLinksController = () => {
     try {
       if (editingId) {
         await axios.put(`${API_URL}/api/social-links/${editingId}`, formData);
+        toast.success("Social link updated!");
       } else {
         await axios.post(`${API_URL}/api/social-links`, formData);
+        toast.success("Social link added!");
       }
+
       resetForm();
       fetchLinks();
     } catch (err) {
-      alert("সেভ করতে সমস্যা হয়েছে");
+      toast.error("Failed to save social link!");
     }
   };
 
@@ -327,78 +74,176 @@ const SocialLinksController = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("আপনি কি নিশ্চিত যে ডিলিট করতে চান?")) {
+    if (!window.confirm("Delete this social link?")) return;
+
+    try {
       await axios.delete(`${API_URL}/api/social-links/${id}`);
+      toast.success("Social link deleted!");
       fetchLinks();
+    } catch (err) {
+      toast.error("Failed to delete social link!");
     }
   };
 
-  if (loading) return <div>Loading game...</div>;
-  if (error) return <div>Error: {error}</div>;
-  if (!game) return <div>No game data</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/30 to-black flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+          className="text-emerald-400 text-6xl"
+        >
+          <FaSpinner />
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
-    <Container>
-      <Title>সোশ্যাল লিংক ম্যানেজ করুন</Title>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 sm:p-6 md:p-8">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-8 text-center">
+          Social Links Controller
+        </h1>
 
-      <FormWrapper onSubmit={handleSubmit}>
-        <InputGrid>
-          <Input
-            type="text"
-            placeholder="নাম (যেমন: WhatsApp)"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-          <Input
-            type="url"
-            placeholder="লিংক[](https://...)"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            required
-          />
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setIconFile(e.target.files[0])}
-          />
-        </InputGrid>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 sm:p-8 shadow-2xl mb-12"
+        >
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  Name (e.g. WhatsApp)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Name (e.g. WhatsApp)"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                />
+              </div>
 
-        <ButtonGroup>
-          <SaveButton type="submit">
-            {editingId ? "আপডেট করুন" : "যোগ করুন"}
-          </SaveButton>
-          {editingId && (
-            <CancelButton type="button" onClick={resetForm}>
-              ক্যানসেল
-            </CancelButton>
-          )}
-        </ButtonGroup>
-      </FormWrapper>
+              <div>
+                <label className="block text-emerald-300 font-medium mb-2">
+                  URL
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  required
+                  className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                />
+              </div>
+            </div>
 
-      <LinksGrid>
-        {links.map((link) => (
-          <LinkCard key={link._id}>
-            <LinkInfo>
-              <Icon src={link.icon} alt={link.name} />
-              <InfoText>
-                <h3>{link.name}</h3>
-                <a href={link.url} target="_blank" rel="noopener noreferrer">
-                  {link.url}
-                </a>
-              </InfoText>
-            </LinkInfo>
-            <ActionButtons>
-              <EditButton onClick={() => handleEdit(link)}>এডিট</EditButton>
-              <DeleteButton onClick={() => handleDelete(link._id)}>
-                ডিলিট
-              </DeleteButton>
-            </ActionButtons>
-          </LinkCard>
-        ))}
-      </LinksGrid>
-    </Container>
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Icon (optional)
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setIconFile(e.target.files[0] || null)}
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-700/50 file:text-emerald-100 hover:file:bg-emerald-600/70 cursor-pointer"
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 mt-8">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.97 }}
+                type="submit"
+                className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-4 rounded-xl font-bold cursor-pointer transition-all shadow-lg"
+              >
+                {editingId ? "Update Link" : "Add Link"}
+              </motion.button>
+
+              {editingId && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.97 }}
+                  type="button"
+                  onClick={resetForm}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-4 rounded-xl font-bold cursor-pointer transition-all border border-gray-600"
+                >
+                  Cancel
+                </motion.button>
+              )}
+            </div>
+          </form>
+        </motion.div>
+
+        {/* Links List */}
+        {links.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {links.map((link) => (
+              <motion.div
+                key={link._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: Math.random() * 0.2 }}
+                className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-5 shadow-xl hover:shadow-2xl transition-all group"
+              >
+                <div className="flex items-center gap-4 mb-4">
+                  {link.icon ? (
+                    <img
+                      src={`${link.icon}`}
+                      alt={link.name}
+                      className="w-16 h-16 object-contain rounded-lg border border-emerald-700/50"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 bg-gray-700 rounded-lg flex items-center justify-center text-gray-400">
+                      No Icon
+                    </div>
+                  )}
+
+                  <div className="flex-1">
+                    <h3 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">
+                      {link.name}
+                    </h3>
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-emerald-400 hover:text-emerald-300 transition-colors break-all"
+                    >
+                      {link.url}
+                    </a>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => handleEdit(link)}
+                    className="flex-1 bg-emerald-700/60 hover:bg-emerald-600/70 text-white py-2 rounded-xl font-medium cursor-pointer transition-all"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(link._id)}
+                    className="flex-1 bg-rose-700/60 hover:bg-rose-600/70 text-white py-2 rounded-xl font-medium cursor-pointer transition-all"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20 text-gray-400 text-xl">
+            No social links added yet. Add your first link above.
+          </div>
+        )}
+      </div>
+
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+    </div>
   );
-};
-
-export default SocialLinksController;
+}

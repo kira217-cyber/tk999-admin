@@ -1,353 +1,40 @@
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
 import axios from "axios";
-import styled from "styled-components";
+import { motion } from "framer-motion";
 import {
   FaUser,
   FaEnvelope,
   FaPhone,
-  FaGlobe,
   FaMoneyBill,
   FaEdit,
   FaUserShield,
   FaChartLine,
-  FaChevronRight,
+  FaSpinner,
+  FaExclamationTriangle,
+  FaCalendarAlt,
+  FaGamepad,
+  FaArrowLeft,
 } from "react-icons/fa";
-import UserDetailsEditProfile from "../components/userDetailsEditProfile/userDetailsEditProfile";
+import UserDetailsEditProfile from "../components/userDetailsEditProfile/userDetailsEditProfile.jsx"; // adjust path
 import { baseURL_For_IMG_UPLOAD, API_URL } from "../utils/baseURL";
-
-// Colorful & Modern Styled Components
-const DashboardContainer = styled.div`
-  display: flex;
-  min-height: 100vh;
-  padding: 2rem;
-  gap: 1.5rem;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e0e7ff 100%);
-  @media (max-width: 768px) {
-    flex-direction: column;
-    padding: 1rem;
-  }
-`;
-
-const Sidebar = styled.div`
-  flex: 0 0 22rem;
-  background: #ffffff;
-  border-radius: 1rem;
-  padding: 2rem;
-  box-shadow: 0 15px 35px rgba(99, 86, 246, 0.15);
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  @media (max-width: 768px) {
-    flex: none;
-    width: 100%;
-    padding: 1.5rem;
-  }
-`;
-
-const MainContent = styled.div`
-  flex: 1;
-  background: #ffffff;
-  border-radius: 1rem;
-  padding: 2rem;
-  box-shadow: 0 15px 35px rgba(99, 86, 246, 0.15);
-  @media (max-width: 768px) {
-    padding: 1.5rem;
-  }
-`;
-
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6);
-  border-radius: 1rem;
-  color: #ffffff;
-  box-shadow: 0 10px 20px rgba(99, 86, 246, 0.2);
-  @media (max-width: 480px) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-`;
-
-const Title = styled.h1`
-  font-size: 1.75rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-`;
-
-const SummaryCard = styled.div`
-  padding: 1.25rem;
-  background: linear-gradient(135deg, #1e293b, #334155);
-  border-radius: 1rem;
-  text-align: center;
-  color: #ffffff;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  transition: all 0.3s ease;
-  box-shadow: 0 8px 20px rgba(30, 41, 59, 0.2);
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(30, 41, 59, 0.3);
-  }
-`;
-
-const SummaryLabel = styled.div`
-  font-size: 0.925rem;
-  font-weight: 500;
-  opacity: 0.9;
-`;
-
-const SummaryValue = styled.div`
-  font-size: 1.5rem;
-  font-weight: 700;
-`;
-
-const ProfileImage = styled.div`
-  width: 6rem;
-  height: 6rem;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 4px solid #6366f1;
-  box-shadow: 0 10px 25px rgba(99, 86, 246, 0.3);
-`;
-
-const StatusBadge = styled.span`
-  padding: 0.5rem 1.25rem;
-  border-radius: 9999px;
-  font-size: 0.925rem;
-  font-weight: 600;
-  text-transform: capitalize;
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-  ${({ status }) => {
-    switch (status) {
-      case "active":
-        return `background: linear-gradient(90deg, #10b981, #34d399);`;
-      case "inactive":
-        return `background: linear-gradient(90deg, #ef4444, #f87171);`;
-      default:
-        return `background: linear-gradient(90deg, #6b7280, #9ca3af);`;
-    }
-  }}
-  color: #ffffff;
-`;
-
-const InfoSection = styled.div`
-  margin-bottom: 2.5rem;
-`;
-
-const SectionTitle = styled.h2`
-  font-size: 1.375rem;
-  font-weight: 700;
-  color: #4f46e5;
-  margin-bottom: 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-`;
-
-const InfoGrid = styled.div`
-  display: grid;
-  gap: 1.25rem;
-  grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const InfoItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.25rem;
-  border-radius: 1rem;
-  background: linear-gradient(135deg, #f8fafc, #e0e7ff);
-  border: 2px solid #c7d2fe;
-  transition: all 0.3s ease;
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(99, 86, 246, 0.2);
-  }
-`;
-
-const IconWrapper = styled.span`
-  color: #6366f1;
-  font-size: 1.5rem;
-  padding: 0.75rem;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #eef2ff, #c7d2fe);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 6px 15px rgba(99, 86, 246, 0.2);
-`;
-
-const Label = styled.span`
-  font-weight: 700;
-  color: #4f46e5;
-  min-width: 1rem;
-`;
-
-const Value = styled.span`
-  color: #334155;
-  word-break: break-word;
-  font-weight: 500;
-`;
-
-const ButtonContainer = styled.div`
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-`;
-
-const ActionButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 3rem;
-  padding: 0 1.75rem;
-  border-radius: 0.75rem;
-  background: linear-gradient(90deg, #dc2626, #ef4444);
-  color: #ffffff;
-  font-size: 1rem;
-  font-weight: 600;
-  outline: none;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 8px 20px rgba(220, 38, 38, 0.3);
-  svg {
-    margin-right: 0.75rem;
-  }
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 30px rgba(220, 38, 38, 0.4);
-    background: linear-gradient(90deg, #b91c1c, #dc2626);
-  }
-`;
-
-const LoadingContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  color: #6366f1;
-  font-size: 1.5rem;
-  font-weight: 600;
-  background: linear-gradient(135deg, #f8fafc, #e0e7ff);
-  gap: 1rem;
-`;
-
-const StyledSpinner = styled.div`
-  border: 6px solid #e0e7ff;
-  border-top: 6px solid #6366f1;
-  border-right: 6px solid #ec4899;
-  border-radius: 50%;
-  width: 4rem;
-  height: 4rem;
-  animation: spin 1s linear infinite;
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-`;
-
-const ErrorAlert = styled.div`
-  padding: 2rem;
-  background: linear-gradient(90deg, #fee2e2, #fecaca);
-  color: #dc2626;
-  border-radius: 1rem;
-  text-align: center;
-  margin: 2rem;
-  font-weight: 700;
-  font-size: 1.125rem;
-  box-shadow: 0 15px 35px rgba(220, 38, 38, 0.15);
-  border: 2px solid #fca5a5;
-`;
-
-const PhoneNumberContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
-const PhoneNumberWrapper = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-  padding: 4px;
-  border-radius: 0.75rem;
-  border: 2px solid #86efac;
-`;
-
-const PhoneNumber = styled.span`
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #166534;
-`;
-
-const HistoryTable = styled.table`
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  margin-top: 1rem;
-  border-radius: 1rem;
-  overflow: hidden;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-
-  th {
-    background: linear-gradient(90deg, #4f46e5, #7c3aed);
-    color: #ffffff;
-    padding: 1rem 1.25rem;
-    text-align: left;
-    font-weight: 600;
-  }
-
-  td {
-    padding: 1rem 1.25rem;
-    background: #f8fafc;
-    border-bottom: 1px solid #e2e8f0;
-  }
-
-  tr:hover td {
-    background: linear-gradient(90deg, #eef2ff, #fdf4ff);
-  }
-`;
-
-const NoHistoryMessage = styled.div`
-  text-align: center;
-  padding: 3rem;
-  color: #6366f1;
-  font-size: 1.25rem;
-  font-weight: 600;
-  background: linear-gradient(135deg, #f8fafc, #e0e7ff);
-  border-radius: 1rem;
-  border: 2px dashed #a78bfa;
-`;
 
 export default function UserDetails() {
   const navigate = useNavigate();
   const { userId } = useParams();
+
   const [isEditing, setIsEditing] = useState(false);
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (!userId) {
+      setError("No user ID in URL");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     axios
       .get(`${API_URL}/api/users/${userId}`)
@@ -356,343 +43,330 @@ export default function UserDetails() {
         setLoading(false);
       })
       .catch((err) => {
-        setError(err.message || "Failed to load user data");
+        setError(err.response?.data?.message || "Failed to load user data");
         setLoading(false);
       });
   }, [userId]);
 
-  useEffect(() => {
-    if (userInfo?.profileImage) {
-      console.log(`${baseURL_For_IMG_UPLOAD}s/${userInfo.profileImage}`);
-    }
-  }, [userInfo]);
+  const handleEditProfile = () => setIsEditing(true);
+  const handleCancelEdit = () => setIsEditing(false);
 
-  const handleEditProfile = () => {
-    setIsEditing(true);
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
 
-  const handleCancelEdit = () => {
-    setIsEditing(false);
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
   };
 
   if (loading) {
     return (
-      <LoadingContainer>
-        <StyledSpinner />
-        <div>Loading User Data...</div>
-      </LoadingContainer>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/30 to-black flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+          className="text-emerald-400 text-6xl"
+        >
+          <FaSpinner />
+        </motion.div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <DashboardContainer>
-        <ErrorAlert>
-          <strong>Error:</strong> {error}
-        </ErrorAlert>
-      </DashboardContainer>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/30 to-black flex items-center justify-center p-4 sm:p-6">
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="bg-gradient-to-br from-red-950/70 to-rose-950/60 backdrop-blur-md border border-red-800/50 rounded-2xl p-8 sm:p-10 max-w-lg text-center shadow-2xl"
+        >
+          <FaExclamationTriangle className="text-6xl text-red-400 mx-auto mb-6" />
+          <h2 className="text-2xl font-bold text-white mb-4">Error</h2>
+          <p className="text-red-300 text-base sm:text-lg">{error}</p>
+        </motion.div>
+      </div>
     );
   }
 
   return (
-    <DashboardContainer>
-      <Sidebar>
-        <SummaryCard>
-          <SummaryLabel>Profile Image</SummaryLabel>
-          <ProfileImage>
-            {userInfo?.profileImage ? (
-              <img
-                src={`${baseURL_For_IMG_UPLOAD}s/${userInfo.profileImage}`}
-                alt="Profile"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                onError={(e) => {
-                  e.target.src =
-                    "https://cdn-icons-png.freepik.com/512/8532/8532963.png";
-                }}
-              />
-            ) : (
-              <FaUser size={48} color="#6366f1" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 sm:p-6 md:p-8">
+      <motion.div
+        variants={containerVariants}
+        className="max-w-7xl mx-auto"
+      >
+        {/* Back Button + Header */}
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate(-1)}
+            className="flex items-center gap-2 text-emerald-300 hover:text-emerald-200 transition-colors cursor-pointer text-lg font-medium"
+          >
+            <FaArrowLeft className="text-xl" />
+            Back
+          </motion.button>
+
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 w-full sm:w-auto">
+            <div>
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white flex items-center gap-3">
+                <FaChartLine className="text-emerald-400" />
+                User Dashboard
+              </h1>
+              <p className="text-emerald-300/80 mt-1 text-base sm:text-lg">
+                {userInfo?.username ? userInfo.username : "User Profile"}
+              </p>
+            </div>
+
+            {!isEditing && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleEditProfile}
+                className="flex items-center justify-center gap-2 bg-emerald-700/50 hover:bg-emerald-600/70 text-emerald-100 px-5 py-2.5 sm:px-6 sm:py-3 rounded-xl border border-emerald-600/50 transition-all cursor-pointer font-medium shadow-lg w-full sm:w-auto"
+              >
+                <FaEdit className="text-lg" />
+                Edit Profile
+              </motion.button>
             )}
-          </ProfileImage>
-        </SummaryCard>
+          </div>
+        </div>
 
-        <SummaryCard>
-          <SummaryLabel>Username</SummaryLabel>
-          <SummaryValue>{userInfo?.username || "-"}</SummaryValue>
-        </SummaryCard>
-
-        <SummaryCard>
-          <SummaryLabel>Balance</SummaryLabel>
-          <SummaryValue>
-            {userInfo?.balance !== undefined
-              ? userInfo.balance.toFixed(2)
-              : "-"}
-          </SummaryValue>
-        </SummaryCard>
-
-        <SummaryCard>
-          <SummaryLabel>Status</SummaryLabel>
-          <StatusBadge status={userInfo?.isActive ? "active" : "inactive"}>
-            {userInfo?.isActive ? "Active" : "Deactive"}
-          </StatusBadge>
-        </SummaryCard>
-      </Sidebar>
-
-      <MainContent>
         {isEditing ? (
-          <UserDetailsEditProfile
-            userInfo={userInfo}
-            onCancel={handleCancelEdit}
-          />
+          <UserDetailsEditProfile onCancel={handleCancelEdit} />
         ) : (
-          <>
-            <Header>
-              <Title>
-                <FaChartLine /> User Dashboard
-              </Title>
-              <ButtonContainer>
-                <ActionButton onClick={handleEditProfile}>
-                  <FaEdit /> Edit Profile
-                </ActionButton>
-              </ButtonContainer>
-            </Header>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 sm:gap-6">
+            {/* Sidebar - Quick Stats */}
+            <motion.div
+              variants={itemVariants}
+              className="lg:col-span-1 space-y-5 sm:space-y-6"
+            >
+              {/* Profile Image */}
+              <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-5 sm:p-6 shadow-2xl text-center">
+                <p className="text-emerald-400 text-sm font-medium mb-3 sm:mb-4">Profile</p>
+                <div className="w-28 h-28 sm:w-32 sm:h-32 mx-auto rounded-full overflow-hidden border-4 border-emerald-600/70 shadow-xl">
+                  {userInfo?.profileImage ? (
+                    <img
+                      src={`${baseURL_For_IMG_UPLOAD}s/${userInfo.profileImage}`}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                      onError={(e) => (e.target.src = "https://cdn-icons-png.freepik.com/512/8532/8532963.png")}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                      <FaUser className="text-4xl sm:text-5xl text-emerald-500/70" />
+                    </div>
+                  )}
+                </div>
+                <p className="mt-4 text-xl sm:text-2xl font-bold text-white">
+                  {userInfo?.username || "—"}
+                </p>
+              </div>
 
-            <InfoSection>
-              <SectionTitle>Personal Information</SectionTitle>
-              <InfoGrid>
-                <InfoItem>
-                  <IconWrapper>
-                    <FaUser />
-                  </IconWrapper>
-                  <Label>ID:</Label>
-                  <Value>{userInfo?._id || "-"}</Value>
-                </InfoItem>
-                <InfoItem>
-                  <IconWrapper>
-                    <FaUser />
-                  </IconWrapper>
-                  <Label>Username:</Label>
-                  <Value>{userInfo?.username || "-"}</Value>
-                </InfoItem>
-                <InfoItem>
-                  <IconWrapper>
-                    <FaEnvelope />
-                  </IconWrapper>
-                  <Label>Email:</Label>
-                  <Value>{userInfo?.email || "-"}</Value>
-                </InfoItem>
-                <InfoItem>
-                  <IconWrapper>
-                    <FaPhone />
-                  </IconWrapper>
-                  <Label>Phone:</Label>
-                  <Value>
-                    <PhoneNumberContainer>
-                      <PhoneNumberWrapper>
-                        <PhoneNumber>{userInfo?.whatsapp || "-"}</PhoneNumber>
-                      </PhoneNumberWrapper>
-                    </PhoneNumberContainer>
-                  </Value>
-                </InfoItem>
-                <InfoItem>
-                  <IconWrapper>
-                    <FaUserShield />
-                  </IconWrapper>
-                  <Label>Role:</Label>
-                  <Value>{userInfo?.role || "-"}</Value>
-                </InfoItem>
-                <InfoItem>
-                  <IconWrapper>
-                    <FaUserShield />
-                  </IconWrapper>
-                  <Label>Status:</Label>
-                  <Value>{userInfo?.isActive ? "Active" : "Inactive"}</Value>
-                </InfoItem>
-                <InfoItem>
-                  <IconWrapper>
-                    <FaUser />
-                  </IconWrapper>
-                  <Label>Referral Code:</Label>
-                  <Value>{userInfo?.referralCode || "-"}</Value>
-                </InfoItem>
-                <InfoItem>
-                  <IconWrapper>
-                    <FaUser />
-                  </IconWrapper>
-                  <Label>Referred By:</Label>
-                  <Value>{userInfo?.referredBy?.$oid || "-"}</Value>
-                </InfoItem>
-              </InfoGrid>
-            </InfoSection>
+              {/* Balance */}
+              <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-5 sm:p-6 shadow-2xl text-center">
+                <p className="text-emerald-400 text-sm font-medium mb-2">Balance</p>
+                <p className="text-3xl sm:text-4xl font-bold text-emerald-300">
+                  {userInfo?.balance?.toFixed(2) ?? "0.00"}
+                </p>
+              </div>
 
-            <InfoSection>
-              <SectionTitle>Financial Information</SectionTitle>
-              <InfoGrid>
-                <InfoItem>
-                  <IconWrapper>
-                    <FaMoneyBill />
-                  </IconWrapper>
-                  <Label>Balance:</Label>
-                  <Value>
-                    {userInfo?.balance !== undefined
-                      ? userInfo.balance.toFixed(2)
-                      : "-"}
-                  </Value>
-                </InfoItem>
-                <InfoItem>
-                  <IconWrapper>
-                    <FaMoneyBill />
-                  </IconWrapper>
-                  <Label>Commission Balance:</Label>
-                  <Value>
-                    {userInfo?.commissionBalance !== undefined
-                      ? userInfo.commissionBalance.toFixed(2)
-                      : "-"}
-                  </Value>
-                </InfoItem>
-              </InfoGrid>
-            </InfoSection>
+              {/* Status */}
+              <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-5 sm:p-6 shadow-2xl text-center">
+                <p className="text-emerald-400 text-sm font-medium mb-3">Status</p>
+                <span
+                  className={`inline-block px-6 sm:px-8 py-2 rounded-full text-sm sm:text-base font-semibold ${
+                    userInfo?.isActive
+                      ? "bg-emerald-700/50 text-emerald-100 border border-emerald-600/50"
+                      : "bg-rose-700/50 text-rose-100 border border-rose-600/50"
+                  }`}
+                >
+                  {userInfo?.isActive ? "Active" : "Deactive"}
+                </span>
+              </div>
+            </motion.div>
 
-            <InfoSection>
-              <SectionTitle>Commissions</SectionTitle>
-              <InfoGrid>
-                <InfoItem>
-                  <IconWrapper>
-                    <FaMoneyBill />
-                  </IconWrapper>
-                  <Label>Game Loss Commission:</Label>
-                  <Value>
-                    {userInfo?.gameLossCommission !== undefined
-                      ? userInfo.gameLossCommission.toFixed(2)
-                      : "-"}
-                  </Value>
-                </InfoItem>
-                <InfoItem>
-                  <IconWrapper>
-                    <FaMoneyBill />
-                  </IconWrapper>
-                  <Label>Deposit Commission:</Label>
-                  <Value>
-                    {userInfo?.depositCommission !== undefined
-                      ? userInfo.depositCommission.toFixed(2)
-                      : "-"}
-                  </Value>
-                </InfoItem>
-                <InfoItem>
-                  <IconWrapper>
-                    <FaMoneyBill />
-                  </IconWrapper>
-                  <Label>Refer Commission:</Label>
-                  <Value>
-                    {userInfo?.referCommission !== undefined
-                      ? userInfo.referCommission.toFixed(2)
-                      : "-"}
-                  </Value>
-                </InfoItem>
-                <InfoItem>
-                  <IconWrapper>
-                    <FaMoneyBill />
-                  </IconWrapper>
-                  <Label>Game Loss Comm. Balance:</Label>
-                  <Value>
-                    {userInfo?.gameLossCommissionBalance !== undefined
-                      ? userInfo.gameLossCommissionBalance.toFixed(2)
-                      : "-"}
-                  </Value>
-                </InfoItem>
-                <InfoItem>
-                  <IconWrapper>
-                    <FaMoneyBill />
-                  </IconWrapper>
-                  <Label>Deposit Comm. Balance:</Label>
-                  <Value>
-                    {userInfo?.depositCommissionBalance !== undefined
-                      ? userInfo.depositCommissionBalance.toFixed(2)
-                      : "-"}
-                  </Value>
-                </InfoItem>
-                <InfoItem>
-                  <IconWrapper>
-                    <FaMoneyBill />
-                  </IconWrapper>
-                  <Label>Refer Comm. Balance:</Label>
-                  <Value>
-                    {userInfo?.referCommissionBalance !== undefined
-                      ? userInfo.referCommissionBalance.toFixed(2)
-                      : "-"}
-                  </Value>
-                </InfoItem>
-              </InfoGrid>
-            </InfoSection>
+            {/* Main Content */}
+            <motion.div variants={itemVariants} className="lg:col-span-3 space-y-6 sm:space-y-8">
+              {/* Personal Information */}
+              <div className="bg-gradient-to-br from-gray-800/70 to-gray-900/70 backdrop-blur-md border border-emerald-800/40 rounded-2xl p-5 sm:p-6 md:p-8 shadow-2xl">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-5 sm:mb-6 flex items-center gap-3">
+                  <FaUser className="text-emerald-400" /> Personal Information
+                </h2>
 
-            <InfoSection>
-              <SectionTitle>Activity</SectionTitle>
-              <InfoGrid>
-                <InfoItem>
-                  <IconWrapper>
-                    <FaUser />
-                  </IconWrapper>
-                  <Label>Created At:</Label>
-                  <Value>
-                    {userInfo?.createdAt
-                      ? new Date(userInfo.createdAt).toLocaleString()
-                      : "-"}
-                  </Value>
-                </InfoItem>
-                <InfoItem>
-                  <IconWrapper>
-                    <FaUser />
-                  </IconWrapper>
-                  <Label>Updated At:</Label>
-                  <Value>
-                    {userInfo?.updatedAt
-                      ? new Date(userInfo.updatedAt).toLocaleString()
-                      : "-"}
-                  </Value>
-                </InfoItem>
-              </InfoGrid>
-            </InfoSection>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                  {[
+                    { icon: FaUser, label: "ID", value: userInfo?._id ?? "—" },
+                    { icon: FaUser, label: "Username", value: userInfo?.username ?? "—" },
+                    { icon: FaEnvelope, label: "Email", value: userInfo?.email ?? "—" },
+                    { icon: FaPhone, label: "Phone / WhatsApp", value: userInfo?.whatsapp ?? "—" },
+                    { icon: FaUserShield, label: "Role", value: userInfo?.role ?? "—" },
+                    {
+                      icon: FaUserShield,
+                      label: "Status",
+                      value: userInfo?.isActive ? "Active" : "Inactive",
+                    },
+                    { icon: FaUser, label: "Referral Code", value: userInfo?.referralCode ?? "—" },
+                    {
+                      icon: FaUser,
+                      label: "Referred By",
+                      value: userInfo?.referredBy ?? "—",
+                    },
+                  ].map((item, idx) => (
+                    <motion.div
+                      key={idx}
+                      variants={itemVariants}
+                      className="flex items-center gap-3 sm:gap-4 bg-gray-900/50 p-4 sm:p-5 rounded-xl border border-emerald-900/40 hover:border-emerald-600/60 transition-all group"
+                    >
+                      <div className="p-3 rounded-xl bg-emerald-900/40 text-emerald-400">
+                        <item.icon className="text-xl sm:text-2xl" />
+                      </div>
+                      <div>
+                        <p className="text-xs sm:text-sm text-gray-400 font-medium">{item.label}</p>
+                        <p className="text-sm sm:text-base md:text-lg text-gray-100 font-semibold break-all">
+                          {item.value}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
 
-            <InfoSection>
-              <SectionTitle>Game History</SectionTitle>
-              {userInfo?.gameHistory && userInfo.gameHistory.length > 0 ? (
-                <HistoryTable>
-                  <thead>
-                    <tr>
-                      <th>Provider Code</th>
-                      <th>Game Code</th>
-                      <th>Bet Type</th>
-                      <th>Amount</th>
-                      <th>Transaction ID</th>
-                      <th>Status</th>
-                      <th>Created At</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {userInfo.gameHistory.map((history, index) => (
-                      <tr key={index}>
-                        <td>{history.provider_code || "-"}</td>
-                        <td>{history.game_code || "-"}</td>
-                        <td>{history.bet_type || "-"}</td>
-                        <td>{history.amount || "-"}</td>
-                        <td>{history.transaction_id || "-"}</td>
-                        <td>{history.status || "-"}</td>
-                        <td>
-                          {history.createdAt
-                            ? new Date(history.createdAt).toLocaleString()
-                            : "-"}
-                        </td>
-                      </tr>
+              {/* Financial & Commissions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
+                <div className="bg-gradient-to-br from-gray-800/70 to-gray-900/70 backdrop-blur-md border border-emerald-800/40 rounded-2xl p-5 sm:p-6 md:p-8 shadow-2xl">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-5 sm:mb-6 flex items-center gap-3">
+                    <FaMoneyBill className="text-emerald-400" /> Financial
+                  </h2>
+                  <div className="space-y-5 sm:space-y-6">
+                    <div className="flex justify-between items-center py-3 sm:py-4 border-b border-emerald-900/50">
+                      <span className="text-gray-300 text-base sm:text-lg">Main Balance</span>
+                      <span className="text-xl sm:text-2xl font-bold text-emerald-300">
+                        {userInfo?.balance?.toFixed(2) ?? "0.00"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-3 sm:py-4">
+                      <span className="text-gray-300 text-base sm:text-lg">Commission Balance</span>
+                      <span className="text-xl sm:text-2xl font-bold text-emerald-300">
+                        {userInfo?.commissionBalance?.toFixed(2) ?? "0.00"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-gray-800/70 to-gray-900/70 backdrop-blur-md border border-emerald-800/40 rounded-2xl p-5 sm:p-6 md:p-8 shadow-2xl">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-5 sm:mb-6 flex items-center gap-3">
+                    <FaMoneyBill className="text-emerald-400" /> Commissions
+                  </h2>
+                  <div className="grid grid-cols-2 gap-4 sm:gap-5">
+                    {[
+                      ["Game Loss", userInfo?.gameLossCommission],
+                      ["Deposit", userInfo?.depositCommission],
+                      ["Referral", userInfo?.referCommission],
+                      ["Game Loss Bal.", userInfo?.gameLossCommissionBalance],
+                      ["Deposit Bal.", userInfo?.depositCommissionBalance],
+                      ["Refer Bal.", userInfo?.referCommissionBalance],
+                    ].map(([label, val], idx) => (
+                      <div key={idx} className="bg-gray-900/50 p-4 sm:p-5 rounded-xl border border-emerald-900/40">
+                        <p className="text-xs sm:text-sm text-gray-400">{label}</p>
+                        <p className="text-base sm:text-lg md:text-xl font-bold text-emerald-300 mt-1 sm:mt-2">
+                          {Number(val ?? 0).toFixed(2)}
+                        </p>
+                      </div>
                     ))}
-                  </tbody>
-                </HistoryTable>
-              ) : (
-                <NoHistoryMessage>No game history available</NoHistoryMessage>
-              )}
-            </InfoSection>
-          </>
+                  </div>
+                </div>
+              </div>
+
+              {/* Activity */}
+              <div className="bg-gradient-to-br from-gray-800/70 to-gray-900/70 backdrop-blur-md border border-emerald-800/40 rounded-2xl p-5 sm:p-6 md:p-8 shadow-2xl">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-5 sm:mb-6 flex items-center gap-3">
+                  <FaCalendarAlt className="text-emerald-400" /> Activity
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
+                  <div className="bg-gray-900/50 p-5 sm:p-6 rounded-xl border border-emerald-900/40">
+                    <p className="text-sm sm:text-base text-gray-400">Created At</p>
+                    <p className="text-base sm:text-lg text-gray-100 mt-2 font-medium">
+                      {userInfo?.createdAt ? new Date(userInfo.createdAt).toLocaleString() : "—"}
+                    </p>
+                  </div>
+                  <div className="bg-gray-900/50 p-5 sm:p-6 rounded-xl border border-emerald-900/40">
+                    <p className="text-sm sm:text-base text-gray-400">Updated At</p>
+                    <p className="text-base sm:text-lg text-gray-100 mt-2 font-medium">
+                      {userInfo?.updatedAt ? new Date(userInfo.updatedAt).toLocaleString() : "—"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Game History */}
+              <div className="bg-gradient-to-br from-gray-800/70 to-gray-900/70 backdrop-blur-md border border-emerald-800/40 rounded-2xl p-5 sm:p-6 shadow-2xl overflow-hidden">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-5 sm:mb-6 flex items-center gap-3">
+                  <FaGamepad className="text-emerald-400" /> Game History
+                </h2>
+
+                {(userInfo?.gameHistory?.length ?? 0) > 0 ? (
+                  <div className="overflow-x-auto scrollbar-hide">
+                    <table className="w-full min-w-[800px] sm:min-w-[900px] text-left">
+                      <thead>
+                        <tr className="bg-emerald-950/70 border-b border-emerald-800/60">
+                          <th className="px-4 sm:px-6 py-3 sm:py-4 text-emerald-300 font-medium text-sm sm:text-base">Provider</th>
+                          <th className="px-4 sm:px-6 py-3 sm:py-4 text-emerald-300 font-medium text-sm sm:text-base">Game</th>
+                          <th className="px-4 sm:px-6 py-3 sm:py-4 text-emerald-300 font-medium text-sm sm:text-base">Bet Type</th>
+                          <th className="px-4 sm:px-6 py-3 sm:py-4 text-emerald-300 font-medium text-sm sm:text-base">Amount</th>
+                          <th className="px-4 sm:px-6 py-3 sm:py-4 text-emerald-300 font-medium text-sm sm:text-base">Tx ID</th>
+                          <th className="px-4 sm:px-6 py-3 sm:py-4 text-emerald-300 font-medium text-sm sm:text-base">Status</th>
+                          <th className="px-4 sm:px-6 py-3 sm:py-4 text-emerald-300 font-medium text-sm sm:text-base">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {userInfo.gameHistory.map((h, i) => (
+                          <tr
+                            key={i}
+                            className="border-b border-emerald-900/50 hover:bg-emerald-950/40 transition-colors"
+                          >
+                            <td className="px-4 sm:px-6 py-3 sm:py-4 text-gray-200 text-sm sm:text-base">{h?.provider_code || "—"}</td>
+                            <td className="px-4 sm:px-6 py-3 sm:py-4 text-gray-200 text-sm sm:text-base">{h?.game_code || "—"}</td>
+                            <td className="px-4 sm:px-6 py-3 sm:py-4 text-gray-200 text-sm sm:text-base">{h?.bet_type || "—"}</td>
+                            <td className="px-4 sm:px-6 py-3 sm:py-4 text-emerald-400 font-medium text-sm sm:text-base">
+                              {h?.amount || "—"}
+                            </td>
+                            <td className="px-4 sm:px-6 py-3 sm:py-4 text-gray-300 break-all text-sm sm:text-base">
+                              {h?.transaction_id || "—"}
+                            </td>
+                            <td className="px-4 sm:px-6 py-3 sm:py-4">
+                              <span
+                                className={`px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium ${
+                                  h?.status?.toLowerCase() === "win"
+                                    ? "bg-emerald-700/40 text-emerald-200"
+                                    : h?.status?.toLowerCase() === "loss"
+                                    ? "bg-rose-700/40 text-rose-200"
+                                    : "bg-gray-700/40 text-gray-200"
+                                }`}
+                              >
+                                {h?.status || "—"}
+                              </span>
+                            </td>
+                            <td className="px-4 sm:px-6 py-3 sm:py-4 text-gray-400 text-xs sm:text-sm">
+                              {h?.createdAt ? new Date(h.createdAt).toLocaleString() : "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-12 sm:py-16 text-gray-400 text-lg sm:text-xl">
+                    No game history available
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
         )}
-      </MainContent>
-    </DashboardContainer>
+      </motion.div>
+    </div>
   );
 }

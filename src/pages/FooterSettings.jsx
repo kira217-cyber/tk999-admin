@@ -1,161 +1,13 @@
-// admin/FooterSettings.jsx
+// src/pages/FooterSettings.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import styled from "styled-components";
+import { motion } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { API_URL } from "../utils/baseURL";
-import { FaFacebookF, FaInstagram, FaYoutube, FaTwitter } from "react-icons/fa";
+import { FaFacebookF, FaInstagram, FaYoutube, FaTwitter, FaSpinner } from "react-icons/fa";
 
-const Page = styled.div`
-  min-height: 100vh;
-  background: #f9fafb;
-  padding: 40px 20px;
-  font-family: "Inter", sans-serif;
-`;
-
-const Container = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-`;
-
-const Header = styled.div`
-  padding: 40px;
-  text-align: center;
-  color: #1e293b;
-`;
-
-const Title = styled.h1`
-  font-size: 42px;
-  font-weight: 800;
-  margin: 0;
-`;
-
-const Content = styled.div`
-  padding: 50px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 50px;
-  @media (max-width: 992px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
-const Left = styled.div``;
-const Right = styled.div`
-  background: #f1f5f9;
-  border-radius: 16px;
-  padding: 30px;
-  border: 1px solid #e2e8f0;
-`;
-
-const Section = styled.div`
-  margin-bottom: 35px;
-`;
-
-const Label = styled.label`
-  display: block;
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 10px;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 14px 18px;
-  border: 2px solid #cbd5e1;
-  border-radius: 12px;
-  font-size: 16px;
-  &:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-  }
-`;
-
-const Textarea = styled.textarea`
-  width: 100%;
-  padding: 14px 18px;
-  border: 2px solid #cbd5e1;
-  border-radius: 12px;
-  min-height: 110px;
-  font-size: 16px;
-  resize: vertical;
-  &:focus {
-    outline: none;
-    border-color: #3b82f6;
-  }
-`;
-
-const UploadBox = styled.label`
-  display: block;
-  padding: 40px;
-  border: 2px dashed #94a3b8;
-  border-radius: 16px;
-  text-align: center;
-  cursor: pointer;
-  background: #f8fafc;
-  font-weight: 600;
-  color: #475569;
-  transition: all 0.3s;
-  &:hover {
-    border-color: #3b82f6;
-    background: #eff6ff;
-    color: #3b82f6;
-  }
-`;
-
-const PreviewImg = styled.img`
-  width: 100%;
-  max-width: 180px;
-  height: auto;
-  border-radius: 12px;
-  margin: 15px 0;
-  border: 3px solid #3b82f6;
-`;
-
-const Button = styled.button`
-  padding: 14px 32px;
-  border: none;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  margin: 10px;
-`;
-
-const SaveBtn = styled(Button)`
-  background: #10b981;
-  color: white;
-  &:hover {
-    background: #059669;
-  }
-  &:disabled {
-    background: #94a3b8;
-    cursor: not-allowed;
-  }
-`;
-
-const DeleteBtn = styled(Button)`
-  background: #ef4444;
-  color: white;
-  &:hover {
-    background: #dc2626;
-  }
-`;
-
-const PreviewFooter = styled.div`
-  background: #000;
-  color: white;
-  padding: 35px;
-  border-radius: 16px;
-  text-align: center;
-`;
-
-const FooterSettings = () => {
+export default function FooterSettings() {
   const [form, setForm] = useState({
     logo: null,
     tagline: "",
@@ -176,28 +28,28 @@ const FooterSettings = () => {
   const [preview, setPreview] = useState({ logo: "", payments: ["", "", ""] });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [isExisting, setIsExisting] = useState(false); // এটাই ম্যাজিক!
+  const [isExisting, setIsExisting] = useState(false);
 
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
+    setLoading(true);
     try {
       const res = await axios.get(`${API_URL}/api/footer`);
       const d = res.data;
 
-      // যদি ডাটা থাকে → isExisting = true
       if (d && (d.logo || d.tagline || d.paymentMethods?.length > 0)) {
         setIsExisting(true);
       }
 
       setForm({
+        logo: null,
         tagline: d.tagline || "",
         copyright: d.copyright || "",
         paymentMethods: d.paymentMethods || form.paymentMethods,
         socialLinks: d.socialLinks || form.socialLinks,
-        logo: null,
       });
 
       setPreview({
@@ -207,8 +59,8 @@ const FooterSettings = () => {
         ),
       });
     } catch (err) {
-      console.error("Load failed:", err);
-      setIsExisting(false);
+      console.error("Failed to load footer settings:", err);
+      toast.error("Failed to load footer settings");
     } finally {
       setLoading(false);
     }
@@ -225,6 +77,7 @@ const FooterSettings = () => {
       const newPayments = [...form.paymentMethods];
       newPayments[index].image = file;
       setForm({ ...form, paymentMethods: newPayments });
+
       const newPrev = [...preview.payments];
       newPrev[index] = URL.createObjectURL(file);
       setPreview({ ...preview, payments: newPrev });
@@ -234,6 +87,7 @@ const FooterSettings = () => {
   const handleSave = async () => {
     setSaving(true);
     const data = new FormData();
+
     data.append("tagline", form.tagline);
     data.append("copyright", form.copyright);
     data.append(
@@ -251,31 +105,30 @@ const FooterSettings = () => {
 
     try {
       if (isExisting) {
-        // আগে থেকে আছে → PUT
         await axios.put(`${API_URL}/api/footer`, data);
       } else {
-        // প্রথমবার → POST
         await axios.post(`${API_URL}/api/footer`, data);
       }
-      alert("Footer Saved Successfully!");
-      setIsExisting(true); // পরেরবার PUT হবে
+      toast.success("Footer settings saved successfully!");
+      setIsExisting(true);
       loadData();
     } catch (err) {
-      console.error("Save Error:", err.response?.data || err.message);
-      alert("Save Failed! Check console for details.");
+      console.error("Save error:", err);
+      toast.error(err.response?.data?.message || "Failed to save footer");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("Delete footer permanently?")) return;
+    if (!window.confirm("Delete footer settings permanently?")) return;
+
     try {
       await axios.delete(`${API_URL}/api/footer`);
-      alert("Footer Deleted!");
+      toast.success("Footer deleted successfully!");
       window.location.reload();
     } catch (err) {
-      alert("Delete Failed!");
+      toast.error("Failed to delete footer");
     }
   };
 
@@ -291,219 +144,261 @@ const FooterSettings = () => {
 
   if (loading) {
     return (
-      <Page className="flex items-center justify-center">
-        <div className="text-2xl text-gray-600">Loading...</div>
-      </Page>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/30 to-black flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+          className="text-emerald-400 text-6xl"
+        >
+          <FaSpinner />
+        </motion.div>
+      </div>
     );
   }
 
   return (
-    <Page>
-      <Container>
-        <Header>
-          <Title>Footer Settings</Title>
-        </Header>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 sm:p-6 md:p-8">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-8 text-center">
+          Footer Settings
+        </h1>
 
-        <Content>
-          <Left>
-            <Section>
-              <Label>Logo</Label>
-              {preview.logo && <PreviewImg src={preview.logo} alt="Logo" />}
-              <UploadBox>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left - Form */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 sm:p-8 shadow-2xl"
+          >
+            {/* Logo */}
+            <div className="mb-10">
+              <label className="block text-emerald-300 font-medium mb-3 text-lg">
+                Logo
+              </label>
+
+              {preview.logo && (
+                <div className="mb-4">
+                  <img
+                    src={preview.logo}
+                    alt="Logo Preview"
+                    className="w-full max-h-32 object-contain mx-auto rounded-xl border border-emerald-700/50 shadow-lg"
+                  />
+                </div>
+              )}
+
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImage(e, "logo")}
+                className="hidden"
+                id="footer-logo-input"
+              />
+
+              <label
+                htmlFor="footer-logo-input"
+                className="block w-full bg-gray-900/60 border-2 border-dashed border-emerald-700/50 rounded-xl px-6 py-10 text-center cursor-pointer hover:border-emerald-500/70 hover:bg-gray-900/70 transition-all text-gray-300 font-medium"
+              >
                 {preview.logo ? "Change Logo" : "Upload Logo"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleImage(e, "logo")}
-                  hidden
-                />
-              </UploadBox>
-            </Section>
+              </label>
+            </div>
 
-            <Section>
-              <Label>Tagline</Label>
-              <Input
+            {/* Tagline */}
+            <div className="mb-8">
+              <label className="block text-emerald-300 font-medium mb-2">
+                Tagline
+              </label>
+              <input
                 placeholder="Rajabaji Trusted Casino – Best Online Cricket Betting App"
                 value={form.tagline}
                 onChange={(e) => setForm({ ...form, tagline: e.target.value })}
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
               />
-            </Section>
+            </div>
 
-            <Section>
-              <Label>Copyright</Label>
-              <Textarea
+            {/* Copyright */}
+            <div className="mb-10">
+              <label className="block text-emerald-300 font-medium mb-2">
+                Copyright
+              </label>
+              <textarea
                 placeholder="Copyright © 2025 Rajabaji. All Rights Reserved."
                 value={form.copyright}
-                onChange={(e) =>
-                  setForm({ ...form, copyright: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, copyright: e.target.value })}
+                rows={3}
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all resize-y"
               />
-            </Section>
+            </div>
 
-            <Section>
-              <Label>Payment Methods</Label>
+            {/* Payment Methods */}
+            <div className="mb-10">
+              <h3 className="text-xl font-bold text-white mb-4">
+                Payment Methods
+              </h3>
+
               {form.paymentMethods.map((method, i) => (
-                <div key={i} style={{ marginBottom: "20px" }}>
-                  <Input
-                    value={method.name}
-                    readOnly
-                    style={{ marginBottom: "8px" }}
-                  />
+                <div key={i} className="mb-6">
+                  <label className="block text-emerald-300 font-medium mb-2">
+                    {method.name}
+                  </label>
+
                   {preview.payments[i] && (
-                    <PreviewImg src={preview.payments[i]} alt={method.name} />
+                    <div className="mb-4">
+                      <img
+                        src={preview.payments[i]}
+                        alt={`${method.name} Preview`}
+                        className="w-24 h-16 object-contain mx-auto rounded-lg border border-emerald-700/50 shadow-md"
+                      />
+                    </div>
                   )}
-                  <UploadBox>
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImage(e, "payment", i)}
+                    className="hidden"
+                    id={`payment-${i}-input`}
+                  />
+
+                  <label
+                    htmlFor={`payment-${i}-input`}
+                    className="block w-full bg-gray-900/60 border-2 border-dashed border-emerald-700/50 rounded-xl px-6 py-6 text-center cursor-pointer hover:border-emerald-500/70 hover:bg-gray-900/70 transition-all text-gray-300 font-medium"
+                  >
                     Change {method.name} Image
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleImage(e, "payment", i)}
-                      hidden
-                    />
-                  </UploadBox>
+                  </label>
                 </div>
               ))}
-            </Section>
-
-            <Section>
-              <Label>Social Links</Label>
-              {form.socialLinks.map((link, i) => (
-                <Input
-                  key={i}
-                  placeholder={`${link.platform} URL`}
-                  value={link.url}
-                  onChange={(e) => {
-                    const newLinks = [...form.socialLinks];
-                    newLinks[i].url = e.target.value;
-                    setForm({ ...form, socialLinks: newLinks });
-                  }}
-                />
-              ))}
-            </Section>
-
-            <div style={{ textAlign: "center" }}>
-              <SaveBtn onClick={handleSave} disabled={saving}>
-                {saving ? "Saving..." : "Save Footer"}
-              </SaveBtn>
-              <DeleteBtn onClick={handleDelete}>Delete Footer</DeleteBtn>
             </div>
-          </Left>
 
-          <Right>
-            <h3
-              style={{
-                fontSize: "24px",
-                fontWeight: "700",
-                marginBottom: "20px",
-                color: "#1e293b",
-              }}
-            >
-              Live Preview
-            </h3>
-            <PreviewFooter>
-              <div style={{ marginBottom: "20px" }}>
-                {preview.logo && (
-                  <img
-                    src={preview.logo}
-                    alt="Logo"
-                    style={{ width: "140px" }}
+            {/* Social Links */}
+            <div className="mb-10">
+              <h3 className="text-xl font-bold text-white mb-4">
+                Social Links
+              </h3>
+
+              {form.socialLinks.map((link, i) => (
+                <div key={i} className="mb-4">
+                  <label className="block text-emerald-300 font-medium mb-2 capitalize">
+                    {link.platform}
+                  </label>
+                  <input
+                    placeholder={`${link.platform} URL`}
+                    value={link.url}
+                    onChange={(e) => {
+                      const newLinks = [...form.socialLinks];
+                      newLinks[i].url = e.target.value;
+                      setForm({ ...form, socialLinks: newLinks });
+                    }}
+                    className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
                   />
-                )}
-                <p
-                  style={{
-                    color: "#94a3b8",
-                    fontSize: "14px",
-                    marginTop: "10px",
-                  }}
-                >
-                  {form.tagline || "Your tagline here"}
-                </p>
-              </div>
+                </div>
+              ))}
+            </div>
 
-              <div style={{ margin: "25px 0" }}>
-                <h4 style={{ color: "#e2e8f0" }}>Payment Methods</h4>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "12px",
-                    justifyContent: "center",
-                    marginTop: "10px",
-                  }}
-                >
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 mt-12">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleSave}
+                disabled={saving}
+                className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-4 rounded-xl font-bold cursor-pointer transition-all shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {saving ? "Saving..." : "Save Footer"}
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleDelete}
+                className="flex-1 bg-gradient-to-r from-rose-700 to-red-700 hover:from-rose-600 hover:to-red-600 text-white py-4 rounded-xl font-bold cursor-pointer transition-all shadow-lg"
+              >
+                Delete Footer
+              </motion.button>
+            </div>
+          </motion.div>
+
+          {/* Right - Live Preview */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-gradient-to-br from-gray-900/90 to-black/90 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 sm:p-8 shadow-2xl"
+          >
+            <h3 className="text-2xl font-bold text-white mb-6 text-center">
+              Live Footer Preview
+            </h3>
+
+            <div className="text-center">
+              {/* Logo */}
+              {preview.logo && (
+                <img
+                  src={preview.logo}
+                  alt="Footer Logo"
+                  className="h-20 mx-auto mb-4 object-contain"
+                />
+              )}
+
+              {/* Tagline */}
+              <p className="text-gray-300 text-sm mb-6">
+                {form.tagline || "Your tagline here"}
+              </p>
+
+              {/* Payment Methods */}
+              <div className="mb-8">
+                <h4 className="text-emerald-300 font-medium mb-3">
+                  Payment Methods
+                </h4>
+                <div className="flex flex-wrap justify-center gap-4">
                   {preview.payments.map((img, i) =>
                     img ? (
                       <img
                         key={i}
                         src={img}
-                        alt="payment"
-                        style={{
-                          width: "50px",
-                          height: "35px",
-                          objectFit: "contain",
-                        }}
+                        alt={form.paymentMethods[i]?.name}
+                        className="w-16 h-10 object-contain rounded-lg border border-emerald-700/50 shadow-md"
                       />
                     ) : (
                       <div
                         key={i}
-                        style={{
-                          width: "50px",
-                          height: "35px",
-                          background: "#333",
-                          borderRadius: "6px",
-                        }}
-                      />
+                        className="w-16 h-10 bg-gray-800 rounded-lg flex items-center justify-center text-xs text-gray-500"
+                      >
+                        {form.paymentMethods[i]?.name}
+                      </div>
                     )
                   )}
                 </div>
               </div>
 
-              <div>
-                <h4 style={{ color: "#e2e8f0" }}>Follow Us</h4>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "12px",
-                    justifyContent: "center",
-                    marginTop: "10px",
-                  }}
-                >
+              {/* Social Links */}
+              <div className="mb-8">
+                <h4 className="text-emerald-300 font-medium mb-3">
+                  Follow Us
+                </h4>
+                <div className="flex justify-center gap-6">
                   {form.socialLinks.map((link, i) => (
-                    <div
+                    <a
                       key={i}
-                      style={{
-                        background: "white",
-                        color: "black",
-                        width: "36px",
-                        height: "36px",
-                        borderRadius: "50%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
+                      href={link.url || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-emerald-400 hover:text-emerald-300 transition-colors text-2xl"
                     >
                       {getIcon(link.platform)}
-                    </div>
+                    </a>
                   ))}
                 </div>
               </div>
 
-              <div
-                style={{
-                  marginTop: "25px",
-                  paddingTop: "20px",
-                  borderTop: "1px solid #374151",
-                }}
-              >
-                <p style={{ color: "#6b7280", fontSize: "13px" }}>
-                  {form.copyright || "Copyright © 2025 Your Site"}
-                </p>
-              </div>
-            </PreviewFooter>
-          </Right>
-        </Content>
-      </Container>
-    </Page>
-  );
-};
+              {/* Copyright */}
+              <p className="text-gray-500 text-sm border-t border-emerald-900/50 pt-6">
+                {form.copyright || "Copyright © 2025 Rajabaji. All Rights Reserved."}
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      </div>
 
-export default FooterSettings;
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+    </div>
+  );
+}

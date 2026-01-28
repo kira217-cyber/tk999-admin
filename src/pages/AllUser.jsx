@@ -1,335 +1,29 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
-import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import {
+  FaSearch,
+  FaEye,
+  FaSpinner,
+  FaExclamationTriangle,
+  FaChevronLeft,
+  FaChevronRight,
+} from "react-icons/fa";
 import { API_URL } from "../utils/baseURL";
-
-// Styled Components - Colorful Design
-const DashboardContainer = styled.div`
-  padding: 1rem;
-  margin: 0 auto;
-  max-width: 90rem;
-  width: 100%;
-  box-sizing: border-box;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
-  min-height: 100vh;
-  @media (min-width: 768px) {
-    padding: 2rem;
-  }
-`;
-
-const Header = styled.div`
-  margin-bottom: 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6);
-  padding: 1.5rem;
-  border-radius: 1rem;
-  box-shadow: 0 10px 25px rgba(99, 86, 246, 0.2);
-  @media (min-width: 768px) {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-  }
-`;
-
-const Title = styled.h1`
-  font-size: 1.75rem;
-  color: #ffffff;
-  margin: 0;
-  font-weight: 700;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-`;
-
-const FilterContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  width: 100%;
-  @media (min-width: 768px) {
-    flex-direction: row;
-    gap: 1rem;
-    max-width: 32rem;
-  }
-`;
-
-const SearchContainer = styled.div`
-  position: relative;
-  flex: 1;
-  max-width: 24rem;
-`;
-
-const SearchInput = styled.input`
-  height: 2.75rem;
-  width: 100%;
-  border-radius: 0.75rem;
-  border: 2px solid #e0e7ff;
-  background: #ffffff;
-  padding: 0.5rem 0.75rem 0.5rem 2.75rem;
-  font-size: 0.925rem;
-  color: #1e293b;
-  outline: none;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 10px rgba(99, 86, 246, 0.1);
-
-  &::placeholder {
-    color: #94a3b8;
-  }
-  &:focus {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 4px rgba(99, 86, 246, 0.3);
-  }
-`;
-
-const SearchIcon = styled.span`
-  position: absolute;
-  left: 0.875rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #6366f1;
-  font-size: 1.25rem;
-`;
-
-const StatusFilter = styled.select`
-  height: 2.75rem;
-  width: 100%;
-  max-width: 14rem;
-  border-radius: 0.75rem;
-  border: 2px solid #e0e7ff;
-  background: #ffffff;
-  padding: 0 1rem;
-  font-size: 0.925rem;
-  color: #1e293b;
-  outline: none;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 10px rgba(99, 86, 246, 0.1);
-
-  &:focus {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 4px rgba(99, 86, 246, 0.3);
-  }
-`;
-
-const TableWrapper = styled.div`
-  background: #ffffff;
-  border-radius: 1rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  margin: 0 0.5rem 1.5rem;
-  overflow-x: auto;
-  border: 1px solid #e0e7ff;
-  @media (max-width: 767px) {
-    display: none;
-  }
-`;
-
-const StyledTable = styled.table`
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  min-width: 640px;
-
-  th {
-    background: linear-gradient(90deg, #4f46e5, #7c3aed);
-    padding: 1rem 1.25rem;
-    text-align: left;
-    font-weight: 600;
-    color: #ffffff;
-    border-bottom: 4px solid #a78bfa;
-    white-space: nowrap;
-    position: sticky;
-    top: 0;
-    z-index: 1;
-  }
-
-  td {
-    padding: 1rem 1.25rem;
-    border-bottom: 1px solid #e2e8f0;
-    vertical-align: middle;
-    color: #334155;
-  }
-
-  tr:hover {
-    background: linear-gradient(90deg, #eef2ff, #fdf4ff);
-    transition: background 0.3s ease;
-  }
-
-  @media (min-width: 1024px) {
-    th,
-    td {
-      padding: 1.25rem 1.5rem;
-    }
-  }
-`;
-
-const CardContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  margin: 0 0.5rem;
-  @media (min-width: 768px) {
-    display: none;
-  }
-`;
-
-const UserCard = styled.div`
-  background: #ffffff;
-  border-radius: 1rem;
-  box-shadow: 0 10px 25px rgba(99, 86, 246, 0.15);
-  padding: 1.25rem;
-  display: grid;
-  gap: 1rem;
-  font-size: 0.925rem;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-  position: relative;
-  transition: all 0.3s ease;
-
-  &::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    padding: 2px;
-    border-radius: 1rem;
-    background: linear-gradient(45deg, #6366f1, #ec4899);
-    mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
-    mask-composite: exclude;
-    -webkit-mask-composite: destination-out;
-  }
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 40px rgba(99, 86, 246, 0.25);
-  }
-
-  @media (min-width: 640px) {
-    padding: 1.75rem;
-    gap: 1.25rem;
-  }
-`;
-
-const CardLabel = styled.span`
-  font-weight: 700;
-  color: #4f46e5;
-`;
-
-const CardValue = styled.span`
-  color: #334155;
-  word-break: break-word;
-`;
-
-const LoadingContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 70vh;
-`;
-
-const StyledSpinner = styled.div`
-  border: 6px solid #e0e7ff;
-  border-top: 6px solid #6366f1;
-  border-right: 6px solid #ec4899;
-  border-radius: 50%;
-  width: 4rem;
-  height: 4rem;
-  animation: spin 0.8s linear infinite;
-
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-`;
-
-const ErrorAlert = styled.div`
-  padding: 1.5rem;
-  background: linear-gradient(90deg, #fee2e2, #fecaca);
-  color: #dc2626;
-  border-radius: 1rem;
-  text-align: center;
-  margin: 0 0.75rem;
-  font-weight: 600;
-  box-shadow: 0 10px 20px rgba(220, 38, 38, 0.1);
-  border: 1px solid #fca5a5;
-`;
-
-const StatusBadge = styled.span`
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  display: inline-block;
-  text-transform: capitalize;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-
-  ${({ status }) => {
-    switch (status) {
-      case "active":
-        return `
-          background: linear-gradient(90deg, #10b981, #34d399);
-          color: #ffffff;
-        `;
-      case "inactive":
-        return `
-          background: linear-gradient(90deg, #ef4444, #f87171);
-          color: #ffffff;
-        `;
-      default:
-        return `
-          background: linear-gradient(90deg, #6b7280, #9ca3af);
-          color: #ffffff;
-        `;
-    }
-  }}
-`;
-
-const NoDataMessage = styled.div`
-  text-align: center;
-  padding: 3rem 1.5rem;
-  color: #6366f1;
-  font-size: 1.25rem;
-  font-weight: 600;
-  background: linear-gradient(135deg, #f8fafc, #e0e7ff);
-  border-radius: 1rem;
-  border: 2px dashed #a78bfa;
-  margin: 1rem;
-`;
-
-const ActionButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 2.75rem;
-  padding: 0 1.5rem;
-  border-radius: 0.75rem;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6);
-  color: #ffffff;
-  font-size: 0.925rem;
-  font-weight: 600;
-  outline: none;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 6px 15px rgba(99, 86, 246, 0.3);
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 25px rgba(99, 86, 246, 0.4);
-    background: linear-gradient(90deg, #5b21b6, #7c3aed);
-  }
-`;
 
 export default function AllUser() {
   const navigate = useNavigate();
+
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     axios
@@ -339,10 +33,7 @@ export default function AllUser() {
         setLoading(false);
       })
       .catch((err) => {
-        setError(true);
-        setErrorMessage(
-          err.response?.data?.message || err.message || "Failed to load users"
-        );
+        setError(err.response?.data?.message || "Failed to load users");
         setLoading(false);
       });
   }, []);
@@ -350,7 +41,7 @@ export default function AllUser() {
   const filteredUsers = users.filter((user) => {
     const matchesSearch = user.username
       ?.toLowerCase()
-      .includes(searchTerm.toLowerCase());
+      .includes(searchTerm.toLowerCase().trim());
     const matchesStatus =
       statusFilter === "all" ||
       (statusFilter === "active" && user.isActive) ||
@@ -358,145 +49,302 @@ export default function AllUser() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleSearchChange = (e) => setSearchTerm(e.target.value);
-  const handleStatusChange = (e) => setStatusFilter(e.target.value);
-  const handleViewUser = (userId) => navigate(`/user/${userId}`);
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredUsers.slice(indexOfFirstItem, indexOfLastItem);
+
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+  const paginate = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i) => ({ opacity: 1, y: 0, transition: { delay: i * 0.05 } }),
+  };
 
   if (loading) {
     return (
-      <DashboardContainer>
-        <LoadingContainer>
-          <StyledSpinner />
-        </LoadingContainer>
-      </DashboardContainer>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/30 to-black flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+          className="text-emerald-400 text-6xl"
+        >
+          <FaSpinner />
+        </motion.div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <DashboardContainer>
-        <ErrorAlert>
-          <strong>Error:</strong> {errorMessage}
-        </ErrorAlert>
-      </DashboardContainer>
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/30 to-black p-4 flex items-center justify-center">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="bg-gradient-to-br from-red-950/70 to-rose-950/60 backdrop-blur-md border border-red-800/40 rounded-2xl p-8 max-w-lg text-center shadow-2xl"
+        >
+          <FaExclamationTriangle className="text-6xl text-red-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-3">Error</h2>
+          <p className="text-red-300 text-lg">{error}</p>
+        </motion.div>
+      </div>
     );
   }
 
-  const renderUserCard = (user) => (
-    <UserCard key={user._id}>
-      <div>
-        <CardLabel>Username:</CardLabel>{" "}
-        <CardValue>{user.username || "-"}</CardValue>
-      </div>
-      <div>
-        <CardLabel>Email:</CardLabel> <CardValue>{user.email || "-"}</CardValue>
-      </div>
-      <div>
-        <CardLabel>Phone:</CardLabel>{" "}
-        <CardValue>{user.whatsapp || user.phoneNumber || "-"}</CardValue>
-      </div>
-      <div>
-        <CardLabel>Balance:</CardLabel>{" "}
-        <CardValue>
-          {user.balance !== undefined ? user.balance.toFixed(2) : "-"}
-        </CardValue>
-      </div>
-      <div>
-        <CardLabel>Status:</CardLabel>{" "}
-        <StatusBadge status={user.isActive ? "active" : "inactive"}>
-          {user.isActive ? "Active" : "Deactive"}
-        </StatusBadge>
-      </div>
-      <ActionButton onClick={() => handleViewUser(user._id)}>
-        View User
-      </ActionButton>
-    </UserCard>
-  );
-
   return (
-    <DashboardContainer>
-      <Header>
-        <Title>All Users</Title>
-        <FilterContainer>
-          <SearchContainer>
-            <SearchIcon>🔍</SearchIcon>
-            <SearchInput
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 md:p-6 pb-16">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8"
+      >
+        <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
+          All Users
+        </h1>
+        <p className="text-emerald-200/80 mt-2 text-lg">
+          Manage and monitor all registered users
+        </p>
+      </motion.div>
+
+      {/* Filters + Stats */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 max-w-6xl"
+      >
+        <div className="flex flex-col sm:flex-row gap-4 flex-1">
+          {/* Search */}
+          <div className="relative flex-1 max-w-md">
+            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-400/70 text-xl" />
+            <input
               type="text"
               placeholder="Search by username..."
               value={searchTerm}
-              onChange={handleSearchChange}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1); // reset to page 1 on search
+              }}
+              className="w-full bg-gray-800/70 backdrop-blur-sm border border-emerald-800/50 rounded-xl pl-12 pr-5 py-3.5 text-white text-base placeholder:text-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all cursor-text"
             />
-          </SearchContainer>
-          <StatusFilter value={statusFilter} onChange={handleStatusChange}>
+          </div>
+
+          {/* Status Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="bg-gray-800/70 backdrop-blur-sm border border-emerald-800/50 rounded-xl px-5 py-3.5 text-white text-base focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all cursor-pointer min-w-[200px]"
+          >
             <option value="all">All Status</option>
             <option value="active">Active</option>
             <option value="inactive">Deactive</option>
-          </StatusFilter>
-        </FilterContainer>
-      </Header>
+          </select>
+        </div>
 
-      {/* Desktop Table View */}
-      <TableWrapper>
-        <StyledTable>
-          <thead>
-            <tr>
-              <th>Username</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Balance</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.length > 0 ? (
-              filteredUsers.map((user) => (
-                <tr key={user._id}>
-                  <td>{user.username || "-"}</td>
-                  <td>{user.email || "-"}</td>
-                  <td>{user.whatsapp || user.phoneNumber || "-"}</td>
-                  <td>
-                    {user.balance !== undefined ? user.balance.toFixed(2) : "-"}
-                  </td>
-                  <td>
-                    <StatusBadge status={user.isActive ? "active" : "inactive"}>
-                      {user.isActive ? "Active" : "Deactive"}
-                    </StatusBadge>
-                  </td>
-                  <td>
-                    <ActionButton onClick={() => handleViewUser(user._id)}>
-                      View User
-                    </ActionButton>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="6">
-                  <NoDataMessage>
-                    {searchTerm || statusFilter !== "all"
-                      ? "No users found matching your filters"
-                      : "No users available"}
-                  </NoDataMessage>
-                </td>
+        {/* Showing results info */}
+        <div className="text-emerald-300/90 text-base font-medium">
+          Showing {filteredUsers.length} users
+        </div>
+      </motion.div>
+
+      {/* No results */}
+      {filteredUsers.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center py-20 text-gray-300"
+        >
+          <p className="text-2xl font-semibold">No users found</p>
+          <p className="mt-3 text-lg">
+            Try adjusting your search or status filter
+          </p>
+        </motion.div>
+      )}
+
+      {/* Desktop Table */}
+      {filteredUsers.length > 0 && (
+        <div className="hidden lg:block overflow-x-auto rounded-xl border border-emerald-800/30 bg-gray-900/50 backdrop-blur-sm shadow-2xl mb-8">
+          <table className="w-full text-left min-w-[800px]">
+            <thead>
+              <tr className="bg-gradient-to-r from-emerald-950/80 to-gray-900/80 border-b border-emerald-800/50">
+                <th className="px-7 py-5 font-semibold text-emerald-300 text-lg">
+                  Username
+                </th>
+                <th className="px-7 py-5 font-semibold text-emerald-300 text-lg">
+                  Phone
+                </th>
+                <th className="px-7 py-5 font-semibold text-emerald-300 text-lg">
+                  Balance
+                </th>
+                <th className="px-7 py-5 font-semibold text-emerald-300 text-lg">
+                  Status
+                </th>
+                <th className="px-7 py-5 font-semibold text-emerald-300 text-lg text-right">
+                  Action
+                </th>
               </tr>
-            )}
-          </tbody>
-        </StyledTable>
-      </TableWrapper>
+            </thead>
+            <tbody>
+              {currentItems.map((user, idx) => (
+                <motion.tr
+                  key={user._id}
+                  custom={idx}
+                  variants={cardVariants}
+                  initial="hidden"
+                  animate="visible"
+                  className="border-b border-emerald-900/40 hover:bg-emerald-950/40 transition-colors group cursor-pointer"
+                  onClick={() => navigate(`/user/${user._id}`)}
+                >
+                  <td className="px-7 py-5 text-gray-100 text-base group-hover:text-emerald-300 transition-colors font-medium">
+                    {user.username || "—"}
+                  </td>
+                  <td className="px-7 py-5 text-gray-200 text-base">
+                    {user.whatsapp || user.phoneNumber || "—"}
+                  </td>
+                  <td className="px-7 py-5 text-emerald-400 text-base font-semibold">
+                    {user.balance !== undefined ? user.balance.toFixed(2) : "—"}
+                  </td>
+                  <td className="px-7 py-5">
+                    <span
+                      className={`inline-block px-4 py-1.5 rounded-full text-sm font-semibold ${
+                        user.isActive
+                          ? "bg-emerald-600/30 text-emerald-200 border border-emerald-500/40"
+                          : "bg-rose-600/30 text-rose-200 border border-rose-500/40"
+                      }`}
+                    >
+                      {user.isActive ? "Active" : "Deactive"}
+                    </span>
+                  </td>
+                  <td className="px-7 py-5 text-right">
+                    <button
+                      className="text-emerald-400 hover:text-emerald-300 text-xl p-3 rounded-lg hover:bg-emerald-950/60 transition-all cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/user/${user._id}`);
+                      }}
+                    >
+                      <FaEye />
+                    </button>
+                  </td>
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-      {/* Mobile Card View */}
-      <CardContainer>
-        {filteredUsers.length > 0 ? (
-          filteredUsers.map(renderUserCard)
-        ) : (
-          <NoDataMessage>
-            {searchTerm || statusFilter !== "all"
-              ? "No users found matching your filters"
-              : "No users available"}
-          </NoDataMessage>
-        )}
-      </CardContainer>
-    </DashboardContainer>
+      {/* Mobile / Tablet Cards */}
+      {filteredUsers.length > 0 && (
+        <div className="lg:hidden space-y-5 mt-6">
+          {currentItems.map((user, idx) => (
+            <motion.div
+              key={user._id}
+              custom={idx}
+              variants={cardVariants}
+              initial="hidden"
+              animate="visible"
+              whileHover={{ scale: 1.02, y: -4 }}
+              className="bg-gradient-to-br from-gray-800/70 to-gray-900/70 backdrop-blur-md border border-emerald-800/40 rounded-2xl p-6 shadow-xl cursor-pointer group"
+              onClick={() => navigate(`/user/${user._id}`)}
+            >
+              <div className="flex justify-between items-start mb-5">
+                <div>
+                  <p className="text-emerald-400 text-base font-medium">
+                    Username
+                  </p>
+                  <p className="text-white text-lg font-semibold">
+                    {user.username || "—"}
+                  </p>
+                </div>
+                <span
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold ${
+                    user.isActive
+                      ? "bg-emerald-600/40 text-emerald-200"
+                      : "bg-rose-600/40 text-rose-200"
+                  }`}
+                >
+                  {user.isActive ? "Active" : "Deactive"}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-5 text-base mb-6">
+                <div>
+                  <p className="text-gray-400">Phone</p>
+                  <p className="text-gray-100">
+                    {user.whatsapp || user.phoneNumber || "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-400">Balance</p>
+                  <p className="text-emerald-400 font-semibold">
+                    {user.balance !== undefined ? user.balance.toFixed(2) : "—"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <button
+                  className="flex items-center gap-2.5 bg-emerald-700/30 hover:bg-emerald-600/50 text-emerald-200 px-5 py-2.5 rounded-lg transition-all cursor-pointer text-base"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/user/${user._id}`);
+                  }}
+                >
+                  <FaEye />
+                  <span>View Details</span>
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {filteredUsers.length > 0 && totalPages > 1 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="flex flex-col sm:flex-row justify-between items-center mt-10 gap-4 text-emerald-300"
+        >
+          <div className="text-base">
+            Showing {indexOfFirstItem + 1} – {Math.min(indexOfLastItem, filteredUsers.length)} of{" "}
+            {filteredUsers.length}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => paginate(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="p-3 rounded-lg bg-gray-800/70 border border-emerald-800/50 hover:bg-emerald-900/50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+            >
+              <FaChevronLeft />
+            </button>
+
+            <span className="px-4 py-2 text-base font-medium">
+              Page {currentPage} of {totalPages}
+            </span>
+
+            <button
+              onClick={() => paginate(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="p-3 rounded-lg bg-gray-800/70 border border-emerald-800/50 hover:bg-emerald-900/50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+            >
+              <FaChevronRight />
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </div>
   );
 }
