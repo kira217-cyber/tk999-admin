@@ -1,309 +1,21 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import axios from 'axios';
-import { toast } from 'react-toastify';
-import { baseURL, baseURL_For_IMG_UPLOAD } from '../utils/baseURL';
-import 'react-toastify/dist/ReactToastify.css';
-import styled from 'styled-components'; // Import styled-components
+// src/pages/ImageControlPanel.jsx
+import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
+import { motion } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { FaUpload, FaTrash, FaEdit, FaSpinner } from "react-icons/fa";
+import { baseURL_For_IMG_UPLOAD } from "../utils/baseURL";
 
-// --- Styled Components ---
-
-const DashboardContainer = styled.div`
-  min-height: 100vh;
-  background: linear-gradient(to bottom right, #1a202c, #2d3748, #4a5568);
-  padding: 2.5rem; /* p-10 */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const ContentCard = styled.div`
-  width: 100%;
-  max-width: 7xl; /* Equivalent to max-w-7xl */
-  background-color: #ffffff;
-  border-radius: 1.5rem; /* rounded-3xl */
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); /* shadow-2xl */
-  padding: 2.5rem; /* p-10 */
-`;
-
-const Header = styled.h2`
-  font-size: 2.5rem; /* text-4xl */
-  font-weight: 700; /* font-bold */
-  color: #1a202c; /* text-gray-900 */
-  margin-bottom: 2.5rem; /* mb-10 */
-  text-align: center;
-  letter-spacing: -0.025em; /* tracking-tight */
-`;
-
-const Form = styled.form`
-  margin-bottom: 3rem; /* mb-12 */
-`;
-
-const FormGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem; /* gap-6 */
-
-  @media (min-width: 1024px) { /* lg */
-    grid-template-columns: repeat(4, 1fr);
-  }
-`;
-
-const FormSection = styled.div`
-  @media (min-width: 1024px) { /* lg */
-    grid-column: span 2 / span 2;
-  }
-`;
-
-const Label = styled.label`
-  display: block;
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 500; /* font-medium */
-  color: #4a5568; /* text-gray-700 */
-  margin-bottom: 0.5rem; /* mb-2 */
-`;
-
-const Dropzone = styled.div`
-  position: relative;
-  border: 2px dashed #cbd5e0; /* border-2 border-dashed border-gray-300 */
-  border-radius: 0.5rem; /* rounded-lg */
-  padding: 1.5rem; /* p-6 */
-  text-align: center;
-  transition: border-color 0.2s ease-in-out; /* transition-colors */
-
-  &:hover {
-    border-color: #38b2ac; /* hover:border-teal-500 */
-  }
-`;
-
-const FileInput = styled.input`
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
-`;
-
-const DropzoneText = styled.p`
-  font-size: 0.875rem; /* text-sm */
-  color: #a0aec0; /* text-gray-500 */
-`;
-
-const ImagePreview = styled.img`
-  margin-top: 1rem; /* mt-4 */
-  margin-left: auto;
-  margin-right: auto;
-  max-height: 10rem; /* max-h-40 */
-  object-fit: contain;
-  border-radius: 0.375rem; /* rounded-md */
-`;
-
-const Select = styled.select`
-  display: block;
-  width: 100%;
-  border-radius: 0.5rem; /* rounded-lg */
-  border-color: #cbd5e0; /* border-gray-300 */
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
-  &:focus {
-    border-color: #319795; /* focus:border-teal-600 */
-    box-shadow: 0 0 0 3px rgba(49, 151, 149, 0.5); /* focus:ring-teal-600 */
-  }
-  font-size: 0.875rem; /* text-sm */
-  padding: 0.75rem; /* p-3 */
-  &:disabled {
-    background-color: #f7fafc; /* disabled:bg-gray-100 */
-    cursor: not-allowed;
-  }
-`;
-
-const ButtonGroup = styled.div`
-  display: flex;
-  align-items: flex-end;
-  gap: 1rem; /* space-x-4 */
-`;
-
-const PrimaryButton = styled.button`
-  width: 100%;
-  padding: 0.75rem 1.5rem; /* py-3 px-6 */
-  background-color: #38b2ac; /* bg-teal-600 */
-  color: #ffffff;
-  font-weight: 600; /* font-semibold */
-  border-radius: 0.5rem; /* rounded-lg */
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
-  &:hover {
-    background-color: #319795; /* hover:bg-teal-700 */
-  }
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(56, 178, 172, 0.5), 0 0 0 6px rgba(56, 178, 172, 0.3); /* focus:ring-2 focus:ring-teal-600 focus:ring-offset-2 */
-  }
-  transition: all 0.2s ease-in-out;
-  &:disabled {
-    background-color: #81e6d9; /* disabled:bg-teal-400 */
-    cursor: not-allowed;
-  }
-  display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const SecondaryButton = styled(PrimaryButton)`
-  background-color: #4a5568; /* bg-gray-600 */
-  &:hover {
-    background-color: #2d3748; /* hover:bg-gray-700 */
-  }
-  &:focus {
-    box-shadow: 0 0 0 3px rgba(74, 85, 104, 0.5), 0 0 0 6px rgba(74, 85, 104, 0.3); /* focus:ring-2 focus:ring-gray-600 focus:ring-offset-2 */
-  }
-`;
-
-const ErrorMessage = styled.p`
-  margin-top: 1rem; /* mt-4 */
-  font-size: 0.875rem; /* text-sm */
-  color: #c53030; /* text-red-600 */
-  background-color: #fed7d7; /* bg-red-50 */
-  padding: 0.75rem; /* p-3 */
-  border-radius: 0.5rem; /* rounded-lg */
-`;
-
-const BannerListGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem; /* gap-6 */
-
-  @media (min-width: 768px) { /* md */
-    grid-template-columns: repeat(2, 1fr);
-  }
-  @media (min-width: 1024px) { /* lg */
-    grid-template-columns: repeat(3, 1fr);
-  }
-`;
-
-const EmptyBannerMessage = styled.p`
-  text-align: center;
-  color: #a0aec0; /* text-gray-500 */
-  grid-column: span 1 / span 1; /* col-span-full for smaller screens */
-
-  @media (min-width: 768px) { /* md */
-     grid-column: span 2 / span 2;
-  }
-   @media (min-width: 1024px) { /* lg */
-     grid-column: span 3 / span 3;
-  }
-
-  font-size: 1.125rem; /* text-lg */
-`;
-
-const BannerCard = styled.div`
-  position: relative;
-  background-color: #ffffff;
-  border-radius: 0.75rem; /* rounded-xl */
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-lg */
-  overflow: hidden;
-  transform: scale(1);
-  transition: transform 0.3s ease-in-out; /* transition-transform duration-300 */
-
-  &:hover {
-    transform: scale(1.05);
-  }
-`;
-
-const BannerImageContainer = styled.div`
-  position: relative;
-`;
-
-const BannerImage = styled.img`
-  width: 100%;
-  height: 16rem; /* h-64 */
-  object-fit: cover;
-`;
-
-const BannerTypeBadge = styled.span`
-  position: absolute;
-  top: 1rem; /* top-4 */
-  left: 1rem; /* left-4 */
-  padding: 0.25rem 0.75rem; /* px-3 py-1 */
-  font-size: 0.75rem; /* text-xs */
-  font-weight: 600; /* font-semibold */
-  color: #ffffff;
-  border-radius: 9999px; /* rounded-full */
-  background-color: ${(props) => (props.type === 'login_banner' ? '#38b2ac' : '#5a67d8')}; /* bg-teal-600 or bg-indigo-600 */
-`;
-
-const CardActions = styled.div`
-  padding: 1.25rem; /* p-5 */
-  display: flex;
-  gap: 0.75rem; /* gap-3 */
-`;
-
-const ActionButton = styled.button`
-  flex: 1;
-  padding: 0.5rem 1rem; /* py-2 px-4 */
-  font-weight: 600; /* font-semibold */
-  border-radius: 0.5rem; /* rounded-lg */
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1), 0 0 0 6px rgba(0, 0, 0, 0.05); /* focus:ring-2 focus:ring-offset-2 */
-  }
-  transition: all 0.2s ease-in-out;
-`;
-
-const EditButton = styled(ActionButton)`
-  background-color: #4299e1; /* bg-blue-600 */
-  color: #ffffff;
-  &:hover {
-    background-color: #3182ce; /* hover:bg-blue-700 */
-  }
-  &:focus {
-    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5), 0 0 0 6px rgba(66, 153, 225, 0.3); /* focus:ring-blue-600 */
-  }
-`;
-
-const DeleteButton = styled(ActionButton)`
-  background-color: #e53e3e; /* bg-red-600 */
-  color: #ffffff;
-  &:hover {
-    background-color: #c53030; /* hover:bg-red-700 */
-  }
-  &:focus {
-    box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.5), 0 0 0 6px rgba(229, 62, 62, 0.3); /* focus:ring-red-600 */
-  }
-`;
-
-
-// --- React Component ---
-
-const ImageControlPanel = () => {
+export default function ImageControlPanel() {
   const [banners, setBanners] = useState([]);
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
-  const [type, setType] = useState('login_banner');
+  const [type, setType] = useState("login_banner");
   const [editingBanner, setEditingBanner] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef(null);
-
-  const handleImageUpload = useCallback(async (file) => {
-    const uploadData = new FormData();
-    uploadData.append('image', file);
-
-    try {
-      const res = await fetch(baseURL_For_IMG_UPLOAD, {
-        method: 'POST',
-        body: uploadData,
-      });
-
-      const data = await res.json();
-      if (!res.ok || !data.imageUrl) {
-        throw new Error('Image upload failed');
-      }
-      return data.imageUrl;
-    } catch (error) {
-      console.error('Upload Error:', error);
-      throw error;
-    }
-  }, []);
 
   // Fetch banners
   const fetchBanners = async () => {
@@ -312,8 +24,8 @@ const ImageControlPanel = () => {
       if (response.data.success) {
         setBanners(response.data.data);
       }
-    } catch (error) {
-      toast.error('Failed to fetch banners', { position: 'top-right', autoClose: 3000 });
+    } catch (err) {
+      toast.error("Failed to fetch banners");
     }
   };
 
@@ -321,264 +33,322 @@ const ImageControlPanel = () => {
     fetchBanners();
   }, []);
 
-  // Handle file selection and preview
+  // Handle file selection + preview
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
+      if (!selectedFile.type.startsWith("image/")) {
+        setError("Please select a valid image file");
+        toast.error("Invalid file type");
+        return;
+      }
       setFile(selectedFile);
       setPreview(URL.createObjectURL(selectedFile));
       setError(null);
     }
   };
 
-  // Handle drag and drop
+  // Drag & Drop handlers
   const handleDrop = (e) => {
     e.preventDefault();
     const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile && droppedFile.type.startsWith('image/')) {
+    if (droppedFile && droppedFile.type.startsWith("image/")) {
       setFile(droppedFile);
       setPreview(URL.createObjectURL(droppedFile));
       setError(null);
     } else {
-      setError('Please drop a valid image file');
+      setError("Please drop a valid image file");
+      toast.error("Invalid file type");
     }
   };
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-  };
+  const handleDragOver = (e) => e.preventDefault();
 
-  // Clean up preview URL
+  // Cleanup preview URL
   useEffect(() => {
     return () => {
       if (preview) URL.revokeObjectURL(preview);
     };
   }, [preview]);
 
-  // Handle image upload and save to database
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!file) {
-      setError('Please select or drop an image');
-      return;
-    }
-    setLoading(true);
+  // Upload image to server
+  const handleImageUpload = async (file) => {
+    const uploadData = new FormData();
+    uploadData.append("image", file);
+
     try {
-      const imageUrl = await handleImageUpload(file);
-      const existingBanner = banners.find((banner) => banner.type === type);
-      if (existingBanner) {
-        await axios.put(`${baseURL}/bannersRegistration/${existingBanner._id}`, { url: imageUrl, type });
-        toast.success('Banner updated successfully', { position: 'top-right', autoClose: 3000 });
-      } else {
-        await axios.post(`${baseURL}/bannersRegistration`, { url: imageUrl, type });
-        toast.success('Banner created successfully', { position: 'top-right', autoClose: 3000 });
-      }
-      setError(null);
-      setFile(null);
-      setPreview(null);
-      setType('login_banner');
-      setEditingBanner(null);
-      fetchBanners();
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    } catch (error) {
-      setError(error.response?.data?.error || 'Failed to create or update banner');
-      toast.error(error.response?.data?.error || 'Failed to create or update banner', {
-        position: 'top-right',
-        autoClose: 3000,
+      const res = await fetch(baseURL_For_IMG_UPLOAD, {
+        method: "POST",
+        body: uploadData,
       });
-    } finally {
-      setLoading(false);
+
+      const data = await res.json();
+      if (!res.ok || !data.imageUrl) {
+        throw new Error("Image upload failed");
+      }
+      return data.imageUrl;
+    } catch (err) {
+      console.error("Upload Error:", err);
+      throw err;
     }
   };
 
-  // Handle banner update
-  const handleUpdate = async (e) => {
+  // Submit / Update banner
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!file && !editingBanner) {
-      setError('Please select an image to update');
+      setError("Please select or drop an image");
+      toast.error("No image selected");
       return;
     }
+
     setLoading(true);
+    setError(null);
+
     try {
-      let imageUrl = editingBanner.url;
+      let imageUrl = editingBanner?.url;
+
       if (file) {
         imageUrl = await handleImageUpload(file);
       }
-      const existingBanner = banners.find((banner) => banner.type === type && banner._id !== editingBanner._id);
-      if (existingBanner) {
-        setError(`A banner with type ${type} already exists`);
-        toast.error(`A banner with type ${type} already exists`, { position: 'top-right', autoClose: 3000 });
+
+      // Check if another banner with same type exists (when changing type)
+      const existing = banners.find(
+        (b) => b.type === type && b._id !== editingBanner?._id,
+      );
+      if (existing) {
+        setError(`A banner with type "${type}" already exists`);
+        toast.error(`A banner with type "${type}" already exists`);
         setLoading(false);
         return;
       }
-      await axios.put(`${baseURL}/bannersRegistration/${editingBanner._id}`, { url: imageUrl, type });
-      setError(null);
+
+      if (editingBanner) {
+        // Update existing
+        await axios.put(`${baseURL}/bannersRegistration/${editingBanner._id}`, {
+          url: imageUrl,
+          type,
+        });
+        toast.success("Banner updated successfully!");
+      } else {
+        // Create new
+        await axios.post(`${baseURL}/bannersRegistration`, {
+          url: imageUrl,
+          type,
+        });
+        toast.success("Banner uploaded successfully!");
+      }
+
       setFile(null);
       setPreview(null);
-      setType('login_banner');
+      setType("login_banner");
       setEditingBanner(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
       fetchBanners();
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      toast.success('Banner updated successfully', { position: 'top-right', autoClose: 3000 });
-    } catch (error) {
-      setError(error.response?.data?.error || 'Failed to update banner');
-      toast.error(error.response?.data?.error || 'Failed to update banner', {
-        position: 'top-right',
-        autoClose: 3000,
-      });
+    } catch (err) {
+      const msg = err.response?.data?.error || "Failed to save banner";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle banner delete
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete(`${baseURL}/bannersRegistration/${id}`);
-      fetchBanners();
-      toast.success('Banner deleted successfully', { position: 'top-right', autoClose: 3000 });
-    } catch (error) {
-      toast.error('Failed to delete banner', { position: 'top-right', autoClose: 3000 });
-    }
-  };
-
-  // Start editing a banner
+  // Start editing
   const startEditing = (banner) => {
     setEditingBanner(banner);
     setType(banner.type);
     setFile(null);
     setPreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  // Delete banner
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this banner permanently?")) return;
+
+    try {
+      await axios.delete(`${baseURL}/bannersRegistration/${id}`);
+      toast.success("Banner deleted!");
+      fetchBanners();
+    } catch (err) {
+      toast.error("Failed to delete banner");
+    }
   };
 
   return (
-    <DashboardContainer>
-      <ContentCard>
-        <Header>
-          {editingBanner ? 'Edit Banner' : 'Image Control Panel'}
-        </Header>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 sm:p-6 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-10 text-center bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+          Banner Control Panel
+        </h1>
 
-        <Form onSubmit={editingBanner ? handleUpdate : handleSubmit}>
-          <FormGrid>
-            <FormSection>
-              <Label>Upload Image</Label>
-              <Dropzone onDrop={handleDrop} onDragOver={handleDragOver}>
-                <FileInput
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  ref={fileInputRef}
-                />
-                <DropzoneText>
-                  {file ? 'Image selected' : 'Drag & drop an image here or click to select'}
-                </DropzoneText>
-                {preview && (
-                  <ImagePreview
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 sm:p-8 shadow-2xl mb-12"
+        >
+          <h2 className="text-2xl font-bold text-emerald-300 mb-6">
+            {editingBanner ? "Edit Banner" : "Upload / Replace Banner"}
+          </h2>
+
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Dropzone */}
+            <div
+              className="relative border-2 border-dashed border-emerald-700/50 rounded-xl p-8 text-center cursor-pointer hover:border-emerald-500/70 transition-all group"
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onClick={() => fileInputRef.current.click()}
+            >
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                ref={fileInputRef}
+                className="hidden"
+              />
+
+              {preview ? (
+                <div className="space-y-4">
+                  <img
                     src={preview}
                     alt="Preview"
+                    className="max-h-64 mx-auto object-contain rounded-lg border border-emerald-700/50 shadow-lg"
                   />
-                )}
-              </Dropzone>
-            </FormSection>
+                  <p className="text-emerald-300 font-medium">Image selected</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <FaUpload className="mx-auto text-5xl text-emerald-500 group-hover:text-emerald-400 transition-colors" />
+                  <p className="text-gray-300 text-lg">
+                    Drag & drop an image here or click to select
+                  </p>
+                  <p className="text-gray-500 text-sm">Supports JPG, PNG</p>
+                </div>
+              )}
+            </div>
+
+            {/* Banner Type */}
             <div>
-              <Label>Banner Type</Label>
-              <Select
+              <label className="block text-emerald-300 font-medium mb-2">
+                Banner Type
+              </label>
+              <select
                 value={type}
                 onChange={(e) => setType(e.target.value)}
                 disabled={editingBanner}
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <option value="login_banner">Login Banner</option>
                 <option value="registration_banner">Registration Banner</option>
-              </Select>
+              </select>
             </div>
-            <ButtonGroup>
-              <PrimaryButton
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.97 }}
                 type="submit"
-                disabled={loading}
+                disabled={loading || (!file && !editingBanner)}
+                className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-4 rounded-xl font-bold cursor-pointer transition-all shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
               >
-                {loading ? (
-                  <svg
-                    className="animate-spin h-5 w-5 mr-2 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                ) : editingBanner ? (
-                  'Update Banner'
-                ) : banners.find((banner) => banner.type === type) ? (
-                  'Replace Banner'
-                ) : (
-                  'Upload Banner'
-                )}
-              </PrimaryButton>
+                {loading && <FaSpinner className="animate-spin" />}
+                {loading
+                  ? "Saving..."
+                  : editingBanner
+                    ? "Update Banner"
+                    : banners.find((b) => b.type === type)
+                      ? "Replace Banner"
+                      : "Upload Banner"}
+              </motion.button>
+
               {editingBanner && (
-                <SecondaryButton
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.97 }}
                   type="button"
-                  onClick={() => startEditing(null)}
+                  onClick={() => {
+                    setEditingBanner(null);
+                    setFile(null);
+                    setPreview(null);
+                    setType("login_banner");
+                    if (fileInputRef.current) fileInputRef.current.value = "";
+                  }}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-4 rounded-xl font-bold cursor-pointer transition-all border border-gray-600"
                 >
-                  Cancel
-                </SecondaryButton>
+                  Cancel Edit
+                </motion.button>
               )}
-            </ButtonGroup>
-          </FormGrid>
-          {error && (
-            <ErrorMessage>{error}</ErrorMessage>
-          )}
-        </Form>
+            </div>
 
-        <BannerListGrid>
-          {banners.length === 0 && (
-            <EmptyBannerMessage>
-              No banners available. Upload one to get started!
-            </EmptyBannerMessage>
+            {error && (
+              <div className="bg-rose-900/40 border border-rose-700/50 text-rose-300 px-6 py-4 rounded-xl text-center">
+                {error}
+              </div>
+            )}
+          </form>
+        </motion.div>
+
+        {/* Banner List */}
+        <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 sm:p-8 shadow-2xl">
+          <h2 className="text-2xl font-bold text-emerald-300 mb-6">
+            Existing Banners
+          </h2>
+
+          {banners.length === 0 ? (
+            <div className="text-center py-12 text-gray-400 text-lg">
+              No banners uploaded yet. Add your first banner above!
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {banners.map((banner) => (
+                <motion.div
+                  key={banner._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-gray-900/50 border border-emerald-800/50 rounded-xl overflow-hidden shadow-lg group relative"
+                >
+                  <div className="relative">
+                    <img
+                      src={`${baseURL_For_IMG_UPLOAD}${banner.url}`}
+                      alt={banner.type}
+                      className="w-full h-64 object-cover"
+                    />
+                    <span
+                      className={`absolute top-4 left-4 px-4 py-1 rounded-full text-sm font-semibold text-white ${
+                        banner.type === "login_banner"
+                          ? "bg-emerald-600"
+                          : "bg-indigo-600"
+                      }`}
+                    >
+                      {banner.type.replace("_", " ").toUpperCase()}
+                    </span>
+                  </div>
+
+                  <div className="p-5 flex gap-3">
+                    <button
+                      onClick={() => startEditing(banner)}
+                      className="flex-1 bg-emerald-700/60 hover:bg-emerald-600/70 text-white py-3 rounded-xl font-medium cursor-pointer transition-all"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(banner._id)}
+                      className="flex-1 bg-rose-700/60 hover:bg-rose-600/70 text-white py-3 rounded-xl font-medium cursor-pointer transition-all"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           )}
-          {banners.map((banner) => (
-            <BannerCard
-              key={banner._id}
-            >
-              <BannerImageContainer>
-                <BannerImage
-                  src={`http://localhost:8000/uploads/${banner.url}`}
-                  alt={banner.type}
-                />
-                <BannerTypeBadge type={banner.type}>
-                  {banner.type.replace('_', ' ').toUpperCase()}
-                </BannerTypeBadge>
-              </BannerImageContainer>
-              <CardActions>
-                <EditButton
-                  onClick={() => startEditing(banner)}
-                  aria-label={`Edit ${banner.type} banner`}
-                >
-                  Edit
-                </EditButton>
-                <DeleteButton
-                  onClick={() => handleDelete(banner._id)}
-                  aria-label={`Delete ${banner.type} banner`}
-                >
-                  Delete
-                </DeleteButton>
-              </CardActions>
-            </BannerCard>
-          ))}
-        </BannerListGrid>
-      </ContentCard>
-    </DashboardContainer>
+        </div>
+      </div>
+
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+    </div>
   );
-};
-
-export default ImageControlPanel;
+}

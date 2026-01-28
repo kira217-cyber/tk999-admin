@@ -1,67 +1,28 @@
-import React, { useState, useEffect, useCallback } from "react";
+// src/pages/GameControl.jsx
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import styled from "styled-components";
-import { FaTrash } from "react-icons/fa";
+import { motion } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   createGame,
   fetchGames,
   updateGame,
   deleteGame,
 } from "../redux/Frontend Control/GameControl/GameControlAPI";
-import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import {
-  baseURL,
-  baseURL_For_IMG_DELETE,
-} from "../utils/baseURL";
+import { FaTrash, FaStar, FaSpinner } from "react-icons/fa";
+import { baseURL, baseURL_For_IMG_UPLOAD } from "../utils/baseURL";
 import axios from "axios";
 
-// Styled Components
-const Container = styled.div`
-  padding: 20px;
-`;
-// Dialog removed in selection-only flow
-const FormGroup = styled.div`
-  margin-bottom: 1rem;
-`;
-const GameList = styled.div`
-  margin-top: 20px;
-`;
-const GameCard = styled.div`
-  background: white;
-  border-radius: 8px;
-  overflow: hidden;
-  transition: transform 0.2s;
-  &:hover {
-    transform: translateY(-5px);
-  }
-`;
-const GameImage = styled.img`
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
-`;
-const GameContent = styled.div`
-  padding: 15px;
-`;
-const GameTitle = styled.h5`
-  margin-bottom: 10px;
-  font-size: 1.25rem;
-`;
-
-const GameControl = () => {
+export default function GameControl() {
   const dispatch = useDispatch();
   const { gameControl, isLoading, isError, errorMessage } = useSelector(
-    (state) => state.gameControl
+    (state) => state.gameControl,
   );
-
-  // Edit dialog state removed
 
   const [submenuProviders, setSubmenuProviders] = useState([]);
   const [apiGames, setApiGames] = useState([]);
   const [selectedSubmenu, setSelectedSubmenu] = useState("");
-  const [isUploading] = useState(false);
-  // No editing in selection-only flow
   const [apiGamesState, setApiGamesState] = useState({});
 
   const API_KEY =
@@ -83,6 +44,7 @@ const GameControl = () => {
         toast.error("Failed to fetch providers.");
       }
     };
+
     fetchSubmenuProviders();
     dispatch(fetchGames());
   }, [dispatch]);
@@ -98,7 +60,7 @@ const GameControl = () => {
         try {
           const response = await axios.get(
             `https://apigames.oracleapi.net/api/games/pagination?page=1&limit=50&provider=${selected.providerId}`,
-            { headers: { "x-api-key": API_KEY } }
+            { headers: { "x-api-key": API_KEY } },
           );
           if (response.data.success) {
             setApiGames(response.data.data);
@@ -111,9 +73,6 @@ const GameControl = () => {
     }
   };
 
-  // Admin will not upload extra images now; selection-only flow
-  // Image upload disabled in selection-only flow
-
   const handleApiGameHotToggle = (gameAPIID) => {
     setApiGamesState((prev) => ({
       ...prev,
@@ -123,12 +82,6 @@ const GameControl = () => {
       },
     }));
   };
-
-  // Removed New Tab toggle
-
-  // Lobby selection handled via explicit buttons; toggle helper removed
-
-  // Removed Lobby Game select/unselect
 
   const handleSaveApiGame = async (gameAPIID) => {
     const gameState = apiGamesState[gameAPIID] || {};
@@ -142,7 +95,7 @@ const GameControl = () => {
           gameAPIID,
           subOptions: selectedSubmenu,
           isHotGame: gameState.isHotGame || false,
-        })
+        }),
       ).unwrap();
       toast.success("Game selected and saved!");
       dispatch(fetchGames());
@@ -151,204 +104,191 @@ const GameControl = () => {
     }
   };
 
-  // Editing removed
-
-  const handleDeleteGame = useCallback(
-    async (gameId, imageFilename) => {
-      try {
-        if (imageFilename) {
-          await fetch(baseURL_For_IMG_DELETE, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ filename: imageFilename }),
-          });
-        }
-        await dispatch(deleteGame(gameId)).unwrap();
-        toast.success("Game deleted successfully!");
-        dispatch(fetchGames());
-      } catch (error) {
-        toast.error(error.message || "Failed to delete game.");
+  const handleDeleteGame = async (gameId, imageFilename) => {
+    try {
+      if (imageFilename) {
+        await fetch(baseURL_For_IMG_DELETE, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ filename: imageFilename }),
+        });
       }
-    },
-    [dispatch]
-  );
+      await dispatch(deleteGame(gameId)).unwrap();
+      toast.success("Game unselected successfully!");
+      dispatch(fetchGames());
+    } catch (error) {
+      toast.error(error.message || "Failed to unselect game.");
+    }
+  };
 
-  // No edit handler in selection-only flow
+  const handleSavedHotToggle = async (savedGame) => {
+    try {
+      await dispatch(
+        updateGame({
+          id: savedGame._id,
+          data: { isHotGame: !savedGame.isHotGame },
+        }),
+      ).unwrap();
+      toast.success("Hot Game status updated!");
+      dispatch(fetchGames());
+    } catch (error) {
+      toast.error(error.message || "Failed to update Hot Game status.");
+    }
+  };
 
-  // No dialog to close
-
-  const handleSavedHotToggle = useCallback(
-    async (savedGame) => {
-      try {
-        await dispatch(
-          updateGame({ id: savedGame._id, data: { isHotGame: !savedGame.isHotGame } })
-        ).unwrap();
-        toast.success("Hot Game status updated!");
-        dispatch(fetchGames());
-      } catch (error) {
-        toast.error(error.message || "Failed to update Hot Game status.");
-      }
-    },
-    [dispatch]
-  );
-
-  // Removed saved New Tab toggle handler
-
-  // Find saved game data for a provider game
   const getSavedGameData = (gameAPIID) => {
     return gameControl.find((savedGame) => savedGame.gameAPIID === gameAPIID);
   };
 
   return (
-    <Container className="container">
-      <FormGroup>
-        <label htmlFor="provider" className="form-label">
-          Select a Provider (Submenu)
-        </label>
-        <select
-          id="provider"
-          value={selectedSubmenu}
-          onChange={(e) => handleProviderChange(e.target.value)}
-          className="form-select"
-        >
-          <option value="">-- Select Provider --</option>
-          {submenuProviders.map((sub) => (
-            <option key={sub._id} value={sub._id}>
-              {sub.providerName}
-            </option>
-          ))}
-        </select>
-      </FormGroup>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 sm:p-6 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-bold text-white mb-10 text-center bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+          Featured Games Control
+        </h1>
 
-      <hr />
-      <h2>Games from Provider</h2>
-      <GameList className="row g-4">
-        {isLoading && (
-          <div className="col-12 text-center">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
+        {/* Provider Selection */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 sm:p-8 shadow-2xl mb-12"
+        >
+          <h2 className="text-2xl font-bold text-emerald-300 mb-6">
+            Select Provider (Submenu)
+          </h2>
+
+          <select
+            value={selectedSubmenu}
+            onChange={(e) => handleProviderChange(e.target.value)}
+            className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-pointer"
+          >
+            <option value="">-- Select Provider --</option>
+            {submenuProviders.map((sub) => (
+              <option key={sub._id} value={sub._id}>
+                {sub.providerName}
+              </option>
+            ))}
+          </select>
+        </motion.div>
+
+        {/* Games List */}
+        <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 sm:p-8 shadow-2xl">
+          <h2 className="text-2xl font-bold text-emerald-300 mb-6">
+            Games from Provider
+          </h2>
+
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <FaSpinner className="w-12 h-12 text-emerald-400 animate-spin" />
             </div>
-          </div>
-        )}
-        {isError && (
-          <div className="col-12">
-            <div className="alert alert-danger" role="alert">
+          ) : isError ? (
+            <div className="bg-rose-900/40 border border-rose-700/50 text-rose-300 px-6 py-8 rounded-xl text-center">
               {errorMessage || "Failed to load games"}
             </div>
-          </div>
-        )}
-        {apiGames.length === 0 && !isLoading && !isError && (
-          <p>Select a provider to see available games.</p>
-        )}
-        {apiGames.map((game) => {
-          const savedGame = getSavedGameData(game._id);
-          const isSaved = !!savedGame;
-          const displayGame = isSaved ? savedGame : game;
-          // Prefer project image belonging to Tk999 if present
-          const tk999ProjectImage = (() => {
-            const docs = (displayGame?.projectImageDocs || game?.projectImageDocs || []);
-            const match = docs.find(
-              (d) => d?.projectName?.title === "Tk999" && d?.image
-            );
-            return match?.image || null;
-          })();
+          ) : apiGames.length === 0 ? (
+            <div className="text-center py-12 text-gray-400 text-lg">
+              Select a provider to see available games
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {apiGames.map((game) => {
+                const savedGame = getSavedGameData(game._id);
+                const isSaved = !!savedGame;
+                const displayGame = isSaved ? savedGame : game;
 
-          const displayImage = (() => {
-            if (tk999ProjectImage) {
-              return `${"https://apigames.oracleapi.net"}/${tk999ProjectImage}`;
-            }
-            if (isSaved) {
-              return `${"https://apigames.oracleapi.net"}/${displayGame.image}`;
-            }
-            if (apiGamesState[game._id]?.imageUrl) {
-              return `${"https://apigames.oracleapi.net"}/${apiGamesState[game._id].imageUrl}`;
-            }
-            return game.image;
-          })();
-          const isHotGame = isSaved
-            ? displayGame.isHotGame
-            : apiGamesState[game._id]?.isHotGame || false;
-          // New Tab and Lobby Game removed
+                // Prefer Tk999 project image if available
+                const tk999ProjectImage = (() => {
+                  const docs =
+                    displayGame?.projectImageDocs ||
+                    game?.projectImageDocs ||
+                    [];
+                  const match = docs.find(
+                    (d) => d?.projectName?.title === "Tk999" && d?.image,
+                  );
+                  return match?.image || null;
+                })();
 
-          return (
-            <div key={game._id} className="col-md-6 col-lg-3">
-              <GameCard className="card h-100">
-                <GameImage src={displayImage} alt={game.name} />
-                <GameContent>
-                  <GameTitle className="card-title">{game.name}</GameTitle>
-                  <p className="card-text">
-                    Hot Game: {isHotGame ? "Yes" : "No"}
-                  </p>
-                  {/* New Tab and Lobby Game removed */}
-                  {!isSaved && (
-                    <>
-                      <FormGroup className="form-check">
-                        <input
-                          type="checkbox"
-                          id={`hot-toggle-${game._id}`}
-                          className="form-check-input"
-                          checked={apiGamesState[game._id]?.isHotGame || false}
-                          onChange={() => handleApiGameHotToggle(game._id)}
-                        />
-                        <label
-                          htmlFor={`hot-toggle-${game._id}`}
-                          className="form-check-label"
-                        >
-                          Hot Game
+                const displayImage = tk999ProjectImage
+                  ? `https://apigames.oracleapi.net/${tk999ProjectImage}`
+                  : isSaved
+                    ? `https://apigames.oracleapi.net/${displayGame.image}`
+                    : apiGamesState[game._id]?.imageUrl
+                      ? `https://apigames.oracleapi.net/${apiGamesState[game._id].imageUrl}`
+                      : game.image;
+
+                const isHotGame = isSaved
+                  ? displayGame.isHotGame
+                  : apiGamesState[game._id]?.isHotGame || false;
+
+                return (
+                  <motion.div
+                    key={game._id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-gray-900/50 border border-emerald-800/50 rounded-xl overflow-hidden shadow-lg group relative"
+                  >
+                    <img
+                      src={displayImage}
+                      alt={game.name}
+                      className="w-full h-48 object-cover"
+                    />
+
+                    <div className="p-5 space-y-4">
+                      <h3 className="text-lg font-bold text-emerald-300 truncate">
+                        {game.name}
+                      </h3>
+
+                      <div className="flex items-center gap-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isHotGame}
+                            onChange={() =>
+                              isSaved
+                                ? handleSavedHotToggle(savedGame)
+                                : handleApiGameHotToggle(game._id)
+                            }
+                            className="w-5 h-5 accent-emerald-500 cursor-pointer"
+                          />
+                          <span className="text-gray-200 font-medium">
+                            Hot Game
+                          </span>
                         </label>
-                      </FormGroup>
-                      {/* Lobby Game selection removed */}
-                      {/* New Tab toggle removed */}
-                      {/* Saved Lobby Game buttons removed */}
-                      <button
-                        className="btn btn-primary w-100"
-                        onClick={() => handleSaveApiGame(game._id)}
-                        disabled={isUploading}
-                      >
-                        Select This Game
-                      </button>
-                    </>
-                  )}
-                  {isSaved && (
-                    <div className="mt-2">
-                      <FormGroup className="form-check">
-                        <input
-                          type="checkbox"
-                          id={`saved-hot-toggle-${savedGame._id}`}
-                          className="form-check-input"
-                          checked={!!savedGame.isHotGame}
-                          onChange={() => handleSavedHotToggle(savedGame)}
-                        />
-                        <label
-                          htmlFor={`saved-hot-toggle-${savedGame._id}`}
-                          className="form-check-label"
+                      </div>
+
+                      {!isSaved ? (
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.97 }}
+                          onClick={() => handleSaveApiGame(game._id)}
+                          disabled={isLoading}
+                          className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-3 rounded-xl font-bold cursor-pointer transition-all shadow-lg disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                          Hot Game
-                        </label>
-                      </FormGroup>
-                      {/* Saved New Tab toggle removed */}
-                      <div className="d-flex gap-2">
-                        <button
-                          className="btn btn-danger"
+                          Select This Game
+                        </motion.button>
+                      ) : (
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.97 }}
                           onClick={() =>
                             handleDeleteGame(savedGame._id, savedGame.image)
                           }
+                          className="w-full bg-rose-700/60 hover:bg-rose-600/70 text-white py-3 rounded-xl font-bold cursor-pointer transition-all flex items-center justify-center gap-2"
                         >
-                          <FaTrash /> Unselect
-                        </button>
-                      </div>
+                          <FaTrash />
+                          Unselect Game
+                        </motion.button>
+                      )}
                     </div>
-                  )}
-                </GameContent>
-              </GameCard>
+                  </motion.div>
+                );
+              })}
             </div>
-          );
-        })}
-      </GameList>
+          )}
+        </div>
+      </div>
 
-      {/* Edit dialog removed */}
-    </Container>
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+    </div>
   );
-};
-
-export default GameControl;
+}

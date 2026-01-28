@@ -1,293 +1,28 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import styled from 'styled-components';
-import { FaTimes, FaEdit } from 'react-icons/fa';
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { baseURL, baseURL_For_IMG_UPLOAD } from '../utils/baseURL';
+// src/pages/SiteControl.jsx
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { FaTimes, FaEdit, FaUpload, FaSpinner } from "react-icons/fa";
+import { baseURL, baseURL_For_IMG_UPLOAD } from "../utils/baseURL";
 
-// Styled Components
-const Container = styled.div`
-  padding: 1rem;
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f0 100%);
-  min-height: 100vh;
-  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-
-  @media (min-width: 768px) {
-    padding: 2rem;
-  }
-`;
-
-const DialogOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  z-index: 1000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow-y: auto;
-`;
-
-const DialogBox = styled.div`
-  background: #ffffff;
-  width: 90%;
-  max-width: 600px;
-  border-radius: 15px;
-  padding: 1.5rem;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-  max-height: 85vh;
-  overflow-y: auto;
-  position: relative;
-  border: 2px solid ${(props) => props.theme['--primary-color']};
-
-  @media (min-width: 768px) {
-    padding: 2rem;
-    max-width: 800px;
-    border-radius: 20px;
-  }
-`;
-
-const CloseButton = styled.button`
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  background: ${(props) => props.theme['--secondary-color']};
-  border: none;
-  border-radius: 50%;
-  width: 35px;
-  height: 35px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: #ffffff;
-  font-size: 1rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-
-  &:hover {
-    transform: scale(1.1);
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-  }
-
-  @media (min-width: 768px) {
-    top: 1rem;
-    right: 1rem;
-    width: 40px;
-    height: 40px;
-    font-size: 1.2rem;
-  }
-`;
-
-const ThemeGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-  background: #ffffff;
-  border-radius: 10px;
-  padding: 1rem;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-  margin-bottom: 1.5rem;
-  border-left: 4px solid ${(props) => props.theme['--primary-color']};
-
-  @media (min-width: 768px) {
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    padding: 1.5rem;
-    border-radius: 15px;
-    margin-bottom: 2rem;
-  }
-`;
-
-const GridItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem;
-  border-radius: 6px;
-  background: ${(props) => (props.highlight ? 'rgba(255, 87, 51, 0.05)' : 'transparent')};
-
-  @media (min-width: 768px) {
-    gap: 1rem;
-    padding: 0.75rem;
-    border-radius: 8px;
-  }
-`;
-
-const Label = styled.span`
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: ${(props) => props.theme['--sidebar-header-color']};
-  min-width: 100px;
-
-  @media (min-width: 768px) {
-    font-size: 0.9rem;
-    min-width: 120px;
-  }
-`;
-
-const Value = styled.span`
-  font-size: 0.8rem;
-  color: #212529;
-
-  @media (min-width: 768px) {
-    font-size: 0.9rem;
-  }
-`;
-
-const ColorSwatch = styled.div`
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  background-color: ${(props) => props.color};
-  border: 2px solid #ffffff;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
-
-  @media (min-width: 768px) {
-    width: 30px;
-    height: 30px;
-  }
-`;
-
-const ImagePreview = styled.img`
-  width: 50px;
-  height: auto;
-  object-fit: cover;
-  border-radius: 6px;
-  border: 2px solid ${(props) => props.theme['--secondary-color']};
-
-  @media (min-width: 768px) {
-    width: 60px;
-    border-radius: 8px;
-  }
-`;
-
-const FormGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-
-  @media (min-width: 768px) {
-    grid-template-columns: 1fr 2fr;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-  }
-`;
-
-const FormLabel = styled.label`
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: ${(props) => props.theme['--sidebar-header-color']};
-  display: flex;
-  align-items: center;
-
-  @media (min-width: 768px) {
-    font-size: 0.85rem;
-  }
-`;
-
-const Input = styled.input`
-  padding: 0.5rem;
-  border: 2px solid ${(props) => props.theme['--sidebar-body-color']};
-  border-radius: 8px;
-  font-size: 0.8rem;
-  color: #212529;
-  background: #ffffff;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-
-  &:focus {
-    outline: none;
-    border-color: ${(props) => props.theme['--primary-color']};
-    box-shadow: 0 0 10px rgba(255, 87, 51, 0.3);
-  }
-
-  @media (min-width: 768px) {
-    padding: 0.6rem;
-    border-radius: 10px;
-    font-size: 0.85rem;
-  }
-`;
-
-const Button = styled.button`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1.5rem;
-  border-radius: 10px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  background: ${(props) => (props.primary ? '#FF5733' : '#1C2937')};
-  color: #ffffff;
-  border: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
-    background: ${(props) => (props.primary ? '#E64A2A' : '#0F1B29')};
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  @media (min-width: 768px) {
-    padding: 0.8rem 2rem;
-    border-radius: 12px;
-    font-size: 0.9rem;
-  }
-`;
-
-const ActionBar = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
-
-  @media (min-width: 768px) {
-    flex-direction: row;
-    justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 2rem;
-  }
-`;
-
-const Title = styled.h2`
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: ${(props) => props.theme['--sidebar-header-color']};
-  margin-bottom: 1.5rem;
-  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-
-  @media (min-width: 768px) {
-    font-size: 2.2rem;
-    margin-bottom: 2rem;
-  }
-`;
-
-const SiteControl = () => {
+export default function SiteControl() {
   const [theme, setTheme] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [editingThemeId, setEditingThemeId] = useState(null);
+
   const [formData, setFormData] = useState({
-    primaryColor: '#FF5733',
-    secondaryColor: '#C70039',
-    sidebarHeaderColor: '#1C2937',
-    sidebarBodyColor: '#34495E',
-    sidebarTitle: 'roni',
-    sidebarTitleBD: 'roni',
-    websiteTitle: 'roni',
-    favicon: '',
-    websiteLogoWhite: '',
-    websiteLogoDark: '',
+    primaryColor: "#FF5733",
+    secondaryColor: "#C70039",
+    sidebarHeaderColor: "#1C2937",
+    sidebarBodyColor: "#34495E",
+    sidebarTitle: "roni",
+    sidebarTitleBD: "roni",
+    websiteTitle: "roni",
+    favicon: "",
+    websiteLogoWhite: "",
+    websiteLogoDark: "",
   });
 
   useEffect(() => {
@@ -301,159 +36,101 @@ const SiteControl = () => {
       if (response.ok && Object.keys(data).length > 0) {
         setTheme(data);
         setFormData({
-          primaryColor: data.primaryColor,
-          secondaryColor: data.secondaryColor,
-          sidebarHeaderColor: data.sidebarHeaderColor,
-          sidebarBodyColor: data.sidebarBodyColor,
-          sidebarTitle: data.sidebarTitle,
-          sidebarTitleBD: data.sidebarTitleBD,
-          websiteTitle: data.websiteTitle,
-          favicon: data.favicon || '',
-          websiteLogoWhite: data.websiteLogoWhite || '',
-          websiteLogoDark: data.websiteLogoDark || '',
+          primaryColor: data.primaryColor || "#FF5733",
+          secondaryColor: data.secondaryColor || "#C70039",
+          sidebarHeaderColor: data.sidebarHeaderColor || "#1C2937",
+          sidebarBodyColor: data.sidebarBodyColor || "#34495E",
+          sidebarTitle: data.sidebarTitle || "roni",
+          sidebarTitleBD: data.sidebarTitleBD || "roni",
+          websiteTitle: data.websiteTitle || "roni",
+          favicon: data.favicon || "",
+          websiteLogoWhite: data.websiteLogoWhite || "",
+          websiteLogoDark: data.websiteLogoDark || "",
         });
-      } else {
-        setTheme(null);
       }
     } catch (error) {
-      console.error('Fetch Theme Error:', error);
-      toast.error('Failed to fetch theme');
+      console.error("Fetch Theme Error:", error);
+      toast.error("Failed to load current theme");
     }
   };
 
-  const handleImageUpload = useCallback(async (file) => {
+  const handleImageUpload = async (file, field) => {
+    if (!file) return;
     const uploadData = new FormData();
-    uploadData.append('image', file);
+    uploadData.append("image", file);
 
+    setIsUploading(true);
     try {
       const res = await fetch(baseURL_For_IMG_UPLOAD, {
-        method: 'POST',
+        method: "POST",
         body: uploadData,
       });
 
       const data = await res.json();
-      if (!res.ok || !data.imageUrl) {
-        throw new Error('Image upload failed');
-      }
-      return data.imageUrl;
+      if (!res.ok || !data.imageUrl) throw new Error("Upload failed");
+
+      setFormData((prev) => ({ ...prev, [field]: data.imageUrl }));
+      toast.success(`${field.replace(/([A-Z])/g, " $1").trim()} uploaded`);
     } catch (error) {
-      console.error('Upload Error:', error);
-      throw error;
+      toast.error(`Failed to upload ${field}`);
+    } finally {
+      setIsUploading(false);
     }
-  }, []);
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageChange = useCallback(
-    async (e, field) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      setIsUploading(true);
-      try {
-        const imageUrl = await handleImageUpload(file);
-        setFormData((prev) => ({ ...prev, [field]: imageUrl }));
-      } catch (error) {
-        toast.error('Failed to upload image');
-      } finally {
-        setIsUploading(false);
-        e.target.value = null;
-      }
-    },
-    [handleImageUpload]
-  );
-
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const {
-      primaryColor,
-      secondaryColor,
-      sidebarHeaderColor,
-      sidebarBodyColor,
-      sidebarTitle,
-      sidebarTitleBD,
-      websiteTitle,
-      favicon,
-      websiteLogoWhite,
-      websiteLogoDark,
-    } = formData;
+    const requiredFields = [
+      "primaryColor",
+      "secondaryColor",
+      "sidebarHeaderColor",
+      "sidebarBodyColor",
+      "sidebarTitle",
+      "sidebarTitleBD",
+      "websiteTitle",
+    ];
 
-    if (
-      !primaryColor ||
-      !secondaryColor ||
-      !sidebarHeaderColor ||
-      !sidebarBodyColor ||
-      !sidebarTitle ||
-      !sidebarTitleBD ||
-      !websiteTitle
-    ) {
-      toast.error('Please fill in all required fields');
+    if (requiredFields.some((f) => !formData[f])) {
+      toast.error("Please fill all required fields");
       return;
     }
 
-    if (sidebarTitle.length > 10) {
-      toast.error('Sidebar title must be 10 characters or less');
+    if (formData.sidebarTitle.length > 10) {
+      toast.error("Sidebar title must be ≤ 10 characters");
       return;
     }
 
     try {
-      if (editingThemeId) {
-        const response = await fetch(`${baseURL}/admin-home-control/${editingThemeId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            primaryColor,
-            secondaryColor,
-            sidebarHeaderColor,
-            sidebarBodyColor,
-            sidebarTitle,
-            sidebarTitleBD,
-            websiteTitle,
-            favicon,
-            websiteLogoWhite,
-            websiteLogoDark,
-          }),
-        });
-        const data = await response.json();
-        if (response.ok) {
-          toast.success('Theme updated successfully');
-          fetchTheme();
-          closeDialog();
-        } else {
-          toast.error(data.message || 'Failed to update theme');
-        }
+      const payload = { ...formData };
+
+      const url = editingThemeId
+        ? `${baseURL}/admin-home-control/${editingThemeId}`
+        : `${baseURL}/admin-home-control`;
+
+      const method = editingThemeId ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success(editingThemeId ? "Theme updated!" : "Theme created!");
+        fetchTheme();
+        setIsDialogOpen(false);
       } else {
-        const response = await fetch(`${baseURL}/admin-home-control`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            primaryColor,
-            secondaryColor,
-            sidebarHeaderColor,
-            sidebarBodyColor,
-            sidebarTitle,
-            sidebarTitleBD,
-            websiteTitle,
-            favicon,
-            websiteLogoWhite,
-            websiteLogoDark,
-          }),
-        });
-        const data = await response.json();
-        if (response.ok) {
-          toast.success('Theme created successfully');
-          fetchTheme();
-          closeDialog();
-        } else {
-          toast.error(data.message || 'Failed to create theme');
-        }
+        toast.error(data.message || "Failed to save theme");
       }
     } catch (error) {
-      console.error('Submit Error:', error);
-      toast.error('Failed to save theme');
+      toast.error("Something went wrong");
     }
   };
 
@@ -464,19 +141,19 @@ const SiteControl = () => {
     }
   };
 
-  const openDialog = () => {
+  const openCreateDialog = () => {
     setEditingThemeId(null);
     setFormData({
-      primaryColor: '#FF5733',
-      secondaryColor: '#C70039',
-      sidebarHeaderColor: '#1C2937',
-      sidebarBodyColor: '#34495E',
-      sidebarTitle: 'roni',
-      sidebarTitleBD: 'roni',
-      websiteTitle: 'roni',
-      favicon: '',
-      websiteLogoWhite: '',
-      websiteLogoDark: '',
+      primaryColor: "#FF5733",
+      secondaryColor: "#C70039",
+      sidebarHeaderColor: "#1C2937",
+      sidebarBodyColor: "#34495E",
+      sidebarTitle: "roni",
+      sidebarTitleBD: "roni",
+      websiteTitle: "roni",
+      favicon: "",
+      websiteLogoWhite: "",
+      websiteLogoDark: "",
     });
     setIsDialogOpen(true);
   };
@@ -484,249 +161,317 @@ const SiteControl = () => {
   const closeDialog = () => setIsDialogOpen(false);
 
   const dynamicStyles = {
-    '--primary-color': theme?.primaryColor || '#FF5733',
-    '--secondary-color': theme?.secondaryColor || '#C70039',
-    '--sidebar-header-color': theme?.sidebarHeaderColor || '#1C2937',
-    '--sidebar-body-color': theme?.sidebarBodyColor || '#34495E',
+    "--primary-color": theme?.primaryColor || "#FF5733",
+    "--secondary-color": theme?.secondaryColor || "#C70039",
+    "--sidebar-header-color": theme?.sidebarHeaderColor || "#1C2937",
+    "--sidebar-body-color": theme?.sidebarBodyColor || "#34495E",
   };
 
   return (
-    <Container style={dynamicStyles}>
-      <Title>Theme Dashboard</Title>
-      <ActionBar>
-        {!theme && (
-          <Button primary onClick={openDialog}>
-            Create New Theme
-          </Button>
+    <div
+      className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-black text-white p-5 sm:p-8"
+      style={dynamicStyles}
+    >
+      <div className="mx-auto max-w-7xl">
+        <h1 className="mb-10 text-center text-4xl font-bold tracking-tight bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+          Theme Control
+        </h1>
+
+        {!theme ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <p className="mb-6 text-lg text-gray-400">
+              No theme has been created yet
+            </p>
+            <motion.button
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={openCreateDialog}
+              className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-10 py-4 font-semibold shadow-lg hover:from-emerald-500 hover:to-teal-500"
+            >
+              Create Your First Theme
+            </motion.button>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-slate-800/60 bg-gradient-to-br from-slate-900/70 to-slate-950/70 p-6 backdrop-blur-sm sm:p-8 shadow-2xl">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {[
+                { label: "Website Title", value: theme.websiteTitle },
+                { label: "Sidebar Title", value: theme.sidebarTitle },
+                { label: "Sidebar Title (BD)", value: theme.sidebarTitleBD },
+                {
+                  label: "Primary Color",
+                  value: theme.primaryColor,
+                  color: true,
+                },
+                {
+                  label: "Secondary Color",
+                  value: theme.secondaryColor,
+                  color: true,
+                },
+                {
+                  label: "Sidebar Header Color",
+                  value: theme.sidebarHeaderColor,
+                  color: true,
+                },
+                {
+                  label: "Sidebar Body Color",
+                  value: theme.sidebarBodyColor,
+                  color: true,
+                },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-xl border border-slate-800/50 bg-slate-900/40 p-5"
+                >
+                  <div className="mb-2 text-sm text-slate-400">
+                    {item.label}
+                  </div>
+                  {item.color ? (
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="h-10 w-10 rounded-full border-2 border-white/30 shadow-inner"
+                        style={{ backgroundColor: item.value }}
+                      />
+                      <span className="font-mono text-slate-200">
+                        {item.value}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="font-medium text-white">{item.value}</div>
+                  )}
+                </div>
+              ))}
+
+              {["favicon", "websiteLogoWhite", "websiteLogoDark"].map((key) =>
+                theme[key] ? (
+                  <div
+                    key={key}
+                    className="rounded-xl border border-slate-800/50 bg-slate-900/40 p-5"
+                  >
+                    <div className="mb-3 text-sm text-slate-400 capitalize">
+                      {key.replace(/([A-Z])/g, " $1").trim()}
+                    </div>
+                    <img
+                      src={`${baseURL_For_IMG_UPLOAD}s/${theme[key]}`}
+                      alt={key}
+                      className="mx-auto h-20 w-auto rounded-lg object-contain shadow-md"
+                    />
+                  </div>
+                ) : null,
+              )}
+            </div>
+
+            <div className="mt-10 flex justify-center">
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleEdit}
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-10 py-4 font-semibold shadow-lg hover:from-emerald-500 hover:to-teal-500"
+              >
+                <FaEdit className="text-lg" />
+                Edit Theme
+              </motion.button>
+            </div>
+          </div>
         )}
-      </ActionBar>
 
-      {theme ? (
-        <ThemeGrid>
-          <GridItem>
-            <Label>Website Title</Label>
-            <Value>{theme.websiteTitle}</Value>
-          </GridItem>
-          <GridItem>
-            <Label>Sidebar Title</Label>
-            <Value>{theme.sidebarTitle}</Value>
-          </GridItem>
-          <GridItem>
-            <Label>Sidebar Title (BD)</Label>
-            <Value>{theme.sidebarTitleBD}</Value>
-          </GridItem>
-          <GridItem highlight>
-            <Label>Primary Color</Label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <ColorSwatch color={theme.primaryColor} />
-              <Value>{theme.primaryColor}</Value>
-            </div>
-          </GridItem>
-          <GridItem highlight>
-            <Label>Secondary Color</Label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <ColorSwatch color={theme.secondaryColor} />
-              <Value>{theme.secondaryColor}</Value>
-            </div>
-          </GridItem>
-          <GridItem highlight>
-            <Label>Sidebar Header Color</Label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <ColorSwatch color={theme.sidebarHeaderColor} />
-              <Value>{theme.sidebarHeaderColor}</Value>
-            </div>
-          </GridItem>
-          <GridItem highlight>
-            <Label>Menu Text Color</Label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <ColorSwatch color={theme.sidebarBodyColor} />
-              <Value>{theme.sidebarBodyColor}</Value>
-            </div>
-          </GridItem>
-          {theme.favicon && (
-            <GridItem>
-              <Label>Favicon</Label>
-              <ImagePreview src={`${baseURL_For_IMG_UPLOAD}s/${theme.favicon}`} alt="Favicon" />
-            </GridItem>
-          )}
-          {theme.websiteLogoWhite && (
-            <GridItem>
-              <Label>White Logo</Label>
-              <ImagePreview src={`${baseURL_For_IMG_UPLOAD}s/${theme.websiteLogoWhite}`} alt="White Logo" />
-            </GridItem>
-          )}
-          {theme.websiteLogoDark && (
-            <GridItem>
-              <Label>Dark Logo</Label>
-              <ImagePreview src={`${baseURL_For_IMG_UPLOAD}s/${theme.websiteLogoDark}`} alt="Dark Logo" />
-            </GridItem>
-          )}
-          <GridItem style={{ gridColumn: 'span 1', justifyContent: 'center' }}>
-            <Button primary onClick={handleEdit}>
-              <FaEdit /> Edit Theme
-            </Button>
-          </GridItem>
-        </ThemeGrid>
-      ) : (
-        <p style={{ color: '#212529', fontSize: '1rem', textAlign: 'center' }}>
-          No theme available. Create a vibrant theme now!
-        </p>
-      )}
+        {/* ────────────────────────────────────────────── */}
+        {/*               DIALOG / MODAL                   */}
+        {/* ────────────────────────────────────────────── */}
+        {isDialogOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 40 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 20 }}
+              className="relative max-h-[90vh] w-full max-w-3xl overflow-hidden rounded-2xl border border-slate-700/60 bg-gradient-to-b from-slate-900 to-slate-950 shadow-2xl"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-slate-700/60 bg-slate-900/60 px-6 py-5">
+                <h2 className="text-xl font-semibold text-white sm:text-2xl">
+                  {editingThemeId ? "Edit Theme" : "Create Theme"}
+                </h2>
+                <button
+                  onClick={closeDialog}
+                  className="rounded-full p-2 text-slate-400 hover:bg-slate-800/60 hover:text-white transition-colors"
+                >
+                  <FaTimes className="text-xl" />
+                </button>
+              </div>
 
-      {isDialogOpen && (
-        <DialogOverlay onClick={closeDialog}>
-          <DialogBox onClick={(e) => e.stopPropagation()}>
-            <CloseButton onClick={closeDialog} aria-label="Close dialog">
-              <FaTimes />
-            </CloseButton>
-            <Title>{editingThemeId ? 'Edit Theme' : 'Create Theme'}</Title>
-            <form onSubmit={handleSubmit}>
-              <FormGrid>
-                <FormLabel htmlFor="websiteTitle">Website Title</FormLabel>
-                <Input
-                  type="text"
-                  id="websiteTitle"
-                  name="websiteTitle"
-                  value={formData.websiteTitle}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="Enter website title"
-                  aria-label="Website title"
-                />
-                <FormLabel htmlFor="sidebarTitle">Sidebar Title</FormLabel>
-                <Input
-                  type="text"
-                  id="sidebarTitle"
-                  name="sidebarTitle"
-                  value={formData.sidebarTitle}
-                  onChange={handleInputChange}
-                  required
-                  maxLength={10}
-                  placeholder="Max 10 chars"
-                  aria-label="Sidebar title"
-                />
-                <FormLabel htmlFor="sidebarTitleBD">Sidebar Title (BD)</FormLabel>
-                <Input
-                  type="text"
-                  id="sidebarTitleBD"
-                  name="sidebarTitleBD"
-                  value={formData.sidebarTitleBD}
-                  onChange={handleInputChange}
-                  required
-                  placeholder="Enter BD title"
-                  aria-label="Sidebar title (BD)"
-                />
-                <FormLabel htmlFor="primaryColor">Primary Color</FormLabel>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Input
-                    type="color"
-                    id="primaryColor"
-                    name="primaryColor"
-                    value={formData.primaryColor}
-                    onChange={handleInputChange}
-                    style={{ width: '45px', height: '35px', padding: '0' }}
-                    required
-                    aria-label="Primary color picker"
-                  />
-                  <ColorSwatch color={formData.primaryColor} />
-                </div>
-                <FormLabel htmlFor="secondaryColor">Secondary Color</FormLabel>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Input
-                    type="color"
-                    id="secondaryColor"
-                    name="secondaryColor"
-                    value={formData.secondaryColor}
-                    onChange={handleInputChange}
-                    style={{ width: '45px', height: '35px', padding: '0' }}
-                    required
-                    aria-label="Secondary color picker"
-                  />
-                  <ColorSwatch color={formData.secondaryColor} />
-                </div>
-                <FormLabel htmlFor="sidebarHeaderColor">Sidebar Header Color</FormLabel>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Input
-                    type="color"
-                    id="sidebarHeaderColor"
-                    name="sidebarHeaderColor"
-                    value={formData.sidebarHeaderColor}
-                    onChange={handleInputChange}
-                    style={{ width: '45px', height: '35px', padding: '0' }}
-                    required
-                    aria-label="Sidebar header color picker"
-                  />
-                  <ColorSwatch color={formData.sidebarHeaderColor} />
-                </div>
-                <FormLabel htmlFor="sidebarBodyColor">Sidebar Body Color</FormLabel>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <Input
-                    type="color"
-                    id="sidebarBodyColor"
-                    name="sidebarBodyColor"
-                    value={formData.sidebarBodyColor}
-                    onChange={handleInputChange}
-                    style={{ width: '45px', height: '35px', padding: '0' }}
-                    required
-                    aria-label="Menu Text Color picker"
-                  />
-                  <ColorSwatch color={formData.sidebarBodyColor} />
-                </div>
-                <FormLabel htmlFor="favicon">Favicon</FormLabel>
-                <div>
-                  {formData.favicon && <ImagePreview src={`${baseURL_For_IMG_UPLOAD}s/${formData.favicon}`} alt="Favicon Preview" />}
-                  <Input
-                    type="file"
-                    id="favicon"
-                    accept=".ico, image/*"
-                    onChange={(e) => handleImageChange(e, 'favicon')}
-                    disabled={isUploading}
-                    style={{ border: 'none' }}
-                  />
-                </div>
-                <FormLabel htmlFor="websiteLogoWhite">White Logo</FormLabel>
-                <div>
-                  {formData.websiteLogoWhite && (
-                    <ImagePreview src={`${baseURL_For_IMG_UPLOAD}s/${formData.websiteLogoWhite}`} alt="White Logo Preview" />
-                  )}
-                  <Input
-                    type="file"
-                    id="websiteLogoWhite"
-                    accept="image/*"
-                    onChange={(e) => handleImageChange(e, 'websiteLogoWhite')}
-                    disabled={isUploading}
-                    style={{ border: 'none' }}
-                  />
-                </div>
-                <FormLabel htmlFor="websiteLogoDark">Dark Logo</FormLabel>
-                <div>
-                  {formData.websiteLogoDark && (
-                    <ImagePreview src={`${baseURL_For_IMG_UPLOAD}s/${formData.websiteLogoDark}`} alt="Dark Logo Preview" />
-                  )}
-                  <Input
-                    type="file"
-                    id="websiteLogoDark"
-                    accept="image/*"
-                    onChange={(e) => handleImageChange(e, 'websiteLogoDark')}
-                    disabled={isUploading}
-                    style={{ border: 'none' }}
-                  />
-                </div>
-              </FormGrid>
-              <ActionBar>
-                <Button type="submit" primary disabled={isUploading}>
-                  {editingThemeId ? 'Update Theme' : 'Create Theme'}
-                </Button>
-                <Button type="button" onClick={closeDialog}>
-                  Cancel
-                </Button>
-              </ActionBar>
-            </form>
-          </DialogBox>
-        </DialogOverlay>
-      )}
-    </Container>
+              {/* Scrollable content with hidden scrollbar */}
+              <div
+                className="custom-scrollbar max-h-[70vh] overflow-y-auto px-6 py-8 sm:px-8"
+                style={{
+                  scrollbarWidth: "none", // Firefox
+                  msOverflowStyle: "none", // IE + Edge
+                }}
+              >
+                <style jsx>{`
+                  .custom-scrollbar::-webkit-scrollbar {
+                    display: none;
+                  }
+                `}</style>
+
+                <form onSubmit={handleSubmit} className="space-y-7">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    {/* Text fields */}
+                    {[
+                      { label: "Website Title", name: "websiteTitle" },
+                      {
+                        label: "Sidebar Title (max 10 chars)",
+                        name: "sidebarTitle",
+                        maxLength: 10,
+                      },
+                      {
+                        label: "Sidebar Title (Bangla)",
+                        name: "sidebarTitleBD",
+                      },
+                    ].map((field) => (
+                      <div key={field.name}>
+                        <label className="mb-2 block text-sm font-medium text-emerald-300/90">
+                          {field.label}
+                        </label>
+                        <input
+                          type="text"
+                          name={field.name}
+                          value={formData[field.name]}
+                          onChange={handleInputChange}
+                          maxLength={field.maxLength}
+                          required
+                          className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-3 text-white placeholder-slate-500 focus:border-emerald-500/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
+                        />
+                      </div>
+                    ))}
+
+                    {/* Color pickers */}
+                    {[
+                      { label: "Primary Color", name: "primaryColor" },
+                      { label: "Secondary Color", name: "secondaryColor" },
+                      {
+                        label: "Sidebar Header Color",
+                        name: "sidebarHeaderColor",
+                      },
+                      { label: "Sidebar Body Color", name: "sidebarBodyColor" },
+                    ].map((field) => (
+                      <div key={field.name}>
+                        <label className="mb-2 block text-sm font-medium text-emerald-300/90">
+                          {field.label}
+                        </label>
+                        <div className="flex gap-3">
+                          <input
+                            type="color"
+                            name={field.name}
+                            value={formData[field.name]}
+                            onChange={handleInputChange}
+                            className="h-10 w-12 cursor-pointer rounded border border-slate-600 bg-transparent p-1"
+                          />
+                          <input
+                            type="text"
+                            name={field.name}
+                            value={formData[field.name]}
+                            onChange={handleInputChange}
+                            className="flex-1 rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-3 font-mono text-white focus:border-emerald-500/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                          />
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Image uploads */}
+                    {[
+                      { label: "Favicon", name: "favicon", size: "w-16 h-16" },
+                      {
+                        label: "Website Logo (White)",
+                        name: "websiteLogoWhite",
+                        size: "w-32 h-auto",
+                      },
+                      {
+                        label: "Website Logo (Dark)",
+                        name: "websiteLogoDark",
+                        size: "w-32 h-auto",
+                      },
+                    ].map((field) => (
+                      <div key={field.name} className="md:col-span-2">
+                        <label className="mb-2 block text-sm font-medium text-emerald-300/90">
+                          {field.label}
+                        </label>
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                          {(formData[field.name] ||
+                            (theme && theme[field.name])) && (
+                            <div className="flex-shrink-0">
+                              <img
+                                src={`${baseURL_For_IMG_UPLOAD}s/${formData[field.name] || theme?.[field.name]}`}
+                                alt={field.label}
+                                className={`${field.size} rounded-lg border border-slate-700 object-contain shadow-sm`}
+                              />
+                            </div>
+                          )}
+
+                          <label className="group flex-1 cursor-pointer">
+                            <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-600 p-8 text-center transition-all hover:border-emerald-500/50 hover:bg-slate-800/30">
+                              <input
+                                type="file"
+                                accept="image/*,.ico"
+                                onChange={(e) =>
+                                  handleImageUpload(
+                                    e.target.files?.[0],
+                                    field.name,
+                                  )
+                                }
+                                className="hidden"
+                                disabled={isUploading}
+                              />
+                              {isUploading ? (
+                                <FaSpinner className="mb-3 animate-spin text-4xl text-emerald-500" />
+                              ) : (
+                                <FaUpload className="mb-3 text-4xl text-emerald-500/70 group-hover:text-emerald-400 transition-colors" />
+                              )}
+                              <p className="text-slate-300 group-hover:text-white">
+                                {isUploading
+                                  ? "Uploading..."
+                                  : "Click or drag image"}
+                              </p>
+                              <p className="mt-1 text-xs text-slate-500">
+                                PNG, JPG, ICO • Recommended favicon 32×32
+                              </p>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="submit"
+                      disabled={isUploading}
+                      className="flex-1 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 py-4 font-semibold text-white shadow-lg hover:from-emerald-500 hover:to-teal-500 disabled:opacity-60 flex items-center justify-center gap-2"
+                    >
+                      {isUploading && <FaSpinner className="animate-spin" />}
+                      {editingThemeId ? "Update Theme" : "Create Theme"}
+                    </motion.button>
+
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="button"
+                      onClick={closeDialog}
+                      className="flex-1 rounded-xl border border-slate-600 bg-slate-800 py-4 font-semibold text-slate-200 hover:bg-slate-700 transition-colors"
+                    >
+                      Cancel
+                    </motion.button>
+                  </div>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </div>
+
+      <ToastContainer position="top-center" theme="dark" limit={3} />
+    </div>
   );
-};
-
-export default SiteControl;
+}

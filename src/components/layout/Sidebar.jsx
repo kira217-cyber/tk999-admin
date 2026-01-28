@@ -257,8 +257,6 @@ const CustomSidebar = () => {
           icon: <FaPlusCircle />,
           to: "/game-control",
         },
-        { label: "Add Provider", icon: <FaUserCheck />, to: "/add-provider" },
-        { label: "Add Game", icon: <FaUserCheck />, to: "/add-game" },
         { label: "Game History", icon: <FaHistory />, to: "/game-history" },
         { label: "Game Turnover", icon: <FaHistory />, to: "/game-turnover" },
         { label: "Tournament", icon: <FaTrophy />, to: "/tournament" },

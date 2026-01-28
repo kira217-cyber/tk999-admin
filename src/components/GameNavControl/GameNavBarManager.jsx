@@ -1,136 +1,50 @@
-import React, { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import React, { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import {
   fetchNavbar,
   createNavbar,
   updateNavbar,
-  setEditing,
-  resetForm,
-} from '../../redux/Frontend Control/GameNavControl/navbarSlice';
-import styled from 'styled-components';
-import { motion } from 'framer-motion';
+} from "../../redux/Frontend Control/GameNavControl/navbarSlice";
+import { motion } from "framer-motion";
 
-// Styled Components
-const Container = styled.div`
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  max-width: 1000px;
-  margin: 0 auto;
-`;
-
-const Title = styled.h2`
-  color: #2c3e50;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  font-size: 1.8rem;
-`;
-
-const FormWrapper = styled(motion.form)`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-`;
-
-const InputWrapper = styled.div`
-  flex: 1 1 30%;
-  min-width: 200px;
-`;
-
-const Label = styled.label`
-  color: #2c3e50;
-  font-size: 0.9rem;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-  display: block;
-`;
-
-const StyledInput = styled.input`
-  background-color: #fff;
-  border: 1px solid #ced4da;
-  border-radius: 8px;
-  padding: 0.75rem;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-  width: 100%;
-  &:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-    outline: none;
-  }
-`;
-
-const ColorInput = styled.input`
-  height: 44px;
-  border: none;
-  border-radius: 8px;
-  padding: 0.25rem;
-  width: 100%;
-  cursor: pointer;
-  &:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-  }
-`;
-
-const SubmitButton = styled(motion.button)`
-  background: linear-gradient(90deg, #007bff, #0056b3);
-  border: none;
-  border-radius: 8px;
-  padding: 0.75rem 2rem;
-  color: white;
-  font-size: 1rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  transition: background 0.3s ease;
-  &:hover {
-    background: linear-gradient(90deg, #0056b3, #003d80);
-  }
-  &:disabled {
-    background: #6c757d;
-    cursor: not-allowed;
-  }
-`;
-
-const ErrorAlert = styled.div`
-  background-color: #f8d7da;
-  color: #721c24;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  width: 100%;
-  text-align: center;
-`;
-
-const GameNavBarManager = () => {
+export default function GameNavBarManager() {
   const dispatch = useDispatch();
   const navbarState = useSelector((state) => state.navbar || {});
-  const { navbar: storedNavbar, editing = false, loading = false, error = null } = navbarState;
+  const { navbar: storedNavbar, loading = false, error = null } = navbarState;
 
-  const [form, setFormState] = useState({
-    gameBoxMarginTop: '',
-    gameNavMenuMarginBottom: '',
-    headerBgColor: '#ffffff',
-    headerMarginBottom: '',
-    headerMenuBgColor: '#ffffff',
-    headerMenuBgHoverColor: '#ffffff',
-    subOptionBgHoverColor: '#ffffff',
+  const [form, setForm] = useState({
+    gameBoxMarginTop: "",
+    gameNavMenuMarginBottom: "",
+    headerBgColor: "#ffffff",
+    headerMarginBottom: "",
+    headerMenuBgColor: "#ffffff",
+    headerMenuBgHoverColor: "#ffffff",
+    subOptionBgHoverColor: "#ffffff",
   });
 
   const fields = [
-    { name: 'gameBoxMarginTop', label: 'Game Box Margin Top', placeholder: 'Enter value (0-80)' },
-    { name: 'gameNavMenuMarginBottom', label: 'Game Nav Menu Margin Bottom', placeholder: 'Enter value (0-80)' },
-    { name: 'headerMarginBottom', label: 'Header Margin Bottom', placeholder: 'Enter value (0-80)' },
+    {
+      name: "gameBoxMarginTop",
+      label: "Game Box Margin Top",
+      placeholder: "0–80 px",
+    },
+    {
+      name: "gameNavMenuMarginBottom",
+      label: "Game Nav Menu Margin Bottom",
+      placeholder: "0–80 px",
+    },
+    {
+      name: "headerMarginBottom",
+      label: "Header Margin Bottom",
+      placeholder: "0–80 px",
+    },
   ];
 
   const colorFields = [
-    { name: 'headerBgColor', label: 'Text Color' },
-    { name: 'headerMenuBgColor', label: 'Header Menu Background Color' },
-    { name: 'headerMenuBgHoverColor', label: 'Header Menu Hover Color' },
-   // { name: 'subOptionBgHoverColor', label: 'Sub Option Hover Color' },
+    { name: "headerBgColor", label: "Header Background Color" },
+    { name: "headerMenuBgColor", label: "Header Menu Background" },
+    { name: "headerMenuBgHoverColor", label: "Header Menu Hover" },
+    // { name: "subOptionBgHoverColor", label: "Sub Option Hover Color" },
   ];
 
   useEffect(() => {
@@ -139,100 +53,203 @@ const GameNavBarManager = () => {
 
   useEffect(() => {
     if (storedNavbar) {
-      setFormState(storedNavbar);
+      setForm((prev) => ({
+        ...prev,
+        ...storedNavbar,
+        // Ensure we keep empty string if backend returns null/undefined
+        gameBoxMarginTop: storedNavbar.gameBoxMarginTop ?? "",
+        gameNavMenuMarginBottom: storedNavbar.gameNavMenuMarginBottom ?? "",
+        headerMarginBottom: storedNavbar.headerMarginBottom ?? "",
+      }));
     }
   }, [storedNavbar]);
 
   const handleNumberChange = (e) => {
     const { name, value } = e.target;
-    // Allow empty string for user to clear input
-    if (value === '') {
-      setFormState({ ...form, [name]: '' });
+
+    // Allow empty input (user clearing the field)
+    if (value === "") {
+      setForm((prev) => ({ ...prev, [name]: "" }));
       return;
     }
-    // Only allow non-negative numbers between 0 and 80
-    const numValue = parseInt(value, 10);
-    if (!isNaN(numValue) && numValue >= 0 && numValue <= 80) {
-      setFormState({ ...form, [name]: numValue.toString() });
+
+    // Only allow digits
+    if (!/^\d*$/.test(value)) return;
+
+    const num = Number(value);
+
+    // Enforce 0–80 range
+    if (num >= 0 && num <= 80) {
+      setForm((prev) => ({ ...prev, [name]: value }));
     }
+    // If >80 or invalid → ignore (don't update)
   };
 
   const handleColorChange = (e) => {
-    setFormState({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
+
+    const submitData = {
+      ...form,
+      gameBoxMarginTop:
+        form.gameBoxMarginTop === "" ? "0" : form.gameBoxMarginTop,
+      gameNavMenuMarginBottom:
+        form.gameNavMenuMarginBottom === ""
+          ? "0"
+          : form.gameNavMenuMarginBottom,
+      headerMarginBottom:
+        form.headerMarginBottom === "" ? "0" : form.headerMarginBottom,
+    };
+
     try {
-      // Convert empty strings to 0 for submission
-      const submitForm = {
-        ...form,
-        gameBoxMarginTop: form.gameBoxMarginTop === '' ? '0' : form.gameBoxMarginTop,
-        gameNavMenuMarginBottom: form.gameNavMenuMarginBottom === '' ? '0' : form.gameNavMenuMarginBottom,
-        headerMarginBottom: form.headerMarginBottom === '' ? '0' : form.headerMarginBottom,
-      };
       if (storedNavbar) {
-        await dispatch(updateNavbar(submitForm)).unwrap();
+        await dispatch(updateNavbar(submitData)).unwrap();
       } else {
-        await dispatch(createNavbar(submitForm)).unwrap();
+        await dispatch(createNavbar(submitData)).unwrap();
       }
     } catch (err) {
-      console.error('Error saving navbar:', err);
+      console.error("Navbar save failed:", err);
     }
   };
 
   return (
-    <Container className="container">
-      <Title>Navbar Manager</Title>
-      {error && <ErrorAlert>{error}</ErrorAlert>}
-      <FormWrapper
+    <div className="min-h-[500px] bg-gradient-to-b from-gray-900/80 to-black/70 backdrop-blur-sm rounded-2xl border border-emerald-800/30 shadow-2xl shadow-black/40 p-6 md:p-8">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <h2 className="text-2xl md:text-3xl font-bold text-emerald-300 tracking-tight">
+          Navbar Manager
+        </h2>
+        <p className="mt-2 text-emerald-200/70 text-sm md:text-base">
+          Customize header appearance and spacing
+        </p>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-4 bg-red-900/40 border border-red-700/50 rounded-xl text-red-200 text-center"
+        >
+          {error}
+        </motion.div>
+      )}
+
+      {/* Form */}
+      <motion.form
         onSubmit={handleSubmit}
-        className="row g-3"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6"
       >
         {fields.map((field) => (
-          <InputWrapper key={field.name} className="col-md-4">
-            <Label htmlFor={field.name}>{field.label}</Label>
-            <StyledInput
-              type="number"
+          <div key={field.name} className="space-y-2">
+            <label
+              htmlFor={field.name}
+              className="block text-sm font-medium text-emerald-200/90"
+            >
+              {field.label}
+            </label>
+            <input
+              type="text" // ← Changed from "number" to "text" → solves most typing issues
+              inputMode="numeric" // Shows numeric keyboard on mobile
+              pattern="[0-9]*" // Restricts to digits only
               id={field.name}
               name={field.name}
               placeholder={field.placeholder}
-              value={form[field.name] || ''}
+              value={form[field.name] ?? ""}
               onChange={handleNumberChange}
-              min="0"
-              max="80"
+              className="
+                w-full px-4 py-3 rounded-lg 
+                bg-gray-800/60 border border-emerald-800/40
+                text-white placeholder-gray-500 caret-emerald-400
+                focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30
+                transition-all duration-200
+              "
             />
-          </InputWrapper>
+          </div>
         ))}
+
         {colorFields.map((field) => (
-          <InputWrapper key={field.name} className="col-md-4">
-            <Label htmlFor={field.name}>{field.label}</Label>
-            <ColorInput
-              type="color"
-              id={field.name}
-              name={field.name}
-              value={form[field.name] || '#ffffff'}
-              onChange={handleColorChange}
-            />
-          </InputWrapper>
+          <div key={field.name} className="space-y-2">
+            <label
+              htmlFor={field.name}
+              className="block text-sm font-medium text-emerald-200/90"
+            >
+              {field.label}
+            </label>
+            <div
+              className="
+                w-full h-14 rounded-lg overflow-hidden 
+                border-2 border-emerald-800/40
+                focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/30
+                transition-all duration-200 relative
+              "
+            >
+              <input
+                type="color"
+                id={field.name}
+                name={field.name}
+                value={form[field.name] || "#ffffff"}
+                onChange={handleColorChange}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+              <div
+                className="w-full h-full"
+                style={{ backgroundColor: form[field.name] || "#ffffff" }}
+              />
+            </div>
+            <div className="text-xs text-gray-400 mt-1 font-mono tracking-wide">
+              {form[field.name] || "#ffffff"}
+            </div>
+          </div>
         ))}
-        <div className="col-12 text-center">
-          <SubmitButton
+
+        <div className="col-span-1 md:col-span-2 lg:col-span-3 flex justify-center mt-6">
+          <motion.button
             type="submit"
             disabled={loading}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: loading ? 1 : 1.04, y: loading ? 0 : -2 }}
+            whileTap={{ scale: loading ? 1 : 0.96 }}
+            className={`
+              px-10 py-4 rounded-xl font-semibold text-base tracking-wide
+              shadow-lg shadow-emerald-900/30
+              transition-all duration-300 min-w-[220px]
+              ${
+                loading
+                  ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                  : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white"
+              }
+            `}
           >
-            {loading ? 'Saving...' : storedNavbar ? 'Update' : 'Create'}
-          </SubmitButton>
+            {loading ? (
+              <span className="flex items-center justify-center gap-3">
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                </svg>
+                Saving...
+              </span>
+            ) : storedNavbar ? (
+              "Update Navbar Settings"
+            ) : (
+              "Create Navbar Settings"
+            )}
+          </motion.button>
         </div>
-      </FormWrapper>
-    </Container>
+      </motion.form>
+    </div>
   );
-};
-
-export default GameNavBarManager;
+}

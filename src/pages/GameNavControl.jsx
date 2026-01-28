@@ -1,174 +1,23 @@
-import React, { useState } from 'react';
-import GameNavBarManager from '../components/GameNavControl/GameNavBarManager';
-import MenuOptionManager from '../components/GameNavControl/MenuOptionManager';
-import SubOptionManager from '../components/GameNavControl/SubOptionManager';
-import HomeMenu from '../components/GameNavControl/HomePageMenu/HomeMenu.jsx';
-import styled from 'styled-components';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaEye, FaTimes } from 'react-icons/fa'; // Only for preview toggle
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FaEye, FaTimes } from "react-icons/fa";
 
-// Styled Components
-const Container = styled.div`
-  background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 100%);
-  min-height: 100vh;
-  padding: 1rem;
-  font-family: 'Inter', sans-serif;
-
-  @media (min-width: 768px) {
-    padding: 1.5rem;
-  }
-`;
-
-const Header = styled.header`
-  background: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
-  padding: 1rem;
-  margin-bottom: 1rem;
-  text-align: center;
-
-  @media (min-width: 768px) {
-    padding: 1.25rem;
-    margin-bottom: 1.5rem;
-  }
-`;
-
-const Title = styled.h1`
-  color: #1a237e;
-  font-weight: 700;
-  font-size: 1.5rem;
-  margin: 0;
-
-  @media (min-width: 768px) {
-    font-size: 1.75rem;
-  }
-`;
-
-const MainContent = styled.div`
-  max-width: 1000px;
-  margin: 0 auto;
-`;
-
-const PreviewToggle = styled(motion.button)`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  background: linear-gradient(90deg, #0288d1, #01579b);
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 0.75rem;
-  font-size: 1rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  cursor: pointer;
-  margin-bottom: 1rem;
-  transition: background 0.3s ease;
-
-  &:hover {
-    background: linear-gradient(90deg, #01579b, #013966);
-  }
-
-  @media (min-width: 768px) {
-    max-width: 300px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-`;
-
-const PreviewSection = styled(motion.div)`
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
-  padding: 1rem;
-  margin-bottom: 1rem;
-  overflow-x: auto;
-
-  @media (min-width: 768px) {
-    padding: 1.5rem;
-  }
-`;
-
-const PreviewTitle = styled.h2`
-  color: #1a237e;
-  font-weight: 600;
-  font-size: 1.25rem;
-  margin-bottom: 1rem;
-  text-align: center;
-
-  @media (min-width: 768px) {
-    font-size: 1.5rem;
-  }
-`;
-
-const TabList = styled.ul`
-  display: flex;
-  list-style: none;
-  padding: 0;
-  margin: 0 0 1rem 0;
-  border-bottom: 2px solid #dee2e6;
-  overflow-x: auto;
-  white-space: nowrap;
-  justify-content: flex-start;
-  margin-bottom: 0px;
-
-  @media (min-width: 768px) {
-    justify-content: center;
-  }
-`;
-
-const TabItem = styled(motion.li)`
-  margin: 0 0.25rem;
-
-  @media (min-width: 768px) {
-    margin: 0 0.5rem;
-  }
-`;
-
-const TabButton = styled.button`
-  background: ${(props) =>
-    props.active ? 'linear-gradient(90deg, #0288d1, #01579b)' : '#fff'};
-  color: ${(props) => (props.active ? '#fff' : '#1a237e')};
-  border: none;
-  border-radius: 8px 8px 0 0;
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: ${(props) =>
-      props.active
-        ? 'linear-gradient(90deg, #01579b, #013966)'
-        : '#f5f7fa'};
-  }
-
-  @media (min-width: 768px) {
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-  }
-`;
-
-const TabContent = styled(motion.div)`
-  background: transparent;
-`;
+import GameNavBarManager from "../components/GameNavControl/GameNavBarManager";
+import MenuOptionManager from "../components/GameNavControl/MenuOptionManager";
+import SubOptionManager from "../components/GameNavControl/SubOptionManager";
+import HomeMenu from "../components/GameNavControl/HomePageMenu/HomeMenu.jsx";
 
 export default function GameNavControl() {
-  const [activeTab, setActiveTab] = useState('navbar');
-  const [isPreviewOpen, setIsPreviewOpen] = useState(true); // Open by default on desktop
+  const [activeTab, setActiveTab] = useState("navbar");
+  const [isPreviewOpen, setIsPreviewOpen] = useState(true); // default open on desktop
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'navbar':
+      case "navbar":
         return <GameNavBarManager />;
-      case 'menu':
+      case "menu":
         return <MenuOptionManager />;
-      case 'sub':
+      case "sub":
         return <SubOptionManager />;
       default:
         return null;
@@ -176,85 +25,110 @@ export default function GameNavControl() {
   };
 
   return (
-    <Container>
-      <Header>
-        <Title>Navigation Control Panel</Title>
-      </Header>
-      <MainContent className="container">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/30 to-black text-gray-100 px-4 py-6 md:px-6 md:py-8 font-sans">
+      {/* Header */}
+      <div className="mb-8 text-center">
+        <h1 className="text-2xl md:text-3xl font-bold text-emerald-300 tracking-tight">
+          Navigation Control Panel
+        </h1>
+        <p className="mt-2 text-emerald-200/70 text-sm md:text-base">
+          Manage navbar, menus and sub-menus appearance
+        </p>
+      </div>
+
+      <div className="max-w-7xl mx-auto">
+        {/* Preview Toggle + Preview Section (only on desktop) */}
         <AnimatePresence>
           {window.innerWidth >= 768 && (
             <>
-              <PreviewToggle
-              style={{display:"none"}}
+              <motion.button
                 onClick={() => setIsPreviewOpen(!isPreviewOpen)}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
+                className="mx-auto mb-6 flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-medium shadow-lg shadow-emerald-900/30 transition-all duration-300"
               >
                 {isPreviewOpen ? (
                   <>
-                    <FaTimes /> Hide Preview
+                    <FaTimes className="text-lg" />
+                    Hide Live Preview
                   </>
                 ) : (
                   <>
-                    <FaEye /> Show Preview
+                    <FaEye className="text-lg" />
+                    Show Live Preview
                   </>
                 )}
-              </PreviewToggle>
-              {isPreviewOpen && (
-                <PreviewSection
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                  style={{display:"none"}}
-                >
-                  <PreviewTitle>Live Preview</PreviewTitle>
-                  <HomeMenu  />
-                </PreviewSection>
-              )}
+              </motion.button>
+
+              <AnimatePresence>
+                {isPreviewOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.4, ease: "easeInOut" }}
+                    className="mb-10 overflow-hidden rounded-2xl border border-emerald-800/40 bg-gradient-to-b from-gray-800/70 to-gray-900/70 backdrop-blur-md shadow-2xl"
+                  >
+                    <div className="p-5 md:p-7">
+                      <h2 className="text-xl font-semibold text-emerald-300 mb-5 text-center">
+                        Live Preview
+                      </h2>
+
+                      <div className="border border-emerald-900/50 rounded-xl overflow-hidden bg-gray-950/60">
+                        <HomeMenu />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </>
           )}
         </AnimatePresence>
-        <TabList>
-          <TabItem 
-          //whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-          >
-            <TabButton
-              active={activeTab === 'navbar'}
-              onClick={() => setActiveTab('navbar')}
+
+        {/* Tabs */}
+        <div className="flex justify-center mb-8 border-b border-emerald-900/40 pb-1 overflow-x-auto">
+          {["navbar", "menu", "sub"].map((tab) => (
+            <motion.button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              className={`
+                relative px-6 py-3 mx-1 md:mx-2 font-medium text-sm md:text-base rounded-t-xl transition-all duration-300
+                ${
+                  activeTab === tab
+                    ? "bg-gradient-to-t from-emerald-900/60 to-emerald-800/40 text-emerald-200 border-b-2 border-emerald-400 shadow-md"
+                    : "text-gray-400 hover:text-emerald-300 hover:bg-emerald-950/30"
+                }
+              `}
             >
-              Navbar
-            </TabButton>
-          </TabItem>
-          <TabItem 
-        //  whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-          >
-            <TabButton
-              active={activeTab === 'menu'}
-              onClick={() => setActiveTab('menu')}
-            >
-              Menus
-            </TabButton>
-          </TabItem>
-          <TabItem 
-         // whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-          >
-            <TabButton
-              active={activeTab === 'sub'}
-              onClick={() => setActiveTab('sub')}
-            >
-              Sub Menus
-            </TabButton>
-          </TabItem>
-        </TabList>
-        <TabContent
-          initial={{ opacity: 0, y: 10 }}
+              {tab === "navbar" && "Navbar"}
+              {tab === "menu" && "Menus"}
+              {tab === "sub" && "Sub Menus"}
+
+              {activeTab === tab && (
+                <motion.div
+                  layoutId="activeTabIndicator"
+                  className="absolute inset-x-0 bottom-0 h-0.5 bg-emerald-400 rounded-full"
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                />
+              )}
+            </motion.button>
+          ))}
+        </div>
+
+        {/* Tab Content */}
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.35 }}
+          className="bg-gradient-to-b from-gray-800/50 to-gray-900/50 backdrop-blur-sm rounded-2xl border border-emerald-900/30 shadow-2xl overflow-hidden"
         >
-          {renderContent()}
-        </TabContent>
-      </MainContent>
-    </Container>
+          <div className="p-5 md:p-7">{renderContent()}</div>
+        </motion.div>
+      </div>
+    </div>
   );
 }

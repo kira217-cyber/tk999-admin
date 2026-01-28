@@ -1,83 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { getAllNotices, updateNotice } from '../redux/Frontend Control/Notice Control/noticeControlAPI';
-import styled from 'styled-components';
-import { toast } from 'react-hot-toast';
-
-// Styled Components
-const DashboardCard = styled.div`
-  border: none;
-  border-radius: 12px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-  background: #ffffff;
-  transition: transform 0.2s ease-in-out;
-
-  &:hover {
-    transform: translateY(-4px);
-  }
-`;
-
-const StyledButton = styled.button`
-  border-radius: 8px;
-  padding: 10px 24px;
-  font-weight: 600;
-  background-color: #0d6efd;
-  border: none;
-  color: #ffffff;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-
-  &:hover {
-    background-color: #0a58ca;
-    transform: scale(1.02);
-  }
-
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-`;
-
-const FormLabel = styled.label`
-  font-weight: 500;
-  color: #212529;
-  font-size: 0.95rem;
-`;
-
-const ErrorAlert = styled.div`
-  border-radius: 8px;
-  font-size: 0.9rem;
-  margin-top: 1.5rem;
-  padding: 1rem;
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-  animation: slideIn 0.3s ease-in-out;
-
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-`;
-
-const LoadingContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  margin: 1.5rem 0;
-`;
+// src/pages/NoticeControl.jsx
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { motion } from "framer-motion";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import {
+  getAllNotices,
+  updateNotice,
+} from "../redux/Frontend Control/Notice Control/noticeControlAPI";
+import { FaSpinner } from "react-icons/fa";
 
 export default function NoticeControl() {
   const dispatch = useDispatch();
   const noticeControl = useSelector((state) => state.noticeControl);
 
-  const [title, setTitle] = useState('');
-  const [titleBD, setTitleBD] = useState('');
-  const [emoji, setEmoji] = useState('');
+  const [title, setTitle] = useState("");
+  const [titleBD, setTitleBD] = useState("");
+  const [emoji, setEmoji] = useState("");
   const [active, setActive] = useState(false);
 
   // Fetch notices on mount
@@ -85,18 +24,18 @@ export default function NoticeControl() {
     dispatch(getAllNotices());
   }, [dispatch]);
 
-  // Sync form state with Redux store
+  // Sync form with Redux store
   useEffect(() => {
-    console.log('Notice Control State:', noticeControl);
-    setTitle(noticeControl?.title || '');
-    setTitleBD(noticeControl?.titleBD || '');
-    setEmoji(noticeControl?.emoji || '');
+    setTitle(noticeControl?.title || "");
+    setTitleBD(noticeControl?.titleBD || "");
+    setEmoji(noticeControl?.emoji || "");
     setActive(noticeControl?.active || false);
   }, [noticeControl]);
 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
       await dispatch(
         updateNotice({
@@ -104,110 +43,134 @@ export default function NoticeControl() {
           titleBD,
           emoji,
           active,
-        })
-      );
-      toast.success('Notice updated successfully.');
+        }),
+      ).unwrap();
+
+      toast.success("Notice updated successfully!");
     } catch (error) {
-      console.error('Update Error:', error);
-      toast.error('An error occurred. Please try again.');
+      console.error("Update Error:", error);
+      toast.error(error.message || "Failed to update notice");
     }
   };
 
-  // Show loading toast
-  useEffect(() => {
-    if (noticeControl.isLoading) {
-      toast.loading('Updating notice...');
-    } else if (noticeControl.isError) {
-      toast.error(noticeControl.errorMessage || 'An error occurred. Please try again.');
-    } else if (noticeControl.isSuccess) {
-      toast.success(noticeControl.successMessage || 'Notice updated successfully.');
-    }
-  }, [noticeControl]);
-
   return (
-    <div className="container-fluid py-4 py-md-5 bg-light min-vh-100">
-      <div className="row justify-content-center">
-        <div className="col-12 col-sm-10 col-md-8 col-lg-6">
-          <DashboardCard className="card p-4 p-md-5">
-            <h2 className="text-center mb-4 fw-bold text-dark">
-              Notice Control Panel
-            </h2>
-            <form onSubmit={handleSubmit}>
-              <div className="mb-3">
-                <FormLabel>Title (English)</FormLabel>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter notice title"
-                  className="form-control rounded-3"
-                  required
-                />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-emerald-950/20 to-black p-4 sm:p-6 md:p-8">
+      <div className="max-w-3xl mx-auto">
+        <motion.h1
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-3xl sm:text-4xl font-bold text-white mb-10 text-center bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent"
+        >
+          Notice Control Panel
+        </motion.h1>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 backdrop-blur-md border border-emerald-800/50 rounded-2xl p-6 sm:p-8 shadow-2xl"
+        >
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Title (English) */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Title (English)
+              </label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Enter notice title in English"
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+                required
+              />
+            </div>
+
+            {/* Title (Bangla) */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Title (Bangla)
+              </label>
+              <input
+                type="text"
+                value={titleBD}
+                onChange={(e) => setTitleBD(e.target.value)}
+                placeholder="Enter notice title in Bangla"
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+              />
+            </div>
+
+            {/* Emoji */}
+            <div>
+              <label className="block text-emerald-300 font-medium mb-2">
+                Emoji
+              </label>
+              <input
+                type="text"
+                value={emoji}
+                onChange={(e) => setEmoji(e.target.value)}
+                placeholder="Enter emoji (e.g., 😊)"
+                className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
+              />
+            </div>
+
+            {/* Active Toggle */}
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={active}
+                onChange={(e) => setActive(e.target.checked)}
+                className="w-5 h-5 accent-emerald-500 cursor-pointer"
+                id="activeCheck"
+              />
+              <label
+                htmlFor="activeCheck"
+                className="text-gray-200 font-medium cursor-pointer"
+              >
+                Active Notice
+              </label>
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-center">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.97 }}
+                type="submit"
+                disabled={noticeControl.isLoading}
+                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white py-4 px-10 rounded-xl font-bold cursor-pointer transition-all shadow-lg disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+              >
+                {noticeControl.isLoading ? (
+                  <>
+                    <FaSpinner className="animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  "Update Notice"
+                )}
+              </motion.button>
+            </div>
+          </form>
+
+          {/* Loading / Error States */}
+          {noticeControl.isLoading && (
+            <div className="flex justify-center mt-8">
+              <div className="flex items-center gap-3 text-emerald-300">
+                <FaSpinner className="animate-spin w-6 h-6" />
+                <span>Updating notice...</span>
               </div>
+            </div>
+          )}
 
-              <div className="mb-3">
-                <FormLabel>Title (Bangla)</FormLabel>
-                <input
-                  type="text"
-                  value={titleBD}
-                  onChange={(e) => setTitleBD(e.target.value)}
-                  placeholder="Enter notice title in Bangla"
-                  className="form-control rounded-3"
-                />
-              </div>
-
-              <div className="mb-3">
-                <FormLabel>Emoji</FormLabel>
-                <input
-                  type="text"
-                  value={emoji}
-                  onChange={(e) => setEmoji(e.target.value)}
-                  placeholder="Enter emoji (e.g., 😊)"
-                  className="form-control rounded-3"
-                />
-              </div>
-
-              <div className="mb-4 form-check">
-                <input
-                  type="checkbox"
-                  checked={active}
-                  onChange={(e) => setActive(e.target.checked)}
-                  className="form-check-input"
-                  id="activeCheck"
-                />
-                <label className="form-check-label text-dark" htmlFor="activeCheck">
-                  Active
-                </label>
-              </div>
-
-              <div className="d-flex justify-content-center">
-                <StyledButton
-                  type="submit"
-                  disabled={noticeControl.isLoading}
-                  className="btn w-100 w-md-50"
-                >
-                  {noticeControl.isLoading ? 'Updating...' : 'Update Notice'}
-                </StyledButton>
-              </div>
-            </form>
-
-            {noticeControl.isLoading && (
-              <LoadingContainer>
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
-                </div>
-              </LoadingContainer>
-            )}
-
-            {noticeControl.isError && (
-              <ErrorAlert>
-                {noticeControl.errorMessage || 'An error occurred. Please try again.'}
-              </ErrorAlert>
-            )}
-          </DashboardCard>
-        </div>
+          {noticeControl.isError && (
+            <div className="mt-8 bg-rose-900/40 border border-rose-700/50 text-rose-300 px-6 py-4 rounded-xl text-center">
+              {noticeControl.errorMessage ||
+                "An error occurred. Please try again."}
+            </div>
+          )}
+        </motion.div>
       </div>
+
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
     </div>
   );
 }
-

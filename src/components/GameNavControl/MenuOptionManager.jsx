@@ -1,5 +1,5 @@
-import React, { useEffect, useCallback } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import React, { useEffect, useCallback } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import {
   fetchMenuOptions,
   createMenuOption,
@@ -8,181 +8,19 @@ import {
   setMenuForm,
   setMenuEditingId,
   resetMenuForm,
-} from '../../redux/Frontend Control/GameNavControl/menuOptionSlice';
-import { uploadImage } from '../../redux/Frontend Control/GameNavControl/imageSlice';
-import styled from 'styled-components';
-import { motion } from 'framer-motion';
-import { baseURL_For_IMG_UPLOAD } from '../../utils/baseURL';
+} from "../../redux/Frontend Control/GameNavControl/menuOptionSlice";
+import { uploadImage } from "../../redux/Frontend Control/GameNavControl/imageSlice";
+import { motion } from "framer-motion";
+import { baseURL_For_IMG_UPLOAD } from "../../utils/baseURL";
 
-// Styled Components
-const Container = styled.div`
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  max-width: 1000px;
-`;
-
-const Title = styled.h2`
-  color: #2c3e50;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  font-size: 1.8rem;
-`;
-
-const FormWrapper = styled(motion.form)`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 2rem;
-`;
-
-const InputWrapper = styled.div`
-  flex: 1 1 30%;
-  min-width: 200px;
-`;
-
-const Label = styled.label`
-  color: #2c3e50;
-  font-size: 0.9rem;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-  display: block;
-`;
-
-const StyledInput = styled.input`
-  background-color: #fff;
-  border: 1px solid #ced4da;
-  border-radius: 8px;
-  padding: 0.75rem;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-  width: 100%;
-  &:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-    outline: none;
-  }
-`;
-
-const FileInputWrapper = styled.div`
-  position: relative;
-`;
-
-const StyledFileInput = styled.input`
-  background-color: #fff;
-  border: 1px solid #ced4da;
-  border-radius: 8px;
-  padding: 0.75rem;
-  font-size: 0.9rem;
-  width: 100%;
-  &:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-    outline: none;
-  }
-`;
-
-const ImagePreview = styled.img`
-  border-radius: 8px;
-  margin-top: 0.5rem;
-  border: 1px solid #dee2e6;
-`;
-
-const SubmitButton = styled(motion.button)`
-  background: linear-gradient(90deg, #007bff, #0056b3);
-  border: none;
-  border-radius: 8px;
-  padding: 0.75rem 2rem;
-  color: white;
-  font-size: 1rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  transition: background 0.3s ease;
-  &:hover {
-    background: linear-gradient(90deg, #0056b3, #003d80);
-  }
-  &:disabled {
-    background: #6c757d;
-    cursor: not-allowed;
-  }
-`;
-
-const ErrorAlert = styled.div`
-  background-color: #f8d7da;
-  color: #721c24;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
-  width: 100%;
-  text-align: center;
-`;
-
-const Card = styled(motion.div)`
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-  margin-bottom: 1rem;
-  transition: transform 0.2s ease;
-  &:hover {
-    transform: translateY(-2px);
-  }
-`;
-
-const CardBody = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem;
-`;
-
-const CardImage = styled.img`
-  border-radius: 4px;
-  margin-left: 1rem;
-  border: 1px solid #dee2e6;
-`;
-
-const EditButton = styled(motion.button)`
-  background: #ffc107;
-  border: none;
-  border-radius: 6px;
-  padding: 0.5rem 1rem;
-  color: #212529;
-  font-size: 0.9rem;
-  font-weight: 500;
-  margin-right: 0.5rem;
-  &:hover {
-    background: #e0a800;
-  }
-  &:disabled {
-    background: #6c757d;
-    cursor: not-allowed;
-  }
-`;
-
-const DeleteButton = styled(motion.button)`
-  background: #dc3545;
-  border: none;
-  border-radius: 6px;
-  padding: 0.5rem 1rem;
-  color: white;
-  font-size: 0.9rem;
-  font-weight: 500;
-  &:hover {
-    background: #c82333;
-  }
-  &:disabled {
-    background: #6c757d;
-    cursor: not-allowed;
-  }
-`;
-
-const MenuOptionManager = () => {
+export default function MenuOptionManager() {
   const dispatch = useDispatch();
-  const { menuOptions, form, editingId, loading, error } = useSelector((state) => state.menuOption);
-  const { loading: imageLoading, error: imageError } = useSelector((state) => state.image);
+  const { menuOptions, form, editingId, loading, error } = useSelector(
+    (state) => state.menuOption,
+  );
+  const { loading: imageLoading, error: imageError } = useSelector(
+    (state) => state.image,
+  );
 
   useEffect(() => {
     dispatch(fetchMenuOptions());
@@ -199,31 +37,33 @@ const MenuOptionManager = () => {
       reader.readAsDataURL(file);
 
       img.onload = () => {
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         const size = 200;
         canvas.width = size;
         canvas.height = size;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext("2d");
 
         let width = img.width;
         let height = img.height;
         let startX = 0;
         let startY = 0;
-        let srcSize = width;
+        let srcSize = Math.min(width, height);
 
         if (width > height) {
           startX = (width - height) / 2;
-          srcSize = height;
         } else if (height > width) {
           startY = (height - width) / 2;
-          srcSize = width;
         }
 
         ctx.drawImage(img, startX, startY, srcSize, srcSize, 0, 0, size, size);
 
-        canvas.toBlob((blob) => {
-          resolve(new File([blob], file.name, { type: file.type }));
-        }, file.type);
+        canvas.toBlob(
+          (blob) => {
+            resolve(new File([blob], file.name, { type: file.type }));
+          },
+          file.type,
+          0.92,
+        );
       };
       img.onerror = reject;
     });
@@ -231,42 +71,45 @@ const MenuOptionManager = () => {
 
   const handleImageUpload = useCallback(
     async (file) => {
-      const resizedFile = await resizeImage(file);
-      const result = await dispatch(uploadImage(resizedFile)).unwrap();
-      return result;
+      if (!file) return;
+      try {
+        const resized = await resizeImage(file);
+        const result = await dispatch(uploadImage(resized)).unwrap();
+        dispatch(setMenuForm({ image: result }));
+      } catch (err) {
+        console.error("Image upload failed:", err);
+      }
     },
-    [dispatch, resizeImage]
+    [dispatch, resizeImage],
   );
 
   const handleChange = (e) => {
-    if (e.target.type === 'file') {
-      const file = e.target.files[0];
-      if (file) {
-        handleImageUpload(file)
-          .then((imageUrl) => {
-            dispatch(setMenuForm({ image: imageUrl }));
-          })
-          .catch((err) => {
-            console.error('Image upload failed:', err);
-          });
+    const { name, value, files, type } = e.target;
+
+    if (type === "file") {
+      if (files?.[0]) {
+        handleImageUpload(files[0]);
       }
     } else {
-      dispatch(setMenuForm({ [e.target.name]: e.target.value }));
+      dispatch(setMenuForm({ [name]: value }));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading || imageLoading) return;
+
     try {
       if (editingId) {
-        await dispatch(updateMenuOption({ id: editingId, data: form })).unwrap();
+        await dispatch(
+          updateMenuOption({ id: editingId, data: form }),
+        ).unwrap();
       } else {
         await dispatch(createMenuOption(form)).unwrap();
       }
       dispatch(resetMenuForm());
     } catch (err) {
-      console.error('Error saving menu option:', err);
+      console.error("Menu option save failed:", err);
     }
   };
 
@@ -276,120 +119,259 @@ const MenuOptionManager = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Delete menu option?')) {
-      try {
-        await dispatch(deleteMenuOption(id)).unwrap();
-      } catch (err) {
-        console.error('Error deleting menu option:', err);
-      }
+    if (!window.confirm("Are you sure you want to delete this menu option?"))
+      return;
+    try {
+      await dispatch(deleteMenuOption(id)).unwrap();
+    } catch (err) {
+      console.error("Delete failed:", err);
     }
   };
 
   return (
-    <Container className="container py-5">
-      <Title>Menu Options Manager</Title>
-      {(error || imageError) && <ErrorAlert>{error || imageError}</ErrorAlert>}
-      <FormWrapper
+    <div className="min-h-[600px] bg-gradient-to-b from-gray-900/80 to-black/70 backdrop-blur-sm rounded-2xl border border-emerald-800/30 shadow-2xl shadow-black/40 p-6 md:p-8">
+      {/* Header */}
+      <div className="text-center mb-8">
+        <h2 className="text-2xl md:text-3xl font-bold text-emerald-300 tracking-tight">
+          Menu Options Manager
+        </h2>
+        <p className="mt-2 text-emerald-200/70 text-sm md:text-base">
+          Create, update and manage homepage menu items
+        </p>
+      </div>
+
+      {/* Errors */}
+      {(error || imageError) && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-4 bg-red-900/40 border border-red-700/50 rounded-xl text-red-200 text-center"
+        >
+          {error || imageError}
+        </motion.div>
+      )}
+
+      {/* Form */}
+      <motion.form
         onSubmit={handleSubmit}
-        className="row g-3"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
+        className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 mb-10"
       >
-        <InputWrapper className="col-md-4">
-          <Label htmlFor="title">Title (EN)</Label>
-          <StyledInput
+        {/* Title EN */}
+        <div className="space-y-2">
+          <label
+            htmlFor="title"
+            className="block text-sm font-medium text-emerald-200/90"
+          >
+            Title (English)
+          </label>
+          <input
             type="text"
             id="title"
             name="title"
-            placeholder="Enter menu title"
-            value={form.title || ''}
+            placeholder="Enter menu title (EN)"
+            value={form.title || ""}
             onChange={handleChange}
             required
+            className="
+              w-full px-4 py-3 rounded-lg bg-gray-800/60 border border-emerald-800/40
+              text-white placeholder-gray-500 caret-emerald-400
+              focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30
+              transition-all duration-200
+            "
           />
-        </InputWrapper>
-        <InputWrapper className="col-md-4">
-          <Label htmlFor="titleBD">Title (BD)</Label>
-          <StyledInput
+        </div>
+
+        {/* Title BD */}
+        <div className="space-y-2">
+          <label
+            htmlFor="titleBD"
+            className="block text-sm font-medium text-emerald-200/90"
+          >
+            Title (Bangla)
+          </label>
+          <input
             type="text"
             id="titleBD"
             name="titleBD"
-            placeholder="Enter menu title in BD"
-            value={form.titleBD || ''}
+            placeholder="Enter menu title (BD)"
+            value={form.titleBD || ""}
             onChange={handleChange}
             required
+            className="
+              w-full px-4 py-3 rounded-lg bg-gray-800/60 border border-emerald-800/40
+              text-white placeholder-gray-500 caret-emerald-400
+              focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30
+              transition-all duration-200
+            "
           />
-        </InputWrapper>
-        <InputWrapper className="col-md-4">
-          <Label htmlFor="image">Image</Label>
-          <FileInputWrapper>
-            <StyledFileInput
+        </div>
+
+        {/* Image Upload */}
+        <div className="space-y-2">
+          <label
+            htmlFor="image"
+            className="block text-sm font-medium text-emerald-200/90"
+          >
+            Menu Icon
+          </label>
+          <div
+            className="
+            relative w-full h-14 rounded-lg overflow-hidden border-2 border-emerald-800/40
+            bg-gray-800/60 hover:bg-gray-700/60 transition-colors
+            focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/30
+          "
+          >
+            <input
               type="file"
               id="image"
               name="image"
               accept="image/*"
               onChange={handleChange}
               required={!form.image}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             />
-          </FileInputWrapper>
+            <div className="absolute inset-0 flex items-center justify-center text-gray-400 pointer-events-none">
+              {form.image ? "Change Icon" : "Choose Icon (200×200 recommended)"}
+            </div>
+          </div>
+
           {form.image && (
-            <ImagePreview src={`${baseURL_For_IMG_UPLOAD}s/${form.image}`} alt="Preview" width={60} height={60} />
+            <div className="mt-3 flex items-center gap-3">
+              <div className="w-16 h-16 rounded-lg overflow-hidden border border-emerald-700/50 bg-gray-900/50">
+                <img
+                  src={`${baseURL_For_IMG_UPLOAD}s/${form.image}`}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <span className="text-sm text-emerald-300/80 truncate max-w-[180px]">
+                {form.image.split("/").pop()}
+              </span>
+            </div>
           )}
-        </InputWrapper>
-        <div className="col-12 text-center">
-          <SubmitButton
+        </div>
+
+        {/* Submit */}
+        <div className="md:col-span-3 flex justify-center mt-4">
+          <motion.button
             type="submit"
             disabled={loading || imageLoading}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: loading || imageLoading ? 1 : 1.04, y: -2 }}
+            whileTap={{ scale: 0.96 }}
+            className={`
+              px-10 py-4 rounded-xl font-semibold text-base tracking-wide
+              shadow-lg shadow-emerald-900/30 min-w-[240px]
+              transition-all duration-300
+              ${
+                loading || imageLoading
+                  ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                  : "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white"
+              }
+            `}
           >
-            {loading || imageLoading ? 'Saving...' : editingId ? 'Update' : 'Create'}
-          </SubmitButton>
+            {loading || imageLoading ? (
+              <span className="flex items-center justify-center gap-3">
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                </svg>
+                Processing...
+              </span>
+            ) : editingId ? (
+              "Update Menu Option"
+            ) : (
+              "Create Menu Option"
+            )}
+          </motion.button>
         </div>
-      </FormWrapper>
+      </motion.form>
 
-      <div>
-        {menuOptions.map((item) => (
-          <Card
-            key={item._id}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          >
-            <CardBody>
-              <div className="d-flex align-items-center">
-                <strong style={{ color: '#343a40', fontWeight: 'bold' }}>{item.title}</strong>
-                <strong style={{ color: '#343a40', fontWeight: 'bold', marginLeft: '10px' }}>{item.titleBD}</strong>
+      {/* List of Existing Options */}
+      <div className="space-y-4">
+        <h3 className="text-xl font-semibold text-emerald-300 mb-4">
+          Existing Menu Options
+        </h3>
+
+        {menuOptions.length === 0 ? (
+          <div className="text-center py-10 text-gray-400">
+            No menu options created yet.
+          </div>
+        ) : (
+          menuOptions.map((item) => (
+            <motion.div
+              key={item._id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="
+                bg-gradient-to-r from-gray-800/70 to-gray-900/70
+                border border-emerald-800/30 rounded-xl p-4
+                flex flex-col sm:flex-row items-start sm:items-center justify-between
+                gap-4 hover:border-emerald-600/50 transition-all duration-200
+                shadow-md shadow-black/30
+              "
+            >
+              <div className="flex items-center gap-4 flex-1">
                 {item.image && (
-                  <CardImage src={`${baseURL_For_IMG_UPLOAD}s/${item.image}`} alt={item.title} width={40} height={40} />
+                  <div className="w-14 h-14 rounded-lg overflow-hidden border border-emerald-700/40 bg-gray-950/60 flex-shrink-0">
+                    <img
+                      src={`${baseURL_For_IMG_UPLOAD}s/${item.image}`}
+                      alt={item.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
                 )}
+                <div>
+                  <div className="font-medium text-white">{item.title}</div>
+                  <div className="text-sm text-emerald-200/70">
+                    {item.titleBD}
+                  </div>
+                </div>
               </div>
-              <div className="mt-2">
-                <EditButton
+
+              <div className="flex gap-3 self-end sm:self-center">
+                <motion.button
                   onClick={() => handleEdit(item)}
-                  disabled={loading}
+                  disabled={loading || imageLoading}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  className="
+                    px-5 py-2 rounded-lg text-sm font-medium
+                    bg-amber-600/80 hover:bg-amber-600 text-white
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    transition-all duration-200
+                  "
                 >
                   Edit
-                </EditButton>
-                <DeleteButton
+                </motion.button>
+
+                <motion.button
                   onClick={() => handleDelete(item._id)}
-                  disabled={loading}
+                  disabled={loading || imageLoading}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  className="
+                    px-5 py-2 rounded-lg text-sm font-medium
+                    bg-red-600/80 hover:bg-red-600 text-white
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    transition-all duration-200
+                  "
                 >
                   Delete
-                </DeleteButton>
+                </motion.button>
               </div>
-            </CardBody>
-          </Card>
-        ))}
+            </motion.div>
+          ))
+        )}
       </div>
-    </Container>
+    </div>
   );
-};
-
-export default MenuOptionManager;
-
-
+}
