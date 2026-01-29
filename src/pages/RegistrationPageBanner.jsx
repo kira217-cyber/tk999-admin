@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { FaUpload, FaTrash, FaEdit, FaSpinner } from "react-icons/fa";
-import { baseURL_For_IMG_UPLOAD } from "../utils/baseURL";
+import { baseURL, baseURL_For_IMG_UPLOAD } from "../utils/baseURL";
 
 export default function ImageControlPanel() {
   const [banners, setBanners] = useState([]);
@@ -311,7 +311,7 @@ export default function ImageControlPanel() {
                 >
                   <div className="relative">
                     <img
-                      src={`${baseURL_For_IMG_UPLOAD}${banner.url}`}
+                      src={`${baseURL_For_IMG_UPLOAD}s/${banner.url}`}
                       alt={banner.type}
                       className="w-full h-64 object-cover"
                     />

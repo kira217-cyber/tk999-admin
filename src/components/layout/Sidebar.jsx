@@ -263,34 +263,34 @@ const CustomSidebar = () => {
         { label: "Jackpot", icon: <FaTrophy />, to: "/jackpot" },
       ],
     },
-    {
-      label: "Risk Management",
-      icon: <FaCog />,
-      submenu: [
-        {
-          label: "Casino Risk Management",
-          icon: <FaCog />,
-          to: "/casino-risk-management",
-        },
-        {
-          label: "Sports Risk Management",
-          icon: <FaCog />,
-          to: "/sports-risk-management",
-        },
-      ],
-    },
-    {
-      label: "Game API Key",
-      icon: <FaCog />,
-      submenu: [
-        { label: "Evolution API", icon: <FaCog />, to: "/evolution-api" },
-        {
-          label: "Exchange Betfair API",
-          icon: <FaCog />,
-          to: "/exchange-betfair-api",
-        },
-      ],
-    },
+    // {
+    //   label: "Risk Management",
+    //   icon: <FaCog />,
+    //   submenu: [
+    //     {
+    //       label: "Casino Risk Management",
+    //       icon: <FaCog />,
+    //       to: "/casino-risk-management",
+    //     },
+    //     {
+    //       label: "Sports Risk Management",
+    //       icon: <FaCog />,
+    //       to: "/sports-risk-management",
+    //     },
+    //   ],
+    // },
+    // {
+    //   label: "Game API Key",
+    //   icon: <FaCog />,
+    //   submenu: [
+    //     { label: "Evolution API", icon: <FaCog />, to: "/evolution-api" },
+    //     {
+    //       label: "Exchange Betfair API",
+    //       icon: <FaCog />,
+    //       to: "/exchange-betfair-api",
+    //     },
+    //   ],
+    // },
     {
       label: "Frontend Control",
       icon: <FaSlidersH />,
@@ -390,17 +390,17 @@ const CustomSidebar = () => {
         },
       ],
     },
-    {
-      label: "Pages",
-      icon: <FaListAlt />,
-      submenu: [
-        { label: "About US", icon: <FaListAlt />, to: "/about-us" },
-        { label: "Blogs", icon: <FaListAlt />, to: "/blogs" },
-        { label: "Sponsor", icon: <FaUsers />, to: "/sponsor" },
-        { label: "Promotions", icon: <FaBullhorn />, to: "/promotions" },
-        { label: "Contact US", icon: <FaEnvelope />, to: "/contact-us" },
-      ],
-    },
+    // {
+    //   label: "Pages",
+    //   icon: <FaListAlt />,
+    //   submenu: [
+    //     { label: "About US", icon: <FaListAlt />, to: "/about-us" },
+    //     { label: "Blogs", icon: <FaListAlt />, to: "/blogs" },
+    //     { label: "Sponsor", icon: <FaUsers />, to: "/sponsor" },
+    //     { label: "Promotions", icon: <FaBullhorn />, to: "/promotions" },
+    //     { label: "Contact US", icon: <FaEnvelope />, to: "/contact-us" },
+    //   ],
+    // },
     {
       label: "Settings",
       icon: <FaCog />,
