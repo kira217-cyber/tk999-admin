@@ -29,7 +29,6 @@ export default function DepositBonus() {
         axios.get(`${API_URL}/api/deposit-bonus`),
         axios.get(`${API_URL}/api/deposit-payment-method/methods`),
       ]);
-
       setPromotions(bonusRes.data.data || []);
       setPaymentMethods(methodRes.data.data || []);
     } catch (err) {
@@ -54,23 +53,36 @@ export default function DepositBonus() {
 
       const newBonuses = newMethods.map((id) => {
         const existing = prev.promotion_bonuses.find(
-          (b) => b.payment_method === id
+          (b) => b.payment_method === id,
         );
-        return existing || { payment_method: id, bonus_type: "Fix", bonus: 0 };
+        return (
+          existing || {
+            payment_method: id,
+            bonus_type: "Fix",
+            bonus: 0,
+            turnover_multiplier: 0, // ← changed field name + default
+          }
+        );
       });
 
       return { payment_methods: newMethods, promotion_bonuses: newBonuses };
     });
   };
 
-  // Handle Bonus Change
+  // Handle Bonus / Turnover Change
   const handleBonusChange = (methodId, field, value) => {
     setFormData((prev) => ({
       ...prev,
       promotion_bonuses: prev.promotion_bonuses.map((b) =>
         b.payment_method === methodId
-          ? { ...b, [field]: field === "bonus" ? Number(value) || 0 : value }
-          : b
+          ? {
+              ...b,
+              [field]:
+                field === "bonus" || field === "turnover_multiplier"
+                  ? Number(value) || 0
+                  : value,
+            }
+          : b,
       ),
     }));
   };
@@ -82,7 +94,6 @@ export default function DepositBonus() {
       toast.error("Select at least one payment method");
       return;
     }
-
     setSubmitting(true);
     try {
       if (editingId) {
@@ -111,6 +122,7 @@ export default function DepositBonus() {
         payment_method: b.payment_method._id || b.payment_method,
         bonus_type: b.bonus_type,
         bonus: b.bonus,
+        turnover_multiplier: b.turnover_multiplier || 0, // ← updated field name
       })),
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -146,7 +158,7 @@ export default function DepositBonus() {
             Deposit Bonus Management
           </h1>
           <p className="text-emerald-300/80 text-lg sm:text-xl">
-            Configure bonuses for different deposit payment methods
+            Configure bonuses & turnover requirements (× times)
           </p>
         </motion.div>
 
@@ -165,7 +177,6 @@ export default function DepositBonus() {
             <h3 className="text-xl font-bold text-white mb-4">
               Select Payment Methods
             </h3>
-
             {paymentMethods.length === 0 ? (
               <div className="text-center py-10 text-gray-400">
                 No payment methods found. Add some first.
@@ -193,21 +204,21 @@ export default function DepositBonus() {
             )}
           </div>
 
-          {/* Bonus Configuration */}
+          {/* Bonus & Turnover Configuration */}
           {formData.payment_methods.length > 0 && (
             <div className="mb-10">
               <h3 className="text-xl font-bold text-white mb-4">
-                Bonus Configuration
+                Bonus & Turnover Configuration
               </h3>
-
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {formData.payment_methods.map((methodId) => {
                   const method = paymentMethods.find((m) => m._id === methodId);
-                  const bonus = formData.promotion_bonuses.find(
-                    (b) => b.payment_method === methodId
+                  const bonusObj = formData.promotion_bonuses.find(
+                    (b) => b.payment_method === methodId,
                   ) || {
                     bonus_type: "Fix",
                     bonus: 0,
+                    turnover_multiplier: 0,
                   };
 
                   return (
@@ -220,9 +231,13 @@ export default function DepositBonus() {
                       </h4>
 
                       <select
-                        value={bonus.bonus_type}
+                        value={bonusObj.bonus_type}
                         onChange={(e) =>
-                          handleBonusChange(methodId, "bonus_type", e.target.value)
+                          handleBonusChange(
+                            methodId,
+                            "bonus_type",
+                            e.target.value,
+                          )
                         }
                         className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 cursor-pointer mb-4"
                       >
@@ -232,15 +247,35 @@ export default function DepositBonus() {
 
                       <input
                         type="number"
-                        value={bonus.bonus}
+                        value={bonusObj.bonus}
                         onChange={(e) =>
                           handleBonusChange(methodId, "bonus", e.target.value)
                         }
                         placeholder="Enter bonus value"
                         min="0"
                         required
+                        className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all mb-4"
+                      />
+
+                      <input
+                        type="number"
+                        value={bonusObj.turnover_multiplier}
+                        onChange={(e) =>
+                          handleBonusChange(
+                            methodId,
+                            "turnover_multiplier",
+                            e.target.value,
+                          )
+                        }
+                        placeholder="Turnover requirement (×)"
+                        min="0"
+                        step="0.1"
                         className="w-full bg-gray-900/60 border border-emerald-800/50 rounded-xl px-5 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-emerald-500/70 focus:ring-2 focus:ring-emerald-500/30 transition-all"
                       />
+                      <p className="text-xs text-gray-400 mt-1">
+                        Required turnover: {bonusObj.turnover_multiplier || 0}×
+                        deposit amount
+                      </p>
                     </div>
                   );
                 })}
@@ -261,8 +296,8 @@ export default function DepositBonus() {
               {submitting
                 ? "Saving..."
                 : editingId
-                ? "Update Bonus"
-                : "Create Bonus"}
+                  ? "Update Bonus"
+                  : "Create Bonus"}
             </motion.button>
 
             {editingId && (
@@ -300,30 +335,29 @@ export default function DepositBonus() {
                 <h3 className="text-lg font-bold text-emerald-300 mb-4">
                   Deposit Bonus Configuration
                 </h3>
-
                 <div className="space-y-3 text-gray-300 mb-6">
                   <div>
-                    <span className="text-emerald-400 font-medium">Methods:</span>{" "}
+                    <span className="text-emerald-400 font-medium">
+                      Methods:
+                    </span>{" "}
                     {bonus.payment_methods
                       .map((m) => m.methodName || m._id)
                       .join(" • ")}
                   </div>
-
                   <div>
-                    <span className="text-emerald-400 font-medium">Bonuses:</span>{" "}
+                    <span className="text-emerald-400 font-medium">
+                      Bonuses:
+                    </span>{" "}
                     {bonus.promotion_bonuses
                       .map(
                         (b) =>
-                          `${b.payment_method?.methodName || "Unknown"}: ${
-                            b.bonus
-                          } ${b.bonus_type === "Percentage" ? "%" : "৳"} (${
-                            b.bonus_type
-                          })`
+                          `${b.payment_method?.methodName || "Unknown"}: ${b.bonus} ${
+                            b.bonus_type === "Percentage" ? "%" : "৳"
+                          } (${b.bonus_type}) • Turnover: ${b.turnover_multiplier || 0}×`,
                       )
                       .join(" | ")}
                   </div>
                 </div>
-
                 <div className="flex gap-3">
                   <button
                     onClick={() => handleEdit(bonus)}
@@ -331,7 +365,6 @@ export default function DepositBonus() {
                   >
                     Edit
                   </button>
-
                   <button
                     onClick={() => handleDelete(bonus._id)}
                     className="flex-1 bg-rose-700/60 hover:bg-rose-600/70 text-white py-3 rounded-xl font-medium cursor-pointer transition-all"
@@ -344,7 +377,6 @@ export default function DepositBonus() {
           </div>
         )}
       </div>
-
       <ToastContainer position="top-right" autoClose={3000} theme="dark" />
     </div>
   );
